@@ -9,6 +9,7 @@ interface FeedbacksTabProps {
   onDelete: (id: string) => void;
   onReply: (id: string, replyText: string) => void;
   onOpenCodeGenerator: () => void;
+  onClose: () => void;
 }
 
 export default function FeedbacksTab({
@@ -17,7 +18,8 @@ export default function FeedbacksTab({
   onReject,
   onDelete,
   onReply,
-  onOpenCodeGenerator
+  onOpenCodeGenerator,
+  onClose
 }: FeedbacksTabProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Published' | 'Pending' | 'Archived'>('All');
@@ -43,14 +45,31 @@ export default function FeedbacksTab({
   return (
     <div className="space-y-5 pb-12">
       {/* Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl">
-        <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-[#00d9ff]" /> Client Testimonials & Feedbacks
-          </h2>
-          <p className="text-xs text-slate-400">
-            Review and publish client reviews verified via single-use <strong>Ali-</strong> codes
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer"
+            title="Go back to Dashboard"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-[#00d9ff]" /> Client Testimonials & Feedbacks
+            </h2>
+            <p className="text-xs text-slate-400">
+              Review and publish client reviews verified via single-use <strong>Ali-</strong> codes
+            </p>
+          </div>
         </div>
 
         <button
@@ -107,9 +126,17 @@ export default function FeedbacksTab({
                 {/* Card Top */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#00d9ff]/20 text-[#00d9ff] font-bold text-sm flex items-center justify-center border border-[#00d9ff]/30">
-                      {fb.avatarLetter || fb.clientName.charAt(0)}
-                    </div>
+                    {fb.clientPhoto ? (
+                      <img 
+                        src={fb.clientPhoto} 
+                        alt={fb.clientName} 
+                        className="w-10 h-10 rounded-full border border-[#00d9ff]/30 object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[#00d9ff]/20 text-[#00d9ff] font-bold text-sm flex items-center justify-center border border-[#00d9ff]/30">
+                        {fb.avatarLetter || fb.clientName.charAt(0)}
+                      </div>
+                    )}
                     <div>
                       <h4 className="text-sm font-bold text-white">{fb.clientName}</h4>
                       <p className="text-[11px] text-slate-400">{fb.clientEmail || fb.date}</p>
@@ -159,13 +186,13 @@ export default function FeedbacksTab({
                 </p>
 
                 {/* Attached Picture Screenshot if available */}
-                {fb.imageUrl && (
+                {(fb.projectScreenshot || fb.imageUrl) && (
                   <div className="mt-2">
-                    <p className="text-[10px] text-slate-400 mb-1 font-semibold">Attached Image / Screenshot:</p>
+                    <p className="text-[10px] text-slate-400 mb-1 font-semibold">Project Screenshot / Work Attachment:</p>
                     <img
-                      src={fb.imageUrl}
+                      src={fb.projectScreenshot || fb.imageUrl}
                       alt="Client Attachment"
-                      className="max-h-36 rounded-lg border border-white/10 object-cover"
+                      className="w-full max-h-[200px] rounded-lg border border-white/10 object-contain bg-black/20"
                     />
                   </div>
                 )}

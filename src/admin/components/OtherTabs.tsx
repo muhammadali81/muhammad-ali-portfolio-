@@ -18,7 +18,8 @@ import {
   Mail,
   Phone,
   Save,
-  Sparkles
+  Sparkles,
+  XCircle
 } from 'lucide-react';
 import { ProjectItem, ServiceItem, AdminUser } from '../types';
 
@@ -28,22 +29,41 @@ import { ProjectItem, ServiceItem, AdminUser } from '../types';
 export function ProjectsTab({
   projects,
   onOpenAddProject,
-  onDeleteProject
+  onDeleteProject,
+  onClose
 }: {
   projects: ProjectItem[];
   onOpenAddProject: () => void;
   onDeleteProject: (id: string) => void;
+  onClose: () => void;
 }) {
   return (
     <div className="space-y-5 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl">
-        <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <FolderGit2 className="w-5 h-5 text-amber-400" /> Showcase Projects ({projects.length})
-          </h2>
-          <p className="text-xs text-slate-400">
-            Manage portfolio showcase items displayed on the live website
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer"
+            title="Go back to Dashboard"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <FolderGit2 className="w-5 h-5 text-amber-400" /> Showcase Projects ({projects.length})
+            </h2>
+            <p className="text-xs text-slate-400">
+              Manage portfolio showcase items displayed on the live website
+            </p>
+          </div>
         </div>
 
         <button
@@ -124,22 +144,41 @@ export function ProjectsTab({
 export function ServicesTab({
   services,
   onOpenAddService,
-  onDeleteService
+  onDeleteService,
+  onClose
 }: {
   services: ServiceItem[];
   onOpenAddService: () => void;
   onDeleteService: (id: string) => void;
+  onClose: () => void;
 }) {
   return (
     <div className="space-y-5 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl">
-        <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-cyan-400" /> Offered Services ({services.length})
-          </h2>
-          <p className="text-xs text-slate-400">
-            Professional solutions with verified pricing criteria starting from $10 or above
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer"
+            title="Go back to Dashboard"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Layers className="w-5 h-5 text-cyan-400" /> Offered Services ({services.length})
+            </h2>
+            <p className="text-xs text-slate-400">
+              Professional solutions with verified pricing criteria starting from $10 or above
+            </p>
+          </div>
         </div>
 
         <button
@@ -194,23 +233,44 @@ export function ServicesTab({
 // =========================================================================
 export function ReactionsTab({
   positive,
-  negative
+  negative,
+  onClose
 }: {
   positive: number;
   negative: number;
+  onClose: () => void;
 }) {
   const total = positive + negative;
   const ratio = total > 0 ? ((positive / total) * 100).toFixed(1) : '100';
 
   return (
     <div className="space-y-6 pb-12">
-      <div className="bg-[#0f1523] border border-white/10 p-5 rounded-2xl">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Heart className="w-5 h-5 text-rose-400" /> Visitor Sentiment & Reactions
-        </h2>
-        <p className="text-xs text-slate-400">
-          Real-time user satisfaction metrics and engagement rates
-        </p>
+      <div className="bg-[#0f1523] border border-white/10 p-5 rounded-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer"
+            title="Go back to Dashboard"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Heart className="w-5 h-5 text-rose-400" /> Visitor Sentiment & Reactions
+            </h2>
+            <p className="text-xs text-slate-400">
+              Real-time user satisfaction metrics and engagement rates
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -254,16 +314,35 @@ export function ReactionsTab({
 // =========================================================================
 // PROFILE VIEWS TAB
 // =========================================================================
-export function ViewsTab() {
+export function ViewsTab({ onClose }: { onClose: () => void }) {
   return (
     <div className="space-y-6 pb-12">
-      <div className="bg-[#0f1523] border border-white/10 p-5 rounded-2xl">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Eye className="w-5 h-5 text-cyan-400" /> Portfolio Traffic & Views Analytics
-        </h2>
-        <p className="text-xs text-slate-400">
-          Visitor trends, peak hours, and device breakdown
-        </p>
+      <div className="bg-[#0f1523] border border-white/10 p-5 rounded-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer"
+            title="Go back to Dashboard"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Eye className="w-5 h-5 text-cyan-400" /> Portfolio Traffic & Views Analytics
+            </h2>
+            <p className="text-xs text-slate-400">
+              Visitor trends, peak hours, and device breakdown
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -314,18 +393,37 @@ export function ViewsTab() {
 // =========================================================================
 // SETTINGS TAB
 // =========================================================================
-export function SettingsTab() {
+export function SettingsTab({ onClose }: { onClose: () => void }) {
   const [passwordNotice, setPasswordNotice] = useState(false);
 
   return (
     <div className="space-y-6 pb-12 max-w-3xl">
-      <div className="bg-[#0f1523] border border-white/10 p-5 rounded-2xl">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Settings className="w-5 h-5 text-slate-400" /> Admin & Security Settings
-        </h2>
-        <p className="text-xs text-slate-400">
-          Admin account credentials, environment variables, and authentication configuration
-        </p>
+      <div className="bg-[#0f1523] border border-white/10 p-5 rounded-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer"
+            title="Go back to Dashboard"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Settings className="w-5 h-5 text-slate-400" /> Admin & Security Settings
+            </h2>
+            <p className="text-xs text-slate-400">
+              Admin account credentials, environment variables, and authentication configuration
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-[#0f1523] border border-white/10 p-5 rounded-2xl space-y-4 text-xs">
@@ -356,11 +454,27 @@ export function SettingsTab() {
 // =========================================================================
 // PROFILE TAB
 // =========================================================================
-export function ProfileTab({ user }: { user: AdminUser }) {
+export function ProfileTab({ user, onClose }: { user: AdminUser; onClose: () => void }) {
   return (
     <div className="space-y-6 pb-12 max-w-3xl">
-      <div className="bg-[#0f1523] border border-white/10 p-6 rounded-2xl flex items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00d9ff]/20 to-[#7c5cff]/20 border border-[#00d9ff]/30 text-[#00d9ff] font-black text-2xl flex items-center justify-center">
+      <div className="bg-[#0f1523] border border-white/10 p-6 rounded-2xl flex items-center gap-5 relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <button
+          onClick={onClose}
+          className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer shrink-0"
+          title="Go back to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00d9ff]/20 to-[#7c5cff]/20 border border-[#00d9ff]/30 text-[#00d9ff] font-black text-2xl flex items-center justify-center shrink-0">
           MA
         </div>
         <div>

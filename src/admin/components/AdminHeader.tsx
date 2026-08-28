@@ -10,6 +10,7 @@ interface AdminHeaderProps {
   onSearch: (query: string) => void;
   onClearNotifications: () => void;
   onToggleSidebar?: () => void;
+  onClose?: () => void;
 }
 
 export default function AdminHeader({
@@ -19,7 +20,8 @@ export default function AdminHeader({
   onRefresh,
   onSearch,
   onClearNotifications,
-  onToggleSidebar
+  onToggleSidebar,
+  onClose
 }: AdminHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +55,15 @@ export default function AdminHeader({
         )}
 
         <div className="flex items-center gap-2">
+          {onClose && (
+            <button
+              onClick={onClose}
+              title="Close current screen and return to Dashboard"
+              className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer mr-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <h1 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">{title}</h1>
           <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold">
             <CheckCircle2 className="w-3 h-3" /> System Active

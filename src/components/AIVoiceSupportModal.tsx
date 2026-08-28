@@ -362,6 +362,16 @@ export default function AIVoiceSupportModal({ isOpen, onClose }: AIVoiceSupportM
     };
   }, []);
 
+  // Auto-speak welcome message on open
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        speakText("Hi! I’m Muhammad Ali’s AI Voice Support Assistant. Ask me anything about his education, skills, projects, services, or contact numbers.");
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   // Keyboard shortcut: Escape to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { Mail, Search, Eye, Trash2, Edit2, Download, ExternalLink } from 'lucide-react';
+import { Mail, Search, Eye, Trash2, Edit2, Download, XCircle } from 'lucide-react';
 import { InquiryItem } from '../types';
 
 interface InquiriesTabProps {
   inquiries: InquiryItem[];
   onViewInquiry: (inquiry: InquiryItem) => void;
   onDeleteInquiry: (id: string) => void;
+  onClose: () => void;
 }
 
 export default function InquiriesTab({
   inquiries,
   onViewInquiry,
-  onDeleteInquiry
+  onDeleteInquiry,
+  onClose
 }: InquiriesTabProps) {
   const [search, setSearch] = useState('');
   const [serviceFilter, setServiceFilter] = useState('All');
@@ -56,14 +58,31 @@ export default function InquiriesTab({
   return (
     <div className="space-y-5 pb-12">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl">
-        <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Mail className="w-5 h-5 text-purple-400" /> Incoming Client Inquiries
-          </h2>
-          <p className="text-xs text-slate-400">
-            Total {inquiries.length} inquiries received across all web, AI, and game design channels
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1523] border border-white/10 p-5 rounded-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg z-10 sm:hidden"
+          title="Close and return to Dashboard"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-400/30 transition-all cursor-pointer"
+            title="Go back to Dashboard"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Mail className="w-5 h-5 text-purple-400" /> Incoming Client Inquiries
+            </h2>
+            <p className="text-xs text-slate-400">
+              Total {inquiries.length} inquiries received across all web, AI, and game design channels
+            </p>
+          </div>
         </div>
 
         <button

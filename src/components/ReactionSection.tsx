@@ -1,57 +1,68 @@
 import React, { useState, useEffect } from 'react';
 
 export default function ReactionSection() {
-  const [likes, setLikes] = useState(() => {
-    const saved = localStorage.getItem('portfolio_likes_count');
-    return saved ? parseInt(saved, 10) : 142;
-  });
-  const [dislikes, setDislikes] = useState(() => {
-    const saved = localStorage.getItem('portfolio_dislikes_count');
-    return saved ? parseInt(saved, 10) : 3;
-  });
+  const [likes, setLikes] = useState(0);
+  const [dislikes, setDislikes] = useState(0);
   const [userReaction, setUserReaction] = useState<'like' | 'dislike' | null>(() => {
     return (localStorage.getItem('portfolio_user_reaction') as 'like' | 'dislike' | null) || null;
   });
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
-  const handleLike = () => {
-    if (userReaction === 'like') {
-      setUserReaction(null);
-      setLikes(prev => prev - 1);
-      localStorage.removeItem('portfolio_user_reaction');
-      setFeedbackNotice('Your feedback was removed.');
-    } else {
-      if (userReaction === 'dislike') {
-        setDislikes(prev => prev - 1);
-      }
-      setUserReaction('like');
-      setLikes(prev => prev + 1);
-      localStorage.setItem('portfolio_user_reaction', 'like');
-      setFeedbackNotice('Thank you for liking my portfolio!');
-    }
-  };
-
-  const handleDislike = () => {
-    if (userReaction === 'dislike') {
-      setUserReaction(null);
-      setDislikes(prev => prev - 1);
-      localStorage.removeItem('portfolio_user_reaction');
-      setFeedbackNotice('Your feedback was removed.');
-    } else {
-      if (userReaction === 'like') {
-        setLikes(prev => prev - 1);
-      }
-      setUserReaction('dislike');
-      setDislikes(prev => prev + 1);
-      localStorage.setItem('portfolio_user_reaction', 'dislike');
-      setFeedbackNotice('Thank you for the feedback. I will continue improving!');
-    }
-  };
-
+  // Fetch real counts from DB
   useEffect(() => {
-    localStorage.setItem('portfolio_likes_count', likes.toString());
-    localStorage.setItem('portfolio_dislikes_count', dislikes.toString());
-  }, [likes, dislikes]);
+    const fetchCounts = async () => {
+      try {
+        const res = await fetch('/api/stats');
+        if (res.ok) {
+          const data = await res.json();
+          setLikes(data.likes || 0);
+          setDislikes(data.dislikes || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch reaction counts:", err);
+      }
+    };
+    fetchCounts();
+  }, []);
+
+  const handleReaction = async (type: 'like' | 'dislike') => {
+    // Optimistic UI update
+    const previousReaction = userReaction;
+    const isRemoving = previousReaction === type;
+    
+    // Calculate new counts locally for instant feedback
+    if (isRemoving) {
+      setUserReaction(null);
+      if (type === 'like') setLikes(prev => prev - 1);
+      else setDislikes(prev => prev - 1);
+      localStorage.removeItem('portfolio_user_reaction');
+      setFeedbackNotice('Your feedback was removed.');
+    } else {
+      // If switching from one to another
+      if (previousReaction === 'like') setLikes(prev => prev - 1);
+      if (previousReaction === 'dislike') setDislikes(prev => prev - 1);
+
+      setUserReaction(type);
+      if (type === 'like') {
+        setLikes(prev => prev + 1);
+        setFeedbackNotice('Thank you for liking my portfolio!');
+      } else {
+        setDislikes(prev => prev + 1);
+        setFeedbackNotice('Thank you for the feedback. I will continue improving!');
+      }
+      localStorage.setItem('portfolio_user_reaction', type);
+    }
+
+    try {
+      await fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, isRemoving })
+      });
+    } catch (err) {
+      console.error("Failed to update reaction on server:", err);
+    }
+  };
 
   return (
     <section id="reactions" className="py-14 sm:py-16 border-t border-[var(--lux-border)]">
@@ -67,7 +78,7 @@ export default function ReactionSection() {
           <div className="flex items-center justify-center gap-4 sm:gap-6 flex-wrap">
             {/* Like Button */}
             <button
-              onClick={handleLike}
+              onClick={() => handleReaction('like')}
               className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer border ${
                 userReaction === 'like'
                   ? 'bg-[#00d9ff]/15 text-[#00d9ff] border-[#00d9ff] shadow-[0_0_20px_rgba(0,217,255,0.25)]'
@@ -84,7 +95,7 @@ export default function ReactionSection() {
 
             {/* Dislike Button */}
             <button
-              onClick={handleDislike}
+              onClick={() => handleReaction('dislike')}
               className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer border ${
                 userReaction === 'dislike'
                   ? 'bg-rose-500/15 text-rose-500 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.2)]'

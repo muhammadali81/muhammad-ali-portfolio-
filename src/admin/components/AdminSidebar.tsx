@@ -30,6 +30,7 @@ interface AdminSidebarProps {
   activeTab: AdminTab;
   onTabChange: (tab: AdminTab) => void;
   onLogout: () => void;
+  onBack?: () => void;
   user: AdminUser;
   pendingFeedbacksCount?: number;
   newInquiriesCount?: number;
@@ -41,6 +42,7 @@ export default function AdminSidebar({
   activeTab,
   onTabChange,
   onLogout,
+  onBack,
   user,
   pendingFeedbacksCount = 1,
   newInquiriesCount = 2,
@@ -147,18 +149,22 @@ export default function AdminSidebar({
       {/* Bottom Section */}
       <div className="p-5 border-t border-white/5 space-y-2">
         {/* Main Website Link */}
-        <a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-[#00d9ff] hover:bg-white/[0.03] transition-colors"
+        <button
+          onClick={() => {
+            if (onBack) {
+              onBack();
+            } else {
+              window.location.href = '/';
+            }
+          }}
+          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-[#00d9ff] hover:bg-white/[0.03] transition-colors cursor-pointer"
         >
           <span className="flex items-center gap-2.5">
             <ExternalLink className="w-3.5 h-3.5" />
             Live Website
           </span>
           <span className="text-[10px] text-slate-500">Main Site</span>
-        </a>
+        </button>
 
         {/* Logout Button */}
         <button

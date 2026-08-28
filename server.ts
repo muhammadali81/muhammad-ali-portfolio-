@@ -3,8 +3,20 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { db } from "./src/db";
+import { portfolioStats, feedback, reactions, feedbackCodes } from "./src/db/schema";
+import { eq, sql, and } from "drizzle-orm";
 
 dotenv.config();
+
+// Initialize Firebase Admin
+if (!getApps().length) {
+  initializeApp({
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID
+  });
+}
 
 const app = express();
 const PORT = 3000;
@@ -13,32 +25,11 @@ app.use(express.json());
 
 // =========================================================================
 // ADMIN AUTHENTICATION CONFIGURATION
-// Admin email is fixed to alimuhammadhvn81@gmail.com
-// You can set or change your desired Admin Password here or via ADMIN_PASSWORD in .env
 // =========================================================================
 export const ADMIN_CREDENTIALS = {
   email: process.env.ADMIN_EMAIL || "alimuhammadhvn81@gmail.com",
   password: process.env.ADMIN_PASSWORD || "Ali2007",
 };
-
-// In-Memory Storage for Admin Data & Generated Codes
-let generatedCodesStore: {
-  code: string;
-  createdAt: string;
-  status: 'Active' | 'Used' | 'Revoked';
-  assignedTo?: string;
-  usedAt?: string;
-  notes?: string;
-}[] = [
-  { code: 'Ali-9K2L8P', createdAt: 'Aug 24, 2025', status: 'Used', assignedTo: 'Ali Raza', usedAt: 'Aug 25, 2025', notes: 'Corporate Client' },
-  { code: 'Ali-3M7X1V', createdAt: 'Aug 23, 2025', status: 'Used', assignedTo: 'Sara Khan', usedAt: 'Aug 24, 2025', notes: 'Agency Project' },
-  { code: 'Ali-5W8N4Q', createdAt: 'Aug 22, 2025', status: 'Used', assignedTo: 'Usman Ahmed', usedAt: 'Aug 23, 2025', notes: 'Freelance Contract' },
-  { code: 'Ali-7B2C9M', createdAt: 'Aug 21, 2025', status: 'Used', assignedTo: 'Hammad Ali', usedAt: 'Aug 22, 2025', notes: 'Web App' },
-  { code: 'Ali-4K9P2W', createdAt: 'Aug 20, 2025', status: 'Used', assignedTo: 'Zainab Noor', usedAt: 'Aug 20, 2025', notes: 'Design Client' },
-  { code: 'Ali-8H4F2L', createdAt: 'Aug 26, 2025', status: 'Active', assignedTo: 'Hamza Khan', notes: 'Valid until feedback is published' },
-  { code: 'Ali-6D1V9Z', createdAt: 'Aug 27, 2025', status: 'Active', assignedTo: 'New Client', notes: 'Valid until feedback is published' },
-  { code: 'Ali-2R7T5M', createdAt: 'Aug 27, 2025', status: 'Active', assignedTo: 'General Client', notes: 'Valid until feedback is published' },
-];
 
 // System prompt for Muhammad Ali’s AI Portfolio Assistant
 const PORTFOLIO_KNOWLEDGE = `
@@ -354,22 +345,23 @@ function getLocalFallbackAnswer(question: string): string {
 
 // Fallback Gemini model pipeline in case of high demand (503) or rate limits (429)
 const GEMINI_MODELS = [
-  "gemini-2.5-flash",
   "gemini-2.0-flash",
   "gemini-1.5-flash",
-  "gemini-2.5-pro",
+  "gemini-1.5-flash-8b",
+  "gemini-3.7-flash",
+  "gemini-3.1-pro-preview",
 ];
 
-async function generateWithModelFallback(ai: GoogleGenAI, contents: any[]): Promise<string | null> {
+async function generateWithModelFallback(ai: GoogleGenAI, contents: any[], systemInstruction: string = PORTFOLIO_KNOWLEDGE): Promise<string | null> {
   for (const model of GEMINI_MODELS) {
     try {
       const response = await ai.models.generateContent({
         model,
         contents,
         config: {
-          systemInstruction: PORTFOLIO_KNOWLEDGE,
+          systemInstruction,
           temperature: 0.7,
-          maxOutputTokens: 300,
+          maxOutputTokens: 500,
         },
       });
       if (response && response.text) {
@@ -440,8 +432,196 @@ app.post("/api/voice-support", async (req, res) => {
 });
 
 // =========================================================================
-// ADMIN BACKEND API ENDPOINTS
+// DATABASE & AUTH API ENDPOINTS
 // =========================================================================
+
+// Get Portfolio Stats
+app.get("/api/stats", async (_req, res) => {
+  try {
+    const statsResult = await db.select().from(portfolioStats).where(eq(portfolioStats.id, 1));
+    let baseStats = statsResult.length > 0 ? statsResult[0] : null;
+    
+    if (!baseStats) {
+      const [newStats] = await db.insert(portfolioStats).values({ id: 1 }).returning();
+      baseStats = newStats;
+    }
+
+    // Live aggregations for real-time accuracy
+    const allFeedbacks = (await db.select().from(feedback)) || [];
+    const ratingBreakdown = {
+      stars5: allFeedbacks.filter(f => f && f.rating === 5).length,
+      stars4: allFeedbacks.filter(f => f && f.rating === 4).length,
+      stars3: allFeedbacks.filter(f => f && f.rating === 3).length,
+      stars2: allFeedbacks.filter(f => f && f.rating === 2).length,
+      stars1: allFeedbacks.filter(f => f && f.rating === 1).length,
+    };
+
+    const feedbackStatusBreakdown = {
+      published: allFeedbacks.filter(f => f && f.isApproved).length,
+      pending: allFeedbacks.filter(f => f && !f.isApproved).length,
+      archived: 0,
+    };
+
+    // Calculate total inquiries live
+    // (Assuming we might have an inquiries table, but for now we track via stats or a separate fetch)
+    
+    res.json({
+      ...baseStats,
+      ratingBreakdown,
+      feedbackStatusBreakdown,
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
+// Update Profile View Count
+app.post("/api/stats/view", async (_req, res) => {
+  try {
+    await db.update(portfolioStats)
+      .set({ profileViews: sql`${portfolioStats.profileViews} + 1` })
+      .where(eq(portfolioStats.id, 1));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update view count" });
+  }
+});
+
+// Submit Feedback (Google Verified + Ali- Code)
+app.post("/api/feedback/submit-verified", async (req, res) => {
+  try {
+    const { token, rating, comment, code, projectScreenshot } = req.body;
+    
+    // 1. Verify Code First
+    if (!code || !code.toLowerCase().startsWith("ali-")) {
+      res.status(400).json({ error: "A valid feedback code starting with 'Ali-' is required." });
+      return;
+    }
+
+    const [dbCode] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    if (!dbCode || dbCode.status !== "Active") {
+      res.status(400).json({ error: "This feedback code is invalid or has already been used." });
+      return;
+    }
+
+    // 2. Verify Firebase Token
+    const decodedToken = await getAuth().verifyIdToken(token);
+    const { name, email, picture, uid } = decodedToken;
+
+    // 3. Generate AI Auto-Reply based on feedback situation
+    let autoReply = "Thank you for your valuable feedback! I am committed to continuous improvement and appreciate your input.";
+    try {
+      const ai = getAIClient();
+      const systemPrompt = `You are Muhammad Ali, a software developer. A client named ${name} left a ${rating}-star review.
+      Generate a professional, warm, and personal response (around 2-3 complete sentences) from Muhammad Ali.
+      CRITICAL: ALWAYS complete your sentences. Never stop mid-sentence.
+      - If the feedback is positive, express gratitude and enthusiasm.
+      - If the client points out a mistake, bug, or problem, acknowledge it specifically, apologize, and mention you'll fix or improve it.
+      - If they have a specific complaint, show empathy and professionalism.
+      Avoid generic "Thank you" messages if they are reporting an issue. Output ONLY the response text.`;
+      
+      const userMessage = `Client Comment: "${comment}"`;
+      
+      const generatedText = await generateWithModelFallback(ai, [{ role: "user", parts: [{ text: userMessage }] }], systemPrompt);
+      if (generatedText) {
+        autoReply = generatedText.trim();
+        // Simple heuristic to check if it's cut off (doesn't end with punctuation)
+        const lastChar = autoReply.slice(-1);
+        if (!['.', '!', '?'].includes(lastChar) && autoReply.length > 20) {
+          autoReply += "...";
+        }
+      }
+    } catch (err) {
+      console.error("AI Auto-reply generation error:", err);
+      console.warn("AI Auto-reply generation failed, using default.");
+    }
+
+    // 4. Save Feedback
+    const [newFeedback] = await db.insert(feedback).values({
+      clientName: name || "Verified User",
+      clientEmail: email || "",
+      clientPhoto: picture || "",
+      rating: rating || 5,
+      comment: comment || "",
+      googleVerified: true,
+      googleId: uid,
+      isApproved: true,
+      codeUsed: code,
+      adminReply: autoReply,
+      projectScreenshot: projectScreenshot || null
+    }).returning();
+
+    // 5. Mark Code as Used
+    await db.update(feedbackCodes)
+      .set({ status: "Used", usedAt: new Date() })
+      .where(eq(feedbackCodes.id, dbCode.id));
+
+    // 6. Update stats
+    const isSatisfied = rating >= 4;
+    const isUnsatisfied = rating <= 2;
+
+    await db.update(portfolioStats)
+      .set({ 
+        totalFeedback: sql`${portfolioStats.totalFeedback} + 1`,
+        averageRating: sql`((${portfolioStats.averageRating} * ${portfolioStats.totalFeedback}) + ${rating}) / (${portfolioStats.totalFeedback} + 1)`,
+        satisfiedClients: isSatisfied ? sql`${portfolioStats.satisfiedClients} + 1` : portfolioStats.satisfiedClients,
+        unsatisfiedClients: isUnsatisfied ? sql`${portfolioStats.unsatisfiedClients} + 1` : portfolioStats.unsatisfiedClients
+      })
+      .where(eq(portfolioStats.id, 1));
+
+    res.json({ success: true, feedback: newFeedback });
+  } catch (error) {
+    console.error("Error submitting verified feedback:", error);
+    res.status(401).json({ error: "Authentication failed or database error" });
+  }
+});
+
+// Get Public Feedbacks
+app.get("/api/feedback", async (_req, res) => {
+  try {
+    const feedbacks = await db.select()
+      .from(feedback)
+      .where(eq(feedback.isApproved, true))
+      .orderBy(sql`${feedback.date} DESC`);
+    res.json(feedbacks);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch feedbacks" });
+  }
+});
+
+// Post Reaction (Like/Dislike)
+app.post("/api/reactions", async (req, res) => {
+  try {
+    const { type, token } = req.body;
+    let userId = null;
+
+    if (token) {
+      const decodedToken = await getAuth().verifyIdToken(token);
+      userId = decodedToken.uid;
+    }
+
+    await db.insert(reactions).values({
+      type,
+      userId,
+      ipAddress: req.ip
+    });
+
+    if (type === 'like') {
+      await db.update(portfolioStats)
+        .set({ positiveReactions: sql`${portfolioStats.positiveReactions} + 1` })
+        .where(eq(portfolioStats.id, 1));
+    } else {
+      await db.update(portfolioStats)
+        .set({ negativeReactions: sql`${portfolioStats.negativeReactions} + 1` })
+        .where(eq(portfolioStats.id, 1));
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to post reaction" });
+  }
+});
 
 // Admin Login
 app.post("/api/admin/login", (req, res) => {
@@ -495,108 +675,133 @@ app.get("/api/admin/session", (_req, res) => {
 });
 
 // Get All Generated Codes
-app.get("/api/admin/codes", (_req, res) => {
-  res.json({
-    success: true,
-    codes: generatedCodesStore
-  });
+app.get("/api/admin/codes", async (_req, res) => {
+  try {
+    const codes = await db.select().from(feedbackCodes).orderBy(sql`${feedbackCodes.createdAt} DESC`);
+    res.json({ success: true, codes });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch codes" });
+  }
 });
 
 // Generate Code (starts with Ali-, valid until feedback is published)
-app.post("/api/admin/codes/generate", (req, res) => {
-  const { assignedTo, notes } = req.body || {};
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let randomSuffix = "";
-  for (let i = 0; i < 6; i++) {
-    randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
+app.post("/api/admin/codes/generate", async (req, res) => {
+  try {
+    const { assignedTo, notes } = req.body || {};
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let randomSuffix = "";
+    for (let i = 0; i < 6; i++) {
+      randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const newCodeStr = `Ali-${randomSuffix}`;
+
+    const [newCodeObj] = await db.insert(feedbackCodes).values({
+      code: newCodeStr,
+      status: "Active",
+      assignedTo: assignedTo || "Client",
+      notes: notes || "Valid until feedback is published by the client"
+    }).returning();
+
+    res.json({
+      success: true,
+      code: newCodeObj,
+      message: `Generated code ${newCodeStr} successfully.`
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to generate code" });
   }
-  const newCodeStr = `Ali-${randomSuffix}`;
-
-  const newCodeObj = {
-    code: newCodeStr,
-    createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    status: "Active" as const,
-    assignedTo: assignedTo || "Client",
-    notes: notes || "Valid until feedback is published by the client"
-  };
-
-  generatedCodesStore.unshift(newCodeObj);
-
-  res.json({
-    success: true,
-    code: newCodeObj,
-    message: `Generated code ${newCodeStr} successfully.`
-  });
 });
 
 // Delete / Revoke Code
-app.delete("/api/admin/codes/:code", (req, res) => {
-  const { code } = req.params;
-  generatedCodesStore = generatedCodesStore.filter(c => c.code !== code);
-  res.json({ success: true, message: `Code ${code} removed.` });
+app.delete("/api/admin/codes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.delete(feedbackCodes).where(eq(feedbackCodes.id, parseInt(id)));
+    res.json({ success: true, message: "Code removed." });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete code" });
+  }
 });
 
 // Verify Feedback Code Validity
-app.post("/api/feedback/verify-code", (req, res) => {
-  const { code } = req.body;
-  if (!code || !code.startsWith("Ali-")) {
-    res.status(400).json({ valid: false, error: "Code must start with 'Ali-'" });
-    return;
-  }
+app.post("/api/feedback/verify-code", async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code || !code.toLowerCase().startsWith("ali-")) {
+      res.status(400).json({ valid: false, error: "Code must start with 'Ali-'" });
+      return;
+    }
 
-  const found = generatedCodesStore.find(c => c.code.toUpperCase() === code.toUpperCase());
-  if (!found) {
-    res.status(404).json({ valid: false, error: "Feedback code not recognized." });
-    return;
-  }
+    const [found] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    if (!found) {
+      res.status(404).json({ valid: false, error: "Feedback code not recognized." });
+      return;
+    }
 
-  if (found.status === "Used") {
-    res.status(400).json({ valid: false, error: "This code has already been used and published." });
-    return;
-  }
+    if (found.status === "Used") {
+      res.status(400).json({ valid: false, error: "This code has already been used and published." });
+      return;
+    }
 
-  if (found.status === "Revoked") {
-    res.status(400).json({ valid: false, error: "This feedback code has expired or been revoked." });
-    return;
-  }
+    if (found.status === "Revoked") {
+      res.status(400).json({ valid: false, error: "This feedback code has expired or been revoked." });
+      return;
+    }
 
-  res.json({ valid: true, code: found.code, assignedTo: found.assignedTo });
+    res.json({ valid: true, code: found.code, assignedTo: found.assignedTo });
+  } catch (error) {
+    res.status(500).json({ error: "Verification failed" });
+  }
 });
 
-// Submit Feedback and consume the code
-app.post("/api/feedback/submit", (req, res) => {
-  const { code, clientName, clientEmail, rating, comment, source } = req.body;
-
-  if (!code || !code.startsWith("Ali-")) {
-    res.status(400).json({ success: false, error: "Valid code starting with 'Ali-' is required." });
-    return;
+// Get All Feedbacks (Admin)
+app.get("/api/admin/feedback", async (_req, res) => {
+  try {
+    const feedbacks = await db.select()
+      .from(feedback)
+      .orderBy(sql`${feedback.date} DESC`);
+    res.json(feedbacks);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch feedbacks" });
   }
+});
 
-  const codeIndex = generatedCodesStore.findIndex(c => c.code.toUpperCase() === code.toUpperCase());
-  if (codeIndex !== -1) {
-    // Mark code as used now that feedback is published!
-    generatedCodesStore[codeIndex].status = "Used";
-    generatedCodesStore[codeIndex].usedAt = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    if (clientName) {
-      generatedCodesStore[codeIndex].assignedTo = clientName;
-    }
+// Reply to Feedback (Admin)
+app.post("/api/admin/feedback/:id/reply", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reply } = req.body;
+    await db.update(feedback)
+      .set({ adminReply: reply })
+      .where(eq(feedback.id, parseInt(id)));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to reply to feedback" });
   }
+});
 
-  res.json({
-    success: true,
-    message: "Feedback submitted and published successfully! Code has now been consumed.",
-    feedback: {
-      id: `fb-${Date.now()}`,
-      clientName: clientName || "Verified Client",
-      clientEmail: clientEmail || "",
-      rating: rating || 5,
-      comment: comment || "",
-      source: source || "Direct",
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      status: "Published",
-      codeUsed: code
-    }
-  });
+// Delete Feedback (Admin)
+app.delete("/api/admin/feedback/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.delete(feedback).where(eq(feedback.id, parseInt(id)));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete feedback" });
+  }
+});
+
+// Approve Feedback (Admin)
+app.post("/api/admin/feedback/:id/approve", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.update(feedback)
+      .set({ isApproved: true })
+      .where(eq(feedback.id, parseInt(id)));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to approve feedback" });
+  }
 });
 
 async function startServer() {
@@ -607,9 +812,9 @@ async function startServer() {
       appType: "spa",
     });
     
-    // Explicit route for /admin to serve admin.html in dev
-    app.get(["/admin", "/admin/"], (_req, res) => {
-      res.redirect("/admin.html");
+    // SPA route for /admin to serve the main App (which now contains AdminApp)
+    app.get(["/admin", "/admin/*"], (_req, res) => {
+      res.sendFile(path.join(process.cwd(), "index.html"));
     });
 
     app.use(vite.middlewares);
@@ -617,8 +822,8 @@ async function startServer() {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
 
-    app.get(["/admin", "/admin/", "/admin.html"], (_req, res) => {
-      res.sendFile(path.join(distPath, "admin.html"));
+    app.get(["/admin", "/admin/*"], (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
 
     app.get("*", (_req, res) => {

@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { HOW_DO_YOU_KNOW_OPTIONS } from '../data/portfolioData';
+import { signInWithGoogle, getFirebaseAuth } from '../lib/firebase';
 import {
   Upload,
   Image as ImageIcon,
@@ -10,7 +11,8 @@ import {
   Search,
   ExternalLink,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  KeyRound
 } from 'lucide-react';
 
 interface FeedbackCardData {
@@ -24,40 +26,13 @@ interface FeedbackCardData {
   codeUsed: string;
   workLink?: string;
   imageUrl?: string;
+  clientPhoto?: string;
   avatarLetter?: string;
   googleVerified?: boolean;
   adminReply?: string;
 }
 
-const INITIAL_PUBLIC_FEEDBACKS: FeedbackCardData[] = [
-  {
-    id: 'fb-101',
-    clientName: 'Alex Sterling',
-    clientEmail: 'alex.s@techcorp.io',
-    rating: 5,
-    comment: 'Muhammad Ali delivered a phenomenal, lightning-fast portfolio web app with pristine responsiveness and gorgeous dark theme design. Absolute pleasure to work with!',
-    source: 'LinkedIn',
-    date: 'Aug 26, 2026',
-    codeUsed: 'Ali-92K4M1',
-    googleVerified: true,
-    avatarLetter: 'AS',
-    adminReply: 'Thank you Alex! It was a pleasure collaborating on your agency platform.'
-  },
-  {
-    id: 'fb-102',
-    clientName: 'Sophia Chen',
-    clientEmail: 'sophia.c@designstudio.org',
-    rating: 5,
-    comment: 'Exceptional full-stack web engineering! The admin portal and live interactive features are built to world-class standards.',
-    source: 'Fiverr / Upwork',
-    date: 'Aug 24, 2026',
-    codeUsed: 'Ali-7X9B3C',
-    googleVerified: true,
-    avatarLetter: 'SC',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80',
-    adminReply: 'Appreciate your awesome feedback Sophia! Best of luck with your design studio.'
-  }
-];
+const INITIAL_PUBLIC_FEEDBACKS: FeedbackCardData[] = [];
 
 export default function FeedbackSection() {
   const [code, setCode] = useState('');
@@ -77,10 +52,41 @@ export default function FeedbackSection() {
   // Google Authentication State
   const [isGoogleAuth, setIsGoogleAuth] = useState(false);
   const [googleUser, setGoogleUser] = useState<{ name: string; email: string; picture: string } | null>(null);
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [aliCode, setAliCode] = useState('');
+  const [isCodeValid, setIsCodeValid] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
 
   // Feed list
   const [feedbackList, setFeedbackList] = useState<FeedbackCardData[]>(INITIAL_PUBLIC_FEEDBACKS);
+
+  // Fetch feedbacks on load
+  useEffect(() => {
+    const fetchFeedbacks = async () => {
+      try {
+        const res = await fetch('/api/feedback');
+        if (res.ok) {
+          const data = await res.json();
+          setFeedbackList(data.map((fb: any) => ({
+            id: fb.id,
+            clientName: fb.clientName,
+            clientEmail: fb.clientEmail,
+            rating: fb.rating,
+            comment: fb.comment,
+            source: fb.source,
+            date: new Date(fb.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            codeUsed: fb.codeUsed || 'GOOGLE-VERIFIED',
+            imageUrl: fb.projectScreenshot,
+            clientPhoto: fb.clientPhoto,
+            googleVerified: fb.googleVerified,
+            adminReply: fb.adminReply
+          })));
+        }
+      } catch (err) {
+        console.error("Failed to fetch feedbacks:", err);
+      }
+    };
+    fetchFeedbacks();
+  }, []);
 
   // Handle Image Upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,24 +115,61 @@ export default function FeedbackSection() {
   };
 
   // Google Authentication Trigger
-  const handleGoogleSignIn = () => {
-    setShowGoogleModal(true);
+  const handleGoogleSignIn = async () => {
+    try {
+      const user = await signInWithGoogle();
+      setGoogleUser({
+        name: user.displayName || 'Verified User',
+        email: user.email || '',
+        picture: user.photoURL || ''
+      });
+      setIsGoogleAuth(true);
+      setStatus('Google Identity authenticated successfully!');
+      setIsError(false);
+    } catch (error) {
+      setStatus('Google Sign-In failed. Please try again.');
+      setIsError(true);
+    }
   };
 
-  const confirmGoogleSignIn = (customEmail?: string, customName?: string) => {
-    const userEmail = customEmail || 'client.verified@gmail.com';
-    const userName = customName || 'Verified Google Client';
-    const userPicture = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+  // Verify Ali- Code
+  const handleVerifyCode = async () => {
+    const trimmedCode = aliCode.trim();
+    if (!trimmedCode.toLowerCase().startsWith('ali-')) {
+      setStatus('Code must start with "Ali-".');
+      setIsError(true);
+      return;
+    }
 
-    setGoogleUser({
-      name: userName,
-      email: userEmail,
-      picture: userPicture
-    });
-    setIsGoogleAuth(true);
-    setShowGoogleModal(false);
-    setStatus('Google Identity authenticated successfully!');
+    setVerifyingCode(true);
     setIsError(false);
+    setStatus('Verifying your unique feedback code...');
+
+    try {
+      const res = await fetch('/api/feedback/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: trimmedCode })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setIsCodeValid(true);
+        setAliCode(data.code); // Normalize to the correct case from DB
+        setStatus(`Code verified for ${data.assignedTo || 'client'}. You can now proceed.`);
+        setIsError(false);
+      } else {
+        const err = await res.json();
+        setStatus(err.error || 'Invalid or used code.');
+        setIsError(true);
+        setIsCodeValid(false);
+      }
+    } catch (err) {
+      setStatus('Connection error during code verification.');
+      setIsError(true);
+    } finally {
+      setVerifyingCode(false);
+    }
   };
 
   // Submit Feedback Handler
@@ -134,8 +177,14 @@ export default function FeedbackSection() {
     e.preventDefault();
     setIsError(false);
 
-    if (!code.trim() || !code.trim().toUpperCase().startsWith('ALI-')) {
-      setStatus('Invalid code format. Code must start with Ali- followed by 6 alphanumeric characters (e.g. Ali-8H4F2L).');
+    if (!isCodeValid) {
+      setStatus('Please provide and verify your unique "Ali-" code provided by the admin.');
+      setIsError(true);
+      return;
+    }
+
+    if (!isGoogleAuth) {
+      setStatus('Please sign in with Google to verify your identity.');
       setIsError(true);
       return;
     }
@@ -146,29 +195,21 @@ export default function FeedbackSection() {
       return;
     }
 
-    if (!rating) {
-      setStatus('Please select a rating score from 1 to 5 stars.');
-      setIsError(true);
-      return;
-    }
-
     setSubmitting(true);
-    setStatus('Verifying one-time Ali- code and Google identity…');
+    setStatus('Submitting verified feedback…');
 
     try {
-      // Call backend API endpoint if available
-      const res = await fetch('/api/feedback/submit', {
+      const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+      const res = await fetch('/api/feedback/submit-verified', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: code.trim(),
-          clientName: googleUser ? googleUser.name : 'Verified Client',
-          clientEmail: googleUser ? googleUser.email : 'client@gmail.com',
+          token,
           rating,
           comment: text.trim(),
           source,
-          imageUrl: selectedImage || (googleUser ? googleUser.picture : undefined),
-          googleVerified: isGoogleAuth
+          code: aliCode.trim(),
+          projectScreenshot: selectedImage
         })
       });
 
@@ -176,62 +217,37 @@ export default function FeedbackSection() {
         const data = await res.json();
         const newFb: FeedbackCardData = {
           id: data.feedback?.id || `fb-${Date.now()}`,
-          clientName: googleUser ? googleUser.name : 'Verified Client',
-          clientEmail: googleUser ? googleUser.email : 'client@gmail.com',
+          clientName: googleUser!.name,
+          clientEmail: googleUser!.email,
           rating,
           comment: text.trim(),
           source,
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          codeUsed: code.trim().toUpperCase(),
-          workLink: workLink.trim() || undefined,
-          imageUrl: selectedImage || (googleUser ? googleUser.picture : undefined),
-          avatarLetter: (googleUser ? googleUser.name : 'VC').substring(0, 2).toUpperCase(),
-          googleVerified: isGoogleAuth || true
+          codeUsed: aliCode.trim(),
+          imageUrl: selectedImage || undefined,
+          clientPhoto: googleUser!.picture,
+          googleVerified: true
         };
 
         setFeedbackList([newFb, ...feedbackList]);
-        setStatus('Feedback submitted and published successfully! Your Ali- code has now been consumed.');
+        setStatus('Feedback submitted and published successfully! Thank you for your verified review.');
         setIsError(false);
 
         // Reset form
-        setCode('');
         setText('');
         setRating(5);
         setSelectedImage(null);
         setWorkLink('');
         if (fileInputRef.current) fileInputRef.current.value = '';
       } else {
-        const errData = await res.json().catch(() => ({}));
-        setStatus(errData.error || 'Feedback submission failed. Please verify your Ali- code.');
+        const errData = await res.json();
+        setStatus(errData.error || 'Feedback submission failed.');
         setIsError(true);
       }
-    } catch {
-      // Fallback local submission
-      const newFb: FeedbackCardData = {
-        id: `fb-${Date.now()}`,
-        clientName: googleUser ? googleUser.name : 'Verified Client',
-        clientEmail: googleUser ? googleUser.email : 'client@gmail.com',
-        rating,
-        comment: text.trim(),
-        source,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        codeUsed: code.trim().toUpperCase(),
-        workLink: workLink.trim() || undefined,
-        imageUrl: selectedImage || (googleUser ? googleUser.picture : undefined),
-        avatarLetter: (googleUser ? googleUser.name : 'VC').substring(0, 2).toUpperCase(),
-        googleVerified: isGoogleAuth || true
-      };
-
-      setFeedbackList([newFb, ...feedbackList]);
-      setStatus('Feedback published successfully! Thank you for your review.');
-      setIsError(false);
-
-      setCode('');
-      setText('');
-      setRating(5);
-      setSelectedImage(null);
-      setWorkLink('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err) {
+      console.error(err);
+      setStatus('An error occurred during submission.');
+      setIsError(true);
     } finally {
       setSubmitting(false);
     }
@@ -239,8 +255,7 @@ export default function FeedbackSection() {
 
   const filteredFeedbacks = feedbackList.filter(fb =>
     fb.clientName.toLowerCase().includes(search.toLowerCase()) ||
-    fb.comment.toLowerCase().includes(search.toLowerCase()) ||
-    fb.codeUsed.toLowerCase().includes(search.toLowerCase())
+    fb.comment.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -255,7 +270,7 @@ export default function FeedbackSection() {
             Client <span className="text-[#00d9ff]">Feedback & Testimonials</span>
           </h2>
           <p className="text-sm text-slate-400 mt-2 max-w-lg mx-auto">
-            Submit your feedback using your single-use <strong>Ali-</strong> code and Google Authentication
+            Submit your feedback using **Real Google Authentication** for verification
           </p>
         </div>
 
@@ -263,27 +278,7 @@ export default function FeedbackSection() {
         <div className="max-w-4xl mx-auto bg-[#0f1523] border border-[#00d9ff]/30 rounded-2xl p-6 sm:p-8 shadow-2xl">
           {/* Submission Form */}
           <form onSubmit={handleSubmit} className="space-y-5 bg-[#0b101c] p-6 rounded-xl border border-white/10">
-            {/* 1. Code Input */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center justify-between">
-                <span>One-Time Feedback Code (Required)</span>
-                <span className="text-[#00d9ff] font-mono text-[11px]">Format: Ali-XXXXXX</span>
-              </label>
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                maxLength={10}
-                placeholder="Ali-8H4F2L"
-                required
-                className="w-full p-3 rounded-xl border border-white/15 bg-[#131b2b] text-white placeholder-slate-500 font-mono text-sm outline-none focus:border-[#00d9ff] focus:ring-1 focus:ring-[#00d9ff] transition-all"
-              />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Enter the unique code provided by Muhammad Ali after work completion.
-              </p>
-            </div>
-
-            {/* 2. Google Auth Verification Box */}
+            {/* 1. Google Auth Verification Box */}
             <div className="p-4 bg-[#121929] border border-white/10 rounded-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -346,6 +341,54 @@ export default function FeedbackSection() {
                   <span>{isGoogleAuth ? 'Change Google Account' : 'Sign in with Google'}</span>
                 </button>
               </div>
+            </div>
+
+            {/* 2. Feedback Code Verification */}
+            <div className={`p-4 rounded-xl border transition-all ${isCodeValid ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-[#121929] border-white/10'}`}>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-[#00d9ff]" /> Enter Unique Feedback Code
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={aliCode}
+                  onChange={(e) => {
+                    setAliCode(e.target.value);
+                    setIsCodeValid(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (!isCodeValid && aliCode.toLowerCase().startsWith('ali-')) {
+                        handleVerifyCode();
+                      }
+                    }
+                  }}
+                  disabled={isCodeValid}
+                  placeholder="Ali-XXXXXX"
+                  className={`flex-1 p-3 rounded-xl border bg-[#0c111a] text-white placeholder-slate-600 text-sm font-mono tracking-widest outline-none transition-all ${
+                    isCodeValid ? 'border-emerald-500/50 text-emerald-400' : 'border-white/10 focus:border-[#00d9ff]'
+                  }`}
+                />
+                {!isCodeValid ? (
+                  <button
+                    type="button"
+                    onClick={handleVerifyCode}
+                    disabled={verifyingCode || !aliCode.toLowerCase().startsWith('ali-')}
+                    className="px-4 py-2 bg-[#00d9ff] text-[#061017] font-bold text-xs rounded-xl hover:bg-cyan-300 disabled:opacity-50 transition-all flex items-center gap-2"
+                  >
+                    {verifyingCode ? <div className="w-3 h-3 border-2 border-[#061017] border-t-transparent rounded-full animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Verify
+                  </button>
+                ) : (
+                  <div className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs font-bold">
+                    <CheckCircle2 className="w-4 h-4" /> Verified
+                  </div>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-2">
+                This code is provided by Muhammad Ali specifically for your project feedback.
+              </p>
             </div>
 
             {/* 3. Written Feedback */}
@@ -538,9 +581,17 @@ export default function FeedbackSection() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#00d9ff]/20 text-[#00d9ff] font-bold text-sm flex items-center justify-center border border-[#00d9ff]/30 shrink-0">
-                        {fb.avatarLetter || fb.clientName.substring(0, 2).toUpperCase()}
-                      </div>
+                      {fb.clientPhoto ? (
+                        <img 
+                          src={fb.clientPhoto} 
+                          alt={fb.clientName} 
+                          className="w-10 h-10 rounded-full border border-[#00d9ff]/30 object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#00d9ff]/20 text-[#00d9ff] font-bold text-sm flex items-center justify-center border border-[#00d9ff]/30 shrink-0">
+                          {fb.avatarLetter || fb.clientName.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
                           {fb.clientName}
@@ -574,11 +625,11 @@ export default function FeedbackSection() {
                   {/* Attached Picture Screenshot / Photo if available */}
                   {fb.imageUrl && (
                     <div className="pt-1">
-                      <p className="text-[10px] font-bold text-slate-400 mb-1">Attached Picture / Screenshot:</p>
+                      <p className="text-[10px] font-bold text-slate-400 mb-1">Project Screenshot / Work Attachment:</p>
                       <img
                         src={fb.imageUrl}
-                        alt="Attached Feedback Screenshot"
-                        className="max-h-48 rounded-xl border border-white/10 object-cover shadow-md"
+                        alt="Project Screenshot"
+                        className="w-full max-h-[300px] rounded-xl border border-white/10 object-contain bg-black/20 shadow-md"
                       />
                     </div>
                   )}
@@ -609,74 +660,6 @@ export default function FeedbackSection() {
         </div>
       </div>
 
-      {/* GOOGLE SIGN IN MODAL DIALOG */}
-      {showGoogleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm bg-[#0e1420] border border-[#00d9ff]/30 rounded-2xl p-6 shadow-2xl space-y-4 relative">
-            <button
-              onClick={() => setShowGoogleModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 mx-auto rounded-full bg-white flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold text-white">Google Accounts Sign-In</h3>
-              <p className="text-xs text-slate-400">
-                Authenticate your identity with your Google Account for feedback verification
-              </p>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                onClick={() => confirmGoogleSignIn('alimuhammadhvn81@gmail.com', 'Muhammad Ali Client')}
-                className="w-full p-3 bg-[#162032] hover:bg-[#1f2d47] border border-white/10 rounded-xl flex items-center gap-3 text-left transition-colors cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-[#00d9ff]/20 text-[#00d9ff] font-bold text-xs flex items-center justify-center">
-                  MA
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white">alimuhammadhvn81@gmail.com</p>
-                  <p className="text-[10px] text-slate-400">Google Verified Client Account</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => confirmGoogleSignIn('client.review@gmail.com', 'Verified Enterprise Client')}
-                className="w-full p-3 bg-[#162032] hover:bg-[#1f2d47] border border-white/10 rounded-xl flex items-center gap-3 text-left transition-colors cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 font-bold text-xs flex items-center justify-center">
-                  VE
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white">client.review@gmail.com</p>
-                  <p className="text-[10px] text-slate-400">Google Verified Enterprise Account</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

@@ -20,7 +20,7 @@ interface CodeGeneratorModalProps {
   onClose: () => void;
   codes: GeneratedCode[];
   onGenerateCode: (assignedTo?: string, notes?: string) => Promise<GeneratedCode | null>;
-  onDeleteCode: (code: string) => void;
+  onDeleteCode: (item: GeneratedCode) => void;
 }
 
 export default function CodeGeneratorModal({
@@ -270,7 +270,7 @@ export default function CodeGeneratorModal({
                       </button>
 
                       <button
-                        onClick={() => onDeleteCode(item.code)}
+                        onClick={() => onDeleteCode(item)}
                         title="Revoke / Delete Code"
                         className="p-1.5 rounded bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors"
                       >

@@ -109,7 +109,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#7c5cff] p-0.5 shadow-xl shadow-[#00d9ff]/20">
                 <div className="w-full h-full bg-[#0a0e17] rounded-[14px] flex items-center justify-center overflow-hidden relative">
                   <img
-                    src="/images/profile.jpg"
+                    src="images/profile.jpg"
                     alt="Muhammad Ali"
                     className="w-full h-full object-cover"
                   />
@@ -279,7 +279,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               <div className="mt-6 text-center bg-[#101726] border border-white/10 p-6 rounded-2xl relative overflow-hidden">
                 <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-[#00d9ff] to-[#7c5cff] p-1 shadow-xl mb-3">
                   <img
-                    src="/images/profile.jpg"
+                    src="images/profile.jpg"
                     alt="Muhammad Ali"
                     className="w-full h-full object-cover rounded-full"
                   />

@@ -112,28 +112,40 @@ export default function DashboardOverview({
     }
   ];
 
-  // Data for Rating Donut Chart
+  // Data for Rating Donut Chart (Live from stats)
   const ratingData = [
-    { name: '5 Stars', value: 16, color: '#3b82f6' },
-    { name: '4 Stars', value: 6, color: '#06b6d4' },
-    { name: '3 Stars', value: 2, color: '#f59e0b' },
-    { name: '2 Stars', value: 1, color: '#f43f5e' },
-    { name: '1 Star', value: 1, color: '#991b1b' }
+    { name: '5 Stars', value: stats.ratingBreakdown.stars5 || 0, color: '#3b82f6' },
+    { name: '4 Stars', value: stats.ratingBreakdown.stars4 || 0, color: '#06b6d4' },
+    { name: '3 Stars', value: stats.ratingBreakdown.stars3 || 0, color: '#f59e0b' },
+    { name: '2 Stars', value: stats.ratingBreakdown.stars2 || 0, color: '#f43f5e' },
+    { name: '1 Star', value: stats.ratingBreakdown.stars1 || 0, color: '#991b1b' }
   ];
 
-  // Data for Feedback Status Donut Chart
+  // Data for Feedback Status Donut Chart (Live from stats)
   const feedbackStatusData = [
-    { name: 'Published', value: 16, color: '#10b981' },
-    { name: 'Pending Review', value: 6, color: '#f59e0b' },
-    { name: 'Archived', value: 3, color: '#06b6d4' }
+    { name: 'Published', value: stats.feedbackStatusBreakdown.published || 0, color: '#10b981' },
+    { name: 'Pending Review', value: stats.feedbackStatusBreakdown.pending || 0, color: '#f59e0b' },
+    { name: 'Archived', value: stats.feedbackStatusBreakdown.archived || 0, color: '#06b6d4' }
   ];
 
-  // Data for Inquiries Service Category Pie Circle Chart
-  const inquiryServicesData = [
-    { name: 'Web Applications', value: 42, color: '#00d9ff' },
-    { name: 'AI & Bot Solutions', value: 28, color: '#a855f7' },
-    { name: 'Mobile / Game Dev', value: 18, color: '#ec4899' },
-    { name: 'Consulting & Tech', value: 12, color: '#f59e0b' }
+  // Data for Inquiries Service Category Pie Circle Chart (Calculated from live inquiries)
+  const calculateInquiryData = () => {
+    const categories: Record<string, number> = {};
+    inquiries.forEach(inq => {
+      const cat = inq.service || 'General';
+      categories[cat] = (categories[cat] || 0) + 1;
+    });
+    
+    const colors = ['#00d9ff', '#a855f7', '#ec4899', '#f59e0b', '#10b981', '#f43f5e'];
+    return Object.entries(categories).map(([name, value], idx) => ({
+      name,
+      value,
+      color: colors[idx % colors.length]
+    }));
+  };
+  
+  const inquiryServicesData = inquiries.length > 0 ? calculateInquiryData() : [
+    { name: 'No Inquiries', value: 1, color: '#1e293b' }
   ];
 
   return (

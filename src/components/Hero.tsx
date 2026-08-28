@@ -59,7 +59,7 @@ export default function Hero({ onTrigger3DMode }: HeroProps) {
 
         <div className="hero-photo flex justify-center items-center flex-col">
           <img
-            src="/images/profile.jpg"
+            src="images/profile.jpg"
             alt="Muhammad Ali Profile Photo"
             className="w-[320px] h-[320px] object-cover rounded-full border-4 border-[#00d9ff] shadow-[0_0_35px_rgba(0,217,255,.18)]"
           />

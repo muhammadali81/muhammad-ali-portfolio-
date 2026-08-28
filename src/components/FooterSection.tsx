@@ -53,7 +53,7 @@ export default function FooterSection() {
               className="inline-flex items-center justify-center border border-[var(--lux-border)] bg-transparent rounded-xl w-[38px] h-[38px] cursor-pointer hover:border-[#00d9ff] hover:bg-[var(--lux-surface2)] hover:scale-105 transition-all duration-300 overflow-hidden"
             >
               <img
-                src="/images/facebook.svg"
+                src="images/facebook.svg"
                 alt="Facebook"
                 className="w-[24px] h-[24px] object-contain"
                 referrerPolicy="no-referrer"
@@ -68,7 +68,7 @@ export default function FooterSection() {
               className="inline-flex items-center justify-center border border-[var(--lux-border)] bg-transparent rounded-xl w-[38px] h-[38px] cursor-pointer hover:border-[#00d9ff] hover:bg-[var(--lux-surface2)] hover:scale-105 transition-all duration-300 overflow-hidden"
             >
               <img
-                src="/images/instagram.svg"
+                src="images/instagram.svg"
                 alt="Instagram"
                 className="w-[24px] h-[24px] object-contain"
                 referrerPolicy="no-referrer"
@@ -83,7 +83,7 @@ export default function FooterSection() {
               className="inline-flex items-center justify-center border border-[var(--lux-border)] bg-transparent rounded-xl w-[38px] h-[38px] cursor-pointer hover:border-[#00d9ff] hover:bg-[var(--lux-surface2)] hover:scale-105 transition-all duration-300 overflow-hidden"
             >
               <img
-                src="/images/tiktok.svg"
+                src="images/tiktok.svg"
                 alt="TikTok"
                 className="w-[24px] h-[24px] object-contain"
                 referrerPolicy="no-referrer"
@@ -98,7 +98,7 @@ export default function FooterSection() {
               className="inline-flex items-center justify-center border border-[var(--lux-border)] bg-transparent rounded-xl w-[38px] h-[38px] cursor-pointer hover:border-[#00d9ff] hover:bg-[var(--lux-surface2)] hover:scale-105 transition-all duration-300 overflow-hidden"
             >
               <img
-                src="/images/snapchat.svg"
+                src="images/snapchat.svg"
                 alt="Snapchat"
                 className="w-[24px] h-[24px] object-contain"
                 referrerPolicy="no-referrer"

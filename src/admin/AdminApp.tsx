@@ -31,7 +31,7 @@ import {
 } from './adminStore';
 import { AdminUser, FeedbackItem, InquiryItem, ProjectItem, ServiceItem, GeneratedCode, AdminNotification } from './types';
 
-export default function AdminApp() {
+export default function AdminApp({ onBack }: { onBack?: () => void }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<AdminUser>(DEFAULT_ADMIN_USER);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
@@ -67,8 +67,82 @@ export default function AdminApp() {
         }
       }
     }
-    fetchCodes();
+    fetchAllData();
+    // Auto-refresh stats every 60 seconds for live feel
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchAllData = async () => {
+    fetchCodes();
+    fetchStats();
+    fetchFeedbacks();
+  };
+
+  const fetchStats = async () => {
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    const executeFetch = async () => {
+      try {
+        const res = await fetch('/api/stats');
+        if (res.ok) {
+          const data = await res.json();
+          setStats(prev => ({
+            ...prev,
+            totalFeedbacks: data.totalFeedback || 0,
+            profileViews: data.profileViews || 0,
+            averageRating: data.averageRating || 0,
+            positiveReactions: data.positiveReactions || 0,
+            negativeReactions: data.negativeReactions || 0,
+            satisfiedClients: data.satisfiedClients || 0,
+            unsatisfiedClients: data.unsatisfiedClients || 0,
+            ratingBreakdown: data.ratingBreakdown || prev.ratingBreakdown,
+            feedbackStatusBreakdown: data.feedbackStatusBreakdown || prev.feedbackStatusBreakdown,
+            totalInquiries: inquiries.length
+          }));
+        } else if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(executeFetch, 2000 * retryCount);
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(executeFetch, 2000 * retryCount);
+        }
+      }
+    };
+
+    executeFetch();
+  };
+
+  const fetchFeedbacks = async () => {
+    try {
+      const res = await fetch('/api/admin/feedback');
+      if (res.ok) {
+        const data = await res.json();
+        setFeedbacks(data.map((fb: any) => ({
+          id: fb.id.toString(),
+          clientName: fb.clientName,
+          clientEmail: fb.clientEmail,
+          rating: fb.rating,
+          comment: fb.comment,
+          date: new Date(fb.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          status: fb.isApproved ? 'Published' : 'Pending',
+          codeUsed: fb.codeUsed || 'GOOGLE-VERIFIED',
+          avatarLetter: fb.clientName.substring(0, 2).toUpperCase(),
+          source: fb.source || 'Direct',
+          adminReply: fb.adminReply,
+          clientPhoto: fb.clientPhoto,
+          projectScreenshot: fb.projectScreenshot,
+          imageUrl: fb.projectScreenshot
+        })));
+      }
+    } catch (err) {
+      console.error("Failed to fetch feedbacks:", err);
+    }
+  };
 
   const fetchCodes = async () => {
     try {
@@ -123,37 +197,66 @@ export default function AdminApp() {
     return fallbackCode;
   };
 
-  const handleDeleteCode = async (codeStr: string) => {
+  const handleDeleteCode = async (item: GeneratedCode) => {
     try {
-      await fetch(`/api/admin/codes/${codeStr}`, { method: 'DELETE' });
+      if (item.id) {
+        await fetch(`/api/admin/codes/${item.id}`, { method: 'DELETE' });
+      }
     } catch {
       // ignore
     }
-    setCodes((prev) => prev.filter((c) => c.code !== codeStr));
+    setCodes((prev) => prev.filter((c) => c.code !== item.code));
   };
 
   // Feedback Actions
-  const handleApproveFeedback = (id: string) => {
-    setFeedbacks((prev) =>
-      prev.map((fb) => (fb.id === id ? { ...fb, status: 'Published' as const } : fb))
-    );
+  const handleApproveFeedback = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}/approve`, { method: 'POST' });
+      if (res.ok) {
+        setFeedbacks((prev) =>
+          prev.map((fb) => (fb.id === id ? { ...fb, status: 'Published' as const } : fb))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to approve feedback:", err);
+    }
   };
 
-  const handleRejectFeedback = (id: string) => {
+  const handleRejectFeedback = async (id: string) => {
+    // In our simplified logic, reject is same as archiving or just keeping it unapproved
+    // If we want a separate archived state in DB, we'd need another column
     setFeedbacks((prev) =>
       prev.map((fb) => (fb.id === id ? { ...fb, status: 'Archived' as const } : fb))
     );
   };
 
-  const handleDeleteFeedback = (id: string) => {
-    setFeedbacks((prev) => prev.filter((fb) => fb.id !== id));
-    setStats((prev) => ({ ...prev, totalFeedbacks: prev.totalFeedbacks - 1 }));
+  const handleDeleteFeedback = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setFeedbacks((prev) => prev.filter((fb) => fb.id !== id));
+        setStats((prev) => ({ ...prev, totalFeedbacks: prev.totalFeedbacks - 1 }));
+      }
+    } catch (err) {
+      console.error("Failed to delete feedback:", err);
+    }
   };
 
-  const handleReplyFeedback = (id: string, replyText: string) => {
-    setFeedbacks((prev) =>
-      prev.map((fb) => (fb.id === id ? { ...fb, adminReply: replyText } : fb))
-    );
+  const handleReplyFeedback = async (id: string, replyText: string) => {
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply: replyText })
+      });
+      if (res.ok) {
+        setFeedbacks((prev) =>
+          prev.map((fb) => (fb.id === id ? { ...fb, adminReply: replyText } : fb))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to reply to feedback:", err);
+    }
   };
 
   // Inquiry Actions
@@ -232,6 +335,7 @@ export default function AdminApp() {
           setIsMobileSidebarOpen(false);
         }}
         onLogout={handleLogout}
+        onBack={onBack}
         user={user}
         pendingFeedbacksCount={feedbacks.filter((f) => f.status === 'Pending').length}
         newInquiriesCount={inquiries.filter((i) => i.status === 'New').length}
@@ -250,6 +354,7 @@ export default function AdminApp() {
           onSearch={(_q) => {}}
           onClearNotifications={handleClearNotifications}
           onToggleSidebar={() => setIsMobileSidebarOpen(true)}
+          onClose={activeTab !== 'dashboard' ? () => setActiveTab('dashboard') : undefined}
         />
 
         {/* Tab Content Body */}
@@ -278,6 +383,7 @@ export default function AdminApp() {
               onDelete={handleDeleteFeedback}
               onReply={handleReplyFeedback}
               onOpenCodeGenerator={() => setIsCodeModalOpen(true)}
+              onClose={() => setActiveTab('dashboard')}
             />
           )}
 
@@ -286,6 +392,7 @@ export default function AdminApp() {
               inquiries={inquiries}
               onViewInquiry={(inq) => setSelectedInquiry(inq)}
               onDeleteInquiry={handleDeleteInquiry}
+              onClose={() => setActiveTab('dashboard')}
             />
           )}
 
@@ -294,6 +401,7 @@ export default function AdminApp() {
               projects={projects}
               onOpenAddProject={() => setIsAddProjectOpen(true)}
               onDeleteProject={handleDeleteProject}
+              onClose={() => setActiveTab('dashboard')}
             />
           )}
 
@@ -302,6 +410,7 @@ export default function AdminApp() {
               services={services}
               onOpenAddService={() => setIsAddServiceOpen(true)}
               onDeleteService={handleDeleteService}
+              onClose={() => setActiveTab('dashboard')}
             />
           )}
 
@@ -309,14 +418,15 @@ export default function AdminApp() {
             <ReactionsTab
               positive={stats.positiveReactions}
               negative={stats.negativeReactions}
+              onClose={() => setActiveTab('dashboard')}
             />
           )}
 
-          {activeTab === 'views' && <ViewsTab />}
+          {activeTab === 'views' && <ViewsTab onClose={() => setActiveTab('dashboard')} />}
 
-          {activeTab === 'settings' && <SettingsTab />}
+          {activeTab === 'settings' && <SettingsTab onClose={() => setActiveTab('dashboard')} />}
 
-          {activeTab === 'profile' && <ProfileTab user={user} />}
+          {activeTab === 'profile' && <ProfileTab user={user} onClose={() => setActiveTab('dashboard')} />}
         </main>
       </div>
 

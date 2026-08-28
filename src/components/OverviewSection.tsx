@@ -2,19 +2,66 @@ import React, { useEffect, useState } from 'react';
 
 export default function OverviewSection() {
   const [stats, setStats] = useState({
-    profile_views: 1248,
-    satisfied: 89,
-    unsatisfied: 2,
-    total_feedback: 91,
-    average_rating: 4.9,
-    positive: 145,
-    negative: 3
+    profile_views: 0,
+    satisfied: 0,
+    unsatisfied: 0,
+    total_feedback: 0,
+    average_rating: 0,
+    positive: 0,
+    negative: 0
   });
+
+  useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        setStats({
+          profile_views: data.profileViews || 0,
+          satisfied: data.satisfiedClients || 0,
+          unsatisfied: data.unsatisfiedClients || 0,
+          total_feedback: data.totalFeedback || 0,
+          average_rating: data.averageRating || 0,
+          positive: data.positiveReactions || 0,
+          negative: data.negativeReactions || 0
+        });
+        retryCount = 0; // Reset on success
+      } catch (error) {
+        console.error("Failed to fetch real-time stats:", error);
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(fetchStats, 2000 * retryCount);
+        }
+      }
+    };
+
+    fetchStats();
+    
+    // Auto-refresh every 30 seconds for real-time feel
+    const interval = setInterval(fetchStats, 30000);
+    
+    // Register a view once per session
+    const hasViewed = sessionStorage.getItem('portfolio_viewed');
+    if (!hasViewed) {
+      fetch('/api/stats/view', { method: 'POST' });
+      sessionStorage.setItem('portfolio_viewed', 'true');
+    }
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <section className="overview-section py-[86px] pb-[35px] relative" id="portfolioOverview">
       <div className="container">
         <div className="section-title text-center mb-[55px]">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Live System Statistics</span>
+          </div>
           <h2 className="text-[40px] font-black mb-[10px]">Portfolio <span>Overview</span></h2>
           <p className="text-[#818c9c]">A live snapshot of reach, client satisfaction and community feedback.</p>
         </div>

@@ -20,10 +20,12 @@ import LightboxModal from './components/LightboxModal';
 import AIVoiceSupportModal from './components/AIVoiceSupportModal';
 import AIFloatingBar from './components/AIFloatingBar';
 import ThreeDApp from './3d/ThreeDApp';
+import AdminApp from './admin/AdminApp';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState<'2d' | '3d'>(() => {
+  const [viewMode, setViewMode] = useState<'2d' | '3d' | 'admin'>(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    if (window.location.pathname.startsWith('/admin')) return 'admin';
     return urlParams.get('mode') === '3d' ? '3d' : '2d';
   });
   const [lightboxState, setLightboxState] = useState({ isOpen: false, src: '', title: '' });
@@ -34,7 +36,11 @@ export default function App() {
   useEffect(() => {
     const handleLocationChange = () => {
       const urlParams = new URLSearchParams(window.location.search);
-      setViewMode(urlParams.get('mode') === '3d' ? '3d' : '2d');
+      if (window.location.pathname.startsWith('/admin')) {
+        setViewMode('admin');
+      } else {
+        setViewMode(urlParams.get('mode') === '3d' ? '3d' : '2d');
+      }
     };
     window.addEventListener('popstate', handleLocationChange);
     return () => {
@@ -74,6 +80,23 @@ export default function App() {
     }
   };
 
+  const handleOpenAdmin = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    setViewMode('admin');
+    window.history.pushState({}, '', '/admin');
+  };
+
+  const handleBackToPortfolio = () => {
+    setViewMode('2d');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('mode');
+    window.history.pushState({}, '', '/');
+  };
+
+  if (viewMode === 'admin') {
+    return <AdminApp onBack={handleBackToPortfolio} />;
+  }
+
   if (viewMode === '3d') {
     return <ThreeDApp onExitTo2D={handleExitTo2D} initialModelFile={uploaded3DFile} />;
   }
@@ -81,7 +104,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[var(--lux-bg)] text-[var(--lux-text)] font-sans antialiased selection:bg-[#00d9ff] selection:text-[#061017] transition-colors duration-300">
       {/* Scroll Progress Bar */}
-      <div className="scroll-progress"></div>
+      {viewMode !== 'admin' && <div className="scroll-progress"></div>}
 
       {/* Hidden 3D File Preloader */}
       <input
@@ -93,7 +116,7 @@ export default function App() {
       />
 
       {/* Navbar */}
-      <Navbar onTrigger3DMode={handleTrigger3DMode} />
+      <Navbar onTrigger3DMode={handleTrigger3DMode} onOpenAdmin={handleOpenAdmin} />
 
       {/* Main Content */}
       <main id="main-content">

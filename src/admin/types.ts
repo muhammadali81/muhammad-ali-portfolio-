@@ -10,6 +10,7 @@ export interface FeedbackItem {
   id: string;
   clientName: string;
   clientEmail?: string;
+  clientPhoto?: string;
   rating: number;
   comment: string;
   date: string;
@@ -18,7 +19,8 @@ export interface FeedbackItem {
   avatarLetter?: string;
   source?: string;
   adminReply?: string;
-  imageUrl?: string;
+  imageUrl?: string; // Still used for compatibility but represents projectScreenshot
+  projectScreenshot?: string;
   googleVerified?: boolean;
 }
 
@@ -36,6 +38,7 @@ export interface InquiryItem {
 }
 
 export interface GeneratedCode {
+  id?: number;
   code: string;
   createdAt: string;
   status: 'Active' | 'Used' | 'Revoked';
@@ -74,6 +77,8 @@ export interface DashboardStats {
   averageRating: number;
   positiveReactions: number;
   negativeReactions: number;
+  satisfiedClients: number;
+  unsatisfiedClients: number;
   storageUsedGb: number;
   storageTotalGb: number;
   databaseSizeMb: number;

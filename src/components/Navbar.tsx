@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 interface NavbarProps {
   onTrigger3DMode?: (e: React.MouseEvent) => void;
+  onOpenAdmin?: (e: React.MouseEvent) => void;
 }
 
-export default function Navbar({ onTrigger3DMode }: NavbarProps) {
+export default function Navbar({ onTrigger3DMode, onOpenAdmin }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLight, setIsLight] = useState(() => {
     const saved = localStorage.getItem('luxTheme');
@@ -84,7 +85,8 @@ export default function Navbar({ onTrigger3DMode }: NavbarProps) {
         <div className="flex items-center gap-3 select-none">
           {/* MA Badge - Performs Admin Button Function */}
           <a
-            href="admin.html"
+            href="/admin"
+            onClick={onOpenAdmin}
             title="Open Admin Portal"
             aria-label="Admin Portal"
             className="brand-badge w-10 h-10 rounded-xl flex items-center justify-center font-brand font-black text-sm text-[#00d9ff] hover:scale-105 hover:border-[#00d9ff] transition-transform duration-300 cursor-pointer shadow-sm"
@@ -120,7 +122,8 @@ export default function Navbar({ onTrigger3DMode }: NavbarProps) {
         <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Luxury Admin Button */}
           <a
-            href="admin.html"
+            href="/admin"
+            onClick={onOpenAdmin}
             className="luxury-header-admin-btn hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[#00d9ff] font-bold text-xs cursor-pointer select-none"
             title="Admin Dashboard"
             aria-label="Admin Dashboard"
@@ -190,8 +193,11 @@ export default function Navbar({ onTrigger3DMode }: NavbarProps) {
             </div>
             <div className="grid grid-cols-2 gap-3 mb-6">
               <a
-                href="admin.html"
-                onClick={() => setMobileMenuOpen(false)}
+                href="/admin"
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  if (onOpenAdmin) onOpenAdmin(e);
+                }}
                 className="p-3.5 rounded-xl border border-[#00d9ff]/40 bg-[#00d9ff]/10 text-[#00d9ff] font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#00d9ff] hover:text-[#061017] transition"
               >
                 <span>⚙</span>
