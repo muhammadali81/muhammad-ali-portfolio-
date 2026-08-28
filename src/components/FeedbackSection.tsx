@@ -51,11 +51,34 @@ export default function FeedbackSection() {
 
   // Authentication State
   const [isAuth, setIsAuth] = useState(false);
-  const [authUser, setAuthUser] = useState<{ name: string; email: string; picture: string, provider: 'Google' | 'Apple' | '' } | null>(null);
+  const [authUser, setAuthUser] = useState<{ name: string; email: string; picture: string, provider: 'Google' | '' } | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [aliCode, setAliCode] = useState('');
   const [isCodeValid, setIsCodeValid] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
+
+  // Sync auth state
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    if (!auth) return;
+
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setAuthUser({
+          name: user.displayName || 'Verified User',
+          email: user.email || '',
+          picture: user.photoURL || '',
+          provider: 'Google'
+        });
+        setIsAuth(true);
+      } else {
+        setAuthUser(null);
+        setIsAuth(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Feed list
   const [feedbackList, setFeedbackList] = useState<FeedbackCardData[]>(INITIAL_PUBLIC_FEEDBACKS);
@@ -122,6 +145,10 @@ export default function FeedbackSection() {
     setStatus('Waiting for Google authentication...');
     setIsError(false);
     try {
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        throw new Error("Firebase is not configured. Please check your environment variables.");
+      }
       const user = await signInWithGoogle();
       setAuthUser({
         name: user.displayName || 'Verified User',
@@ -196,7 +223,7 @@ export default function FeedbackSection() {
     }
 
     if (!isAuth) {
-      setStatus('Please sign in with Google or Apple to verify your identity.');
+      setStatus('Please sign in with Google to verify your identity.');
       setIsError(true);
       return;
     }
@@ -325,6 +352,7 @@ export default function FeedbackSection() {
 
                 <div className="flex items-center gap-2">
                   <button
+                    id="google-signin-button"
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={isAuthenticating}
@@ -389,6 +417,7 @@ export default function FeedbackSection() {
                 />
                 {!isCodeValid ? (
                   <button
+                    id="verify-code-button"
                     type="button"
                     onClick={handleVerifyCode}
                     disabled={verifyingCode || !aliCode.toLowerCase().startsWith('ali-')}
@@ -552,6 +581,7 @@ export default function FeedbackSection() {
 
             {/* Submit Button */}
             <button
+              id="submit-feedback-button"
               type="submit"
               disabled={submitting}
               className="w-full py-4 px-6 bg-gradient-to-r from-[#00d9ff] to-[#00b4d8] text-[#061017] font-black text-sm rounded-xl hover:shadow-xl hover:shadow-[#00d9ff]/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
@@ -676,7 +706,6 @@ export default function FeedbackSection() {
           </div>
         </div>
       </div>
-
     </section>
   );
 }
