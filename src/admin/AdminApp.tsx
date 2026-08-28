@@ -106,7 +106,11 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
           setTimeout(executeFetch, 2000 * retryCount);
         }
       } catch (err) {
-        console.error("Failed to fetch stats:", err);
+        if (retryCount >= maxRetries) {
+          console.error("Failed to fetch stats after retries:", err);
+        } else {
+          console.warn(`Transient admin fetch error (attempt ${retryCount + 1}/${maxRetries}):`, err instanceof Error ? err.message : err);
+        }
         if (retryCount < maxRetries) {
           retryCount++;
           setTimeout(executeFetch, 2000 * retryCount);
