@@ -345,16 +345,21 @@ function getLocalFallbackAnswer(question: string): string {
 
 // Fallback Gemini model pipeline in case of high demand (503) or rate limits (429)
 const GEMINI_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
   "gemini-3.7-flash",
+  "gemini-3.1-flash-lite",
   "gemini-3.1-pro-preview",
+  "gemini-2.0-flash-exp",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
+  "gemini-flash-latest",
 ];
 
 async function generateWithModelFallback(ai: GoogleGenAI, contents: any[], systemInstruction: string = PORTFOLIO_KNOWLEDGE): Promise<string | null> {
+  let lastError = null;
   for (const model of GEMINI_MODELS) {
     try {
+      if (lastError) await new Promise(resolve => setTimeout(resolve, 800));
+
       const response = await ai.models.generateContent({
         model,
         contents,
@@ -368,10 +373,15 @@ async function generateWithModelFallback(ai: GoogleGenAI, contents: any[], syste
         return response.text;
       }
     } catch (err: any) {
-      console.warn(`[Gemini API Warning] Model '${model}' call failed (${err?.status || err?.code || 500}). Retrying with fallback model candidate...`);
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      lastError = err;
+      // Silently fall back for common transient errors (503, 429, 404)
+      if (err?.status !== 503 && err?.status !== 429 && err?.status !== 404) {
+        console.warn(`[Gemini API] Model '${model}' failed: ${err?.message || 'unknown error'}`);
+      }
     }
   }
+  
+  console.error("All Gemini model fallbacks failed. Final error:", lastError?.status || lastError?.message || lastError);
   return null;
 }
 
@@ -437,17 +447,21 @@ app.post("/api/voice-support", async (req, res) => {
 
 // Get Portfolio Stats
 app.get("/api/stats", async (_req, res) => {
+  console.log("[API] GET /api/stats requested");
   try {
     const statsResult = await db.select().from(portfolioStats).where(eq(portfolioStats.id, 1));
     let baseStats = statsResult.length > 0 ? statsResult[0] : null;
     
     if (!baseStats) {
+      console.log("[API] Stats record not found, creating id:1");
       const [newStats] = await db.insert(portfolioStats).values({ id: 1 }).returning();
       baseStats = newStats;
     }
 
     // Live aggregations for real-time accuracy
     const allFeedbacks = (await db.select().from(feedback)) || [];
+    console.log(`[API] Found ${allFeedbacks.length} feedbacks for live aggregation`);
+
     const ratingBreakdown = {
       stars5: allFeedbacks.filter(f => f && f.rating === 5).length,
       stars4: allFeedbacks.filter(f => f && f.rating === 4).length,
@@ -462,17 +476,24 @@ app.get("/api/stats", async (_req, res) => {
       archived: 0,
     };
 
-    // Calculate total inquiries live
-    // (Assuming we might have an inquiries table, but for now we track via stats or a separate fetch)
+    // Recalculate satisfied/unsatisfied counts live based on ratings
+    const liveSatisfied = allFeedbacks.filter(f => f && f.rating >= 4).length;
+    const liveUnsatisfied = allFeedbacks.filter(f => f && f.rating <= 2).length;
     
-    res.json({
+    const responseData = {
       ...baseStats,
+      satisfiedClients: liveSatisfied,
+      unsatisfiedClients: liveUnsatisfied,
+      totalFeedback: allFeedbacks.filter(f => f && f.isApproved).length,
       ratingBreakdown,
       feedbackStatusBreakdown,
-    });
+    };
+
+    console.log("[API] Sending stats response:", JSON.stringify(responseData).substring(0, 100) + "...");
+    res.json(responseData);
   } catch (error) {
-    console.error("Error fetching stats:", error);
-    res.status(500).json({ error: "Failed to fetch stats" });
+    console.error("[API ERROR] Error fetching stats:", error);
+    res.status(500).json({ error: "Failed to fetch stats", details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -513,15 +534,24 @@ app.post("/api/feedback/submit-verified", async (req, res) => {
     let autoReply = "Thank you for your valuable feedback! I am committed to continuous improvement and appreciate your input.";
     try {
       const ai = getAIClient();
-      const systemPrompt = `You are Muhammad Ali, a software developer. A client named ${name} left a ${rating}-star review.
-      Generate a professional, warm, and personal response (around 2-3 complete sentences) from Muhammad Ali.
-      CRITICAL: ALWAYS complete your sentences. Never stop mid-sentence.
-      - If the feedback is positive, express gratitude and enthusiasm.
-      - If the client points out a mistake, bug, or problem, acknowledge it specifically, apologize, and mention you'll fix or improve it.
-      - If they have a specific complaint, show empathy and professionalism.
-      Avoid generic "Thank you" messages if they are reporting an issue. Output ONLY the response text.`;
+      const systemPrompt = `${PORTFOLIO_KNOWLEDGE}
+
+You are Muhammad Ali, the owner of this software studio. A client named ${name} has just submitted a ${rating}-star review on your portfolio website.
+Your task is to generate a professional, warm, and highly personal response (2-3 sentences) that reflects your brand and values.
+
+GUIDELINES FOR YOUR RESPONSE:
+1. GRATITUDE: Always start by thanking ${name} by name.
+2. CONTEXTUAL AWARENESS: Carefully read the client's comment. If they mention a specific service (Web, Game, AI, Design, or Architecture), acknowledge it.
+3. RATING-BASED TONE:
+   - 5 STARS: Be enthusiastic and mention you look forward to future collaborations.
+   - 3-4 STARS: Be warm, thank them, and ask if there's anything specific you could have done better.
+   - 1-2 STARS: Be extremely professional and empathetic. Apologize sincerely, acknowledge any specific complaints mentioned in their comment, and state that you will personally review the issue to ensure it doesn't happen again.
+4. PERSONAL TOUCH: Use your professional background (Computer Science student, software creator) if it adds value to the reply.
+5. NO HALLUCINATIONS: Do not mention specific projects or features that are not in the client's comment or the portfolio knowledge.
+6. COMPLETENESS: Always complete your sentences. Never stop mid-sentence.
+7. FORMATTING: Output ONLY the plain text of your response. No quotes, no markdown labels.`;
       
-      const userMessage = `Client Comment: "${comment}"`;
+      const userMessage = `Client Name: ${name}\nRating: ${rating} stars\nClient Comment: "${comment}"`;
       
       const generatedText = await generateWithModelFallback(ai, [{ role: "user", parts: [{ text: userMessage }] }], systemPrompt);
       if (generatedText) {
