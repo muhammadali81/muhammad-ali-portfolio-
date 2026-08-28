@@ -369,34 +369,31 @@ app.post("/api/feedback/submit-verified", (req, res) => {
   try {
     const { rating, comment, code, projectScreenshot, source, clientName, clientEmail, clientPhoto } = req.body;
     const trimmedCode = (code || "").trim();
-    const codeIndex = store.feedbackCodes.findIndex(
-      (c) => c.code.toLowerCase() === trimmedCode.toLowerCase()
-    );
-    if (codeIndex === -1 && !trimmedCode.toUpperCase().startsWith("ALI-")) {
-      return res.status(400).json({ error: "Invalid or unrecognized feedback code." });
+    if (trimmedCode) {
+      const codeIndex = store.feedbackCodes.findIndex(
+        (c) => c.code.toLowerCase() === trimmedCode.toLowerCase()
+      );
+      if (codeIndex !== -1 && !store.feedbackCodes[codeIndex].isUsed) {
+        store.feedbackCodes[codeIndex].isUsed = true;
+        store.feedbackCodes[codeIndex].usedAt = (/* @__PURE__ */ new Date()).toISOString();
+      }
     }
-    if (codeIndex !== -1 && store.feedbackCodes[codeIndex].isUsed) {
-      return res.status(400).json({ error: "This feedback code has already been used." });
-    }
-    if (codeIndex !== -1) {
-      store.feedbackCodes[codeIndex].isUsed = true;
-      store.feedbackCodes[codeIndex].usedAt = (/* @__PURE__ */ new Date()).toISOString();
-    }
-    const calculatedRating = Number(rating) || 5;
-    const finalClientName = clientName || "Verified Client";
+    const calculatedRating = Math.max(1, Math.min(5, Number(rating) || 5));
+    const finalClientName = (clientName || "Verified Client").trim();
+    const finalClientEmail = (clientEmail || "verified.client@google.com").trim();
     const generatedReply = getAutoReplyForRating(calculatedRating, finalClientName);
     const newFeedback = {
       id: `fb-${Date.now()}`,
       clientName: finalClientName,
-      clientEmail: clientEmail || "client@verified.com",
+      clientEmail: finalClientEmail,
       clientPhoto: clientPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(finalClientName)}&background=00d9ff&color=061017`,
       rating: calculatedRating,
       comment: (comment || "").trim(),
       googleVerified: true,
       isApproved: true,
-      codeUsed: trimmedCode,
-      projectScreenshot,
-      source: source || "Portfolio Client",
+      codeUsed: trimmedCode || "GOOGLE-AUTH-VERIFIED",
+      projectScreenshot: projectScreenshot || void 0,
+      source: source || "Direct Client",
       adminReply: generatedReply,
       date: (/* @__PURE__ */ new Date()).toISOString()
     };
