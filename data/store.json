@@ -1,0 +1,73 @@
+{
+  "siteStats": {
+    "profileViews": 168,
+    "satisfiedClients": 19,
+    "unsatisfiedClients": 0,
+    "positiveReactions": 55,
+    "negativeReactions": 1
+  },
+  "feedbacks": [
+    {
+      "id": "fb-1",
+      "clientName": "David Harrison",
+      "clientEmail": "david.h@novastudio.co",
+      "clientPhoto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+      "rating": 5,
+      "comment": "Muhammad Ali delivered exceptional full-stack work for Nova Web Studio. Clean code, smooth responsive UI, and delivered ahead of schedule!",
+      "googleVerified": true,
+      "isApproved": true,
+      "codeUsed": "Ali-NOVA1",
+      "source": "Nova Web Studio Showcase",
+      "date": "2026-08-25T12:07:56.421Z"
+    },
+    {
+      "id": "fb-2",
+      "clientName": "Sarah Jenkins",
+      "clientEmail": "sarah.j@pixelcreatives.io",
+      "clientPhoto": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+      "rating": 5,
+      "comment": "Incredible attention to detail with Pixel Forge brand assets and luxury business card layouts. Highly recommended!",
+      "googleVerified": true,
+      "isApproved": true,
+      "codeUsed": "Ali-PIXEL2",
+      "source": "Pixel Forge Graphic Design",
+      "date": "2026-08-21T12:07:56.422Z"
+    },
+    {
+      "id": "fb-3",
+      "clientName": "Tariq Mahmood",
+      "clientEmail": "tariq.arch@gmail.com",
+      "clientPhoto": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+      "rating": 5,
+      "comment": "The 2D smart flooring room plan and 3D architectural renders exceeded our client expectations. Precise dimensions and clean layers.",
+      "googleVerified": true,
+      "isApproved": true,
+      "codeUsed": "Ali-ARCH3",
+      "source": "2D & 3D Architecture",
+      "date": "2026-08-16T12:07:56.422Z"
+    }
+  ],
+  "feedbackCodes": [
+    {
+      "id": "code-1",
+      "code": "Ali-TEST",
+      "assignedTo": "Demo Client / Reviewer",
+      "isUsed": false,
+      "createdAt": "2026-08-28T12:07:56.422Z"
+    },
+    {
+      "id": "code-2",
+      "code": "Ali-VIP1",
+      "assignedTo": "VIP Client",
+      "isUsed": false,
+      "createdAt": "2026-08-28T12:07:56.422Z"
+    },
+    {
+      "id": "code-3",
+      "code": "Ali-DEV2",
+      "assignedTo": "Game Development Client",
+      "isUsed": false,
+      "createdAt": "2026-08-28T12:07:56.422Z"
+    }
+  ]
+}

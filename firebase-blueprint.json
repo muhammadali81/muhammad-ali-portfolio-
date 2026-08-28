@@ -1,0 +1,43 @@
+{
+  "collections": {
+    "feedbackCodes": {
+      "code": "string",
+      "assignedTo": "string",
+      "isUsed": "boolean",
+      "createdAt": "timestamp",
+      "notes": "string"
+    },
+    "feedbacks": {
+      "clientName": "string",
+      "clientEmail": "string",
+      "rating": "number",
+      "comment": "string",
+      "date": "timestamp",
+      "isApproved": "boolean",
+      "codeUsed": "string",
+      "adminReply": "string",
+      "clientPhoto": "string",
+      "projectScreenshot": "string",
+      "source": "string"
+    },
+    "inquiries": {
+      "name": "string",
+      "email": "string",
+      "category": "string",
+      "budget": "string",
+      "message": "string",
+      "date": "timestamp",
+      "status": "string"
+    },
+    "siteStats": {
+      "id": "string",
+      "profileViews": "number",
+      "totalFeedbacks": "number",
+      "averageRating": "number",
+      "positiveReactions": "number",
+      "negativeReactions": "number",
+      "satisfiedClients": "number",
+      "unsatisfiedClients": "number"
+    }
+  }
+}

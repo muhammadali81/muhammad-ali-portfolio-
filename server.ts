@@ -1,33 +1,242 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import { initializeApp, getApps } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { db } from "./src/db";
-import { portfolioStats, feedback, reactions, feedbackCodes } from "./src/db/schema";
-import { eq, sql, and } from "drizzle-orm";
 
 dotenv.config();
 
-// Initialize Firebase Admin
-if (!getApps().length) {
-  initializeApp({
-    projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID
-  });
+// =========================================================================
+// TYPES & IN-MEMORY PERSISTENT STORE
+// =========================================================================
+
+interface FeedbackRecord {
+  id: string;
+  clientName: string;
+  clientEmail?: string;
+  clientPhoto?: string;
+  rating: number;
+  comment: string;
+  googleVerified: boolean;
+  googleId?: string;
+  isApproved: boolean;
+  codeUsed?: string;
+  projectScreenshot?: string;
+  source?: string;
+  adminReply?: string;
+  date: string;
 }
 
-const app = express();
-const PORT = 3000;
+// Generate customized auto-reply based on feedback review stars
+export function getAutoReplyForRating(rating: number, clientName?: string): string {
+  const firstName = (clientName || 'Valued Client').trim().split(' ')[0];
+  const stars = Math.max(1, Math.min(5, Math.round(Number(rating) || 5)));
+  switch (stars) {
+    case 5:
+      return `Thank you so much ${firstName} for the stellar 5-star review! It was an absolute pleasure working together on your project. Wishing you massive success, and I look forward to collaborating again on future milestones! 🚀`;
+    case 4:
+      return `Thank you very much ${firstName} for the great 4-star feedback and for trusting my services! I am delighted with the project outcome, and I remain available anytime if you need any adjustments or enhancements.`;
+    case 3:
+      return `Thank you for sharing your feedback, ${firstName}. I value your honest review and strive to make every single delivery a 5-star experience. Please feel free to reach out anytime if there is anything we can optimize or refine further!`;
+    case 2:
+      return `Thank you for your feedback, ${firstName}. Client satisfaction is my top priority. Please reach out to me directly on WhatsApp (+92 342 6793428) or email so we can address your points and ensure everything meets your standards.`;
+    case 1:
+      return `Thank you for your review, ${firstName}. I take your feedback very seriously. Please reach out to me directly at alimuhammadhvn81@gmail.com or WhatsApp (+92 342 6793428) so I can immediately assist, make revisions, and resolve any concerns.`;
+    default:
+      return `Thank you for your valuable feedback, ${firstName}! Your review helps continuously elevate the quality of my services.`;
+  }
+}
 
-app.use(express.json());
+interface FeedbackCodeRecord {
+  id: string;
+  code: string;
+  assignedTo: string;
+  isUsed: boolean;
+  createdAt: string;
+  usedAt?: string;
+}
 
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`[SERVER] ${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
+interface InquiryRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject?: string;
+  service?: string;
+  budget?: string;
+  message: string;
+  status: "New" | "Read" | "Replied";
+  date: string;
+}
+
+interface SiteStatsRecord {
+  profileViews: number;
+  satisfiedClients: number;
+  unsatisfiedClients: number;
+  positiveReactions: number;
+  negativeReactions: number;
+}
+
+interface AppStore {
+  siteStats: SiteStatsRecord;
+  feedbacks: FeedbackRecord[];
+  feedbackCodes: FeedbackCodeRecord[];
+  inquiries: InquiryRecord[];
+}
+
+const DATA_DIR = path.join(process.cwd(), "data");
+const STORE_PATH = path.join(DATA_DIR, "store.json");
+
+// Default initial state
+const defaultStore: AppStore = {
+  siteStats: {
+    profileViews: 168,
+    satisfiedClients: 19,
+    unsatisfiedClients: 0,
+    positiveReactions: 54,
+    negativeReactions: 1
+  },
+  feedbacks: [
+    {
+      id: "fb-1",
+      clientName: "David Harrison",
+      clientEmail: "david.h@novastudio.co",
+      clientPhoto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+      rating: 5,
+      comment: "Muhammad Ali delivered exceptional full-stack work for Nova Web Studio. Clean code, smooth responsive UI, and delivered ahead of schedule!",
+      googleVerified: true,
+      isApproved: true,
+      codeUsed: "Ali-NOVA1",
+      source: "Nova Web Studio Showcase",
+      adminReply: "Thank you so much David for the stellar 5-star review! It was an absolute pleasure working together on the Nova Web Studio showcase. Wishing you massive success, and I look forward to collaborating again on future milestones! 🚀",
+      date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString()
+    },
+    {
+      id: "fb-2",
+      clientName: "Sarah Jenkins",
+      clientEmail: "sarah.j@pixelcreatives.io",
+      clientPhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+      rating: 5,
+      comment: "Incredible attention to detail with Pixel Forge brand assets and luxury business card layouts. Highly recommended!",
+      googleVerified: true,
+      isApproved: true,
+      codeUsed: "Ali-PIXEL2",
+      source: "Pixel Forge Graphic Design",
+      adminReply: "Thank you so much Sarah for the wonderful 5-star review! I'm thrilled that the Pixel Forge branding and executive visiting cards came out exactly as envisioned. Always here whenever you need new creative assets!",
+      date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString()
+    },
+    {
+      id: "fb-3",
+      clientName: "Tariq Mahmood",
+      clientEmail: "tariq.arch@gmail.com",
+      clientPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+      rating: 5,
+      comment: "The 2D smart flooring room plan and 3D architectural renders exceeded our client expectations. Precise dimensions and clean layers.",
+      googleVerified: true,
+      isApproved: true,
+      codeUsed: "Ali-ARCH3",
+      source: "2D & 3D Architecture",
+      adminReply: "Thank you Tariq for the excellent 5-star rating! Delivering precise 2D CAD floor plans and photorealistic 3D spatial renders was a fantastic experience. Looking forward to our next architectural project!",
+      date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString()
+    }
+  ],
+  feedbackCodes: [
+    {
+      id: "code-1",
+      code: "Ali-TEST",
+      assignedTo: "Demo Client / Reviewer",
+      isUsed: false,
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "code-2",
+      code: "Ali-VIP1",
+      assignedTo: "VIP Client",
+      isUsed: false,
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "code-3",
+      code: "Ali-DEV2",
+      assignedTo: "Game Development Client",
+      isUsed: false,
+      createdAt: new Date().toISOString()
+    }
+  ],
+  inquiries: [
+    {
+      id: "inq-1",
+      name: "Alex Rivera",
+      email: "alex@gamingforge.net",
+      phone: "+1 415 555 0192",
+      subject: "Custom 2D Puzzle Game Development",
+      service: "Game & AI Development",
+      budget: "$250 - $500",
+      message: "Looking for an interactive HTML5/Canvas puzzle mechanic similar to Colour Block with custom audio triggers and level editor.",
+      status: "New",
+      date: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString()
+    },
+    {
+      id: "inq-2",
+      name: "Fatima Noor",
+      email: "fatima@creativestudios.pk",
+      phone: "+92 300 1234567",
+      subject: "Luxury Brand Identity & Corporate Visiting Cards",
+      service: "Pixel Forge Graphic Design",
+      budget: "$100 - $200",
+      message: "Need complete vector branding, embossed visiting cards, and promotional banners for a boutique luxury brand launch.",
+      status: "Read",
+      date: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString()
+    }
+  ]
+};
+
+// Load or initialize store from disk
+function loadStore(): AppStore {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (fs.existsSync(STORE_PATH)) {
+      const raw = fs.readFileSync(STORE_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      const feedbacks: FeedbackRecord[] = (Array.isArray(parsed.feedbacks) && parsed.feedbacks.length > 0
+        ? parsed.feedbacks
+        : defaultStore.feedbacks
+      ).map((fb: FeedbackRecord) => ({
+        ...fb,
+        adminReply: fb.adminReply || getAutoReplyForRating(fb.rating, fb.clientName)
+      }));
+
+      return {
+        siteStats: { ...defaultStore.siteStats, ...(parsed.siteStats || {}) },
+        feedbacks,
+        feedbackCodes: Array.isArray(parsed.feedbackCodes) && parsed.feedbackCodes.length > 0 ? parsed.feedbackCodes : defaultStore.feedbackCodes,
+        inquiries: Array.isArray(parsed.inquiries) && parsed.inquiries.length > 0 ? parsed.inquiries : defaultStore.inquiries,
+      };
+    } else {
+      fs.writeFileSync(STORE_PATH, JSON.stringify(defaultStore, null, 2), "utf-8");
+      return defaultStore;
+    }
+  } catch (err) {
+    console.error("[STORE] Failed to load store, using default:", err);
+    return defaultStore;
+  }
+}
+
+let store: AppStore = loadStore();
+
+function saveStore(): void {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2), "utf-8");
+  } catch (err) {
+    console.error("[STORE] Error saving store to disk:", err);
+  }
+}
 
 // =========================================================================
 // ADMIN AUTHENTICATION CONFIGURATION
@@ -38,851 +247,553 @@ export const ADMIN_CREDENTIALS = {
 };
 
 // System prompt for Muhammad Ali’s AI Portfolio Assistant
-const PORTFOLIO_KNOWLEDGE = `
-You are the official AI Assistant for Muhammad Ali’s Portfolio & Software Studio website.
+const PORTFOLIO_KNOWLEDGE = `You are the official AI Assistant for Muhammad Ali’s Portfolio.
+Answer questions accurately based on:
+1. Web Development: Nova Web Studio (Full-stack responsive web applications, modern architectures).
+2. Games/AI: Colour Block (puzzle game logic), Pak AI (NLP & conversational AI), Learn Play (educational quiz portal).
+3. Design: Pixel Forge (Vector Logos, Visiting Cards, Social Media & YouTube Banners).
+4. Architecture: 2D/3D Smart Flooring, spatial mapping, and 3D architectural renders.
+Budget: Starting from $10+ USD.
+Contact Details:
+- WhatsApp: +92 342 6793428
+- Call: +92 330 0358799
+- Email: alimuhammadhvn81@gmail.com
+If question is completely irrelevant to Muhammad Ali or his services, say politely: "Unfortunately, I am unable to answer you regarding that topic, but I am happy to help you with Muhammad Ali's web development, game/AI, design, or architecture services!"`;
 
-YOUR MANDATE & PURPOSE:
-You are strictly designed to assist website visitors by answering questions based solely on the verified information available on Muhammad Ali's website and professional profile.
-
-SCOPE OF TOPICS YOU MUST ANSWER:
-1. YOUR WORK & SERVICES:
-   - Projects (4 Main Categories & Sub-Divisions):
-     1) Web Development: Nova Web Studio agency showcase with live website link (novawebstudio.app) and 4-photo layout.
-     2) Game & AI App Development: Colour Block (strategy puzzle game), Pak AI (Urdu/English voice & chat assistant), Learn Play (gamified education portal) — each with 4-photo galleries.
-     3) Pixel Forge Graphic Design: Logo Design (corporate, tech emblem, mascot, monogram), Visiting Card (Muhammad Ali executive card, Jhan Mobile Hub gold card, Anshu Mobile Shop blue card, Mobile Zone card), Banner (social media, YouTube/Twitch, e-commerce, exhibition) — each with 4-photo galleries.
-     4) 2D & 3D Architecture: 2D Smart Flooring (CAD room spatial mapping & tile distribution), 3D House Design (luxury villa facade, living room interior, night lighting study) — each with 4-photo galleries.
-   - Technical Skills: HTML, CSS, JavaScript, React, Node.js, Express, Python, C++, Game Development (Godot Engine, Unity), AI Development, Pixel Forge Graphic Design, 2D Smart Floor CAD mapping, 3D Architectural Rendering, Tailwind CSS, REST APIs.
-   - Services Offered: Web Development, Game & AI App Development, Pixel Forge Graphic Design, 2D & 3D Architecture.
-   - Hire Me Section: Interactive service selector allowing clients to hire Muhammad for an entire service category or a specific sub-division photo slot with $10+ USD budget criteria. Direct WhatsApp (+92 342 6793428) and Email booking available.
-   - Inquiry Section: Secure inquiry submission form allowing users to select their service category, budget range ($10+ criteria), subject, and custom message for direct delivery to the studio backend.
-   - Pricing & Budget: Project budget criteria starts from $10 and above ($10+ USD). Flexible pricing tailored to project requirements.
-
-2. YOUR PASSION & VISION:
-   - What drives Muhammad: A deep passion for web development, game and AI application development, graphic design, and modern technology.
-   - Creative approach & goals: Turning ideas into polished digital experiences, continuous learning, crafting clean modular software, maintaining high ethical standards, and delivering real value to clients.
-
-3. YOUR DEALINGS & WORK STYLE:
-   - Professionalism & Reliability: 100% professional, trustworthy, detail-oriented, and dedicated to delivering clean code and modern responsive designs.
-   - Client Dealings & Communication: Clear, honest communication with regular progress updates. Transparent requirements and direct 1-on-1 collaboration.
-   - 6-Step Work Process: 1. Discuss -> 2. Plan -> 3. Build -> 4. Test -> 5. Deliver -> 6. Support.
-   - Post-Delivery Support: Responsive bug fixes and ongoing support available.
-
-4. YOUR PORTFOLIO & WEBSITE DETAILS:
-   - All details presented on the website, including client feedback, profile reach, average rating (4.9/5 stars), and how to submit feedback or inquiries.
-
-5. YOUR BACKGROUND & PROFILE:
-   - Education: BS in Computer Science at Iqra Post Graduate College (Currently 3rd Semester, 2025–Present); FSc in Computer Science from Pak Wattan School & College of Science (Completed 2024); Matric in Science from Al Arqam Academy of Excellence (Completed 2022).
-   - Location: Havelian, Abbottabad, Pakistan.
-   - Languages: English, Urdu, Hindko.
-   - Contact Info: WhatsApp (+92 342 6793428), Direct Phone Call (+92 330 0358799), Email (alimuhammadhvn81@gmail.com).
-
-FOLLOW-UP QUESTIONS & NATURAL PHRASING:
-- Visitors can phrase questions naturally in different ways (e.g. "How do you work with clients?", "What inspires your work?", "Tell me about your coding skills"). Use the conversation context where appropriate to give continuous, relevant answers.
-
-CRITICAL BOUNDARY RULE:
-- YOU MUST NOT INVENT OR HALLUCINATE ANY INFORMATION.
-- If a visitor asks a question that is NOT covered by the website/business information, OR is unrelated/irrelevant to Muhammad Ali's work or professional profile, OR is a random/general question outside your purpose (e.g., "What is your favorite football team?", "Write me a love poem", "What is the capital of France?", recipes, world news, general trivia), YOU MUST STRICTLY RESPOND WITH EXACTLY THIS STRING AND NOTHING ELSE:
-  "Unfortunately, I am unable to answer you."
-
-SPEECH & TONE FORMATTING:
-- Sound warm, articulate, natural, and polite when answering portfolio questions.
-- Keep output clean without markdown symbols (* or #) so speech synthesis reads naturally.
-`;
-
-let aiClient: GoogleGenAI | null = null;
-function getAIClient(): GoogleGenAI {
+let aiClient: any = null;
+function getAIClient() {
   if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY || "";
-    aiClient = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
+    const key = process.env.GEMINI_API_KEY;
+    if (key) {
+      aiClient = new GoogleGenAI({ apiKey: key });
+    }
   }
   return aiClient;
 }
 
-// Health check endpoint
+// =========================================================================
+// EXPRESS APPLICATION SETUP
+// =========================================================================
+const app = express();
+const PORT = 3000;
+
+app.use(express.json({ limit: "10mb" }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[SERVER] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// =========================================================================
+// API ENDPOINTS
+// =========================================================================
+
+// Health Check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
-
-// Helper function for local intelligent answer matching when AI API key is missing or service is unavailable
-function getLocalFallbackAnswer(question: string): string {
-  const qLower = (question || "").toLowerCase().trim();
-
-  // Explicit out-of-scope check for common random / general questions
-  if (
-    qLower.includes("football") ||
-    qLower.includes("soccer") ||
-    qLower.includes("cricket team") ||
-    qLower.includes("poem") ||
-    qLower.includes("poetry") ||
-    qLower.includes("capital of") ||
-    qLower.includes("recipe") ||
-    qLower.includes("weather in") ||
-    qLower.includes("president") ||
-    qLower.includes("prime minister") ||
-    qLower.includes("movie") ||
-    qLower.includes("song") ||
-    qLower.includes("joke") ||
-    qLower.includes("tell me a story")
-  ) {
-    return "Unfortunately, I am unable to answer you.";
-  }
-
-  // Greetings / Small talk relevant to portfolio
-  if (
-    qLower.includes("salam") ||
-    qLower.includes("hello") ||
-    qLower.includes("hi") ||
-    qLower.includes("hey") ||
-    qLower.includes("kaise ho") ||
-    qLower.includes("kese ho") ||
-    qLower.includes("how are you") ||
-    qLower.includes("good morning") ||
-    qLower.includes("good evening")
-  ) {
-    return "Walaikum Assalam and hello! I am Muhammad Ali’s AI Assistant. How can I assist you with your project, inquiry, or technical questions regarding Muhammad Ali’s portfolio today?";
-  }
-
-  // Passion / Drive / Vision / Goals
-  if (
-    qLower.includes("passionat") ||
-    qLower.includes("passion") ||
-    qLower.includes("drive") ||
-    qLower.includes("vision") ||
-    qLower.includes("goal") ||
-    qLower.includes("inspire") ||
-    qLower.includes("creative approach")
-  ) {
-    return "Muhammad Ali is deeply passionate about web development, game & AI app development, 2D graphic design, and modern technology. His goal is to create practical digital products, deliver dependable freelance services, and continually refine his software engineering skills.";
-  }
-
-  // Work Dealings / Client Approach / Communication / Work Style
-  if (
-    qLower.includes("deal") ||
-    qLower.includes("client") ||
-    qLower.includes("work style") ||
-    qLower.includes("approach") ||
-    qLower.includes("process") ||
-    qLower.includes("collaborat") ||
-    qLower.includes("communicate") ||
-    qLower.includes("method")
-  ) {
-    return "Muhammad Ali follows a transparent, 6-step work process: Discussing client requirements, Planning the project structure, Building with clean code, Testing for usability, Delivering on time, and providing ongoing Support.";
-  }
-
-  // Education & Qualifications
-  if (
-    qLower.includes("education") ||
-    qLower.includes("study") ||
-    qLower.includes("college") ||
-    qLower.includes("school") ||
-    qLower.includes("matric") ||
-    qLower.includes("fsc") ||
-    qLower.includes("iqra") ||
-    qLower.includes("degree") ||
-    qLower.includes("qualification") ||
-    qLower.includes("padhai")
-  ) {
-    return "Muhammad Ali is currently pursuing his BS in Computer Science at Iqra Post Graduate College (2025–Present). He completed his FSc in Computer Science from Pak Wattan School and College of Science (2024), and Matric in Science from Al Arqam Academy of Excellence (2022).";
-  }
-
-  // Languages
-  if (
-    qLower.includes("language") ||
-    qLower.includes("zaban") ||
-    qLower.includes("speak") ||
-    qLower.includes("bolte")
-  ) {
-    return "Muhammad Ali speaks English, Urdu, and Hindko fluently.";
-  }
-
-  // Services & Work
-  if (
-    qLower.includes("service") ||
-    qLower.includes("offer") ||
-    qLower.includes("what can you do") ||
-    qLower.includes("work") ||
-    qLower.includes("build") ||
-    qLower.includes("develop") ||
-    qLower.includes("web") ||
-    qLower.includes("game") ||
-    qLower.includes("app") ||
-    qLower.includes("graphic") ||
-    qLower.includes("design") ||
-    qLower.includes("architecture") ||
-    qLower.includes("kam")
-  ) {
-    return "Muhammad Ali offers 4 core service divisions: 1. Web Development (Nova Web Studio), 2. Game & AI App Development (Colour Block, Pak AI, Learn Play), 3. Pixel Forge Graphic Design (Logos, Visiting Cards, Banners), and 4. 2D & 3D Architecture (2D Smart Flooring, 3D House Design).";
-  }
-
-  // Hire Me Section & Inquiry
-  if (
-    qLower.includes("hire") ||
-    qLower.includes("inquiry") ||
-    qLower.includes("how to order") ||
-    qLower.includes("book")
-  ) {
-    return "You can hire Muhammad Ali or submit a project inquiry directly on the website with $10+ USD budget criteria. Choose an entire service or select a specific sub-division photo slot, or message him directly on WhatsApp at +92 342 6793428.";
-  }
-
-  // Contact / Phone / WhatsApp / Email
-  if (
-    qLower.includes("contact") ||
-    qLower.includes("phone") ||
-    qLower.includes("call") ||
-    qLower.includes("whatsapp") ||
-    qLower.includes("number") ||
-    qLower.includes("email") ||
-    qLower.includes("rabta") ||
-    qLower.includes("reach") ||
-    qLower.includes("message")
-  ) {
-    return "You can message Muhammad Ali on WhatsApp at +92 342 6793428, call him directly at +92 330 0358799, or email alimuhammadhvn81@gmail.com.";
-  }
-
-  // Projects & Portfolio
-  if (
-    qLower.includes("project") ||
-    qLower.includes("portfolio") ||
-    qLower.includes("nova") ||
-    qLower.includes("color blocks") ||
-    qLower.includes("colour block") ||
-    qLower.includes("pak ai") ||
-    qLower.includes("learn play") ||
-    qLower.includes("pixel forge") ||
-    qLower.includes("visiting card") ||
-    qLower.includes("smart flooring") ||
-    qLower.includes("3d house") ||
-    qLower.includes("sample") ||
-    qLower.includes("demo")
-  ) {
-    return "Muhammad Ali's portfolio features 4 major categories with 4-photo sub-division galleries: Web Development (Nova Web Studio), Game & AI App Development (Colour Block, Pak AI, Learn Play), Pixel Forge Graphic Design (Logos, Executive & Mobile Shop Visiting Cards, Banners), and 2D & 3D Architecture (2D Smart Flooring & 3D House Design).";
-  }
-
-  // Technical Skills / Stack
-  if (
-    qLower.includes("skill") ||
-    qLower.includes("tech") ||
-    qLower.includes("stack") ||
-    qLower.includes("coding") ||
-    qLower.includes("programming") ||
-    qLower.includes("react") ||
-    qLower.includes("python") ||
-    qLower.includes("node") ||
-    qLower.includes("typescript") ||
-    qLower.includes("godot") ||
-    qLower.includes("unity") ||
-    qLower.includes("canva")
-  ) {
-    return "His core technical skills include HTML, CSS, JavaScript, React, Node.js, Python, C++, Game Development (Godot, Unity), AI Development, and Graphic Design (Canva).";
-  }
-
-  // Price / Rates / Budget / Cost
-  if (
-    qLower.includes("price") ||
-    qLower.includes("cost") ||
-    qLower.includes("rate") ||
-    qLower.includes("fee") ||
-    qLower.includes("budget") ||
-    qLower.includes("kitna") ||
-    qLower.includes("charge") ||
-    qLower.includes("dollar") ||
-    qLower.includes("$")
-  ) {
-    return "Muhammad Ali's project budget criteria starts from $10 and above ($10+ USD). Final pricing depends on your project scope. You can reach out on WhatsApp at +92 342 6793428 or call +92 330 0358799 for an instant quote.";
-  }
-
-  // Professionalism / Trust / Experience
-  if (
-    qLower.includes("professional") ||
-    qLower.includes("quality") ||
-    qLower.includes("trust") ||
-    qLower.includes("reliable") ||
-    qLower.includes("why hire") ||
-    qLower.includes("kaisa hai") ||
-    qLower.includes("experience") ||
-    qLower.includes("work ethic")
-  ) {
-    return "Yes, Muhammad Ali is highly professional, reliable, and detail-oriented. He delivers clean code, modern responsive designs, and punctual updates with 100% dedication to client satisfaction.";
-  }
-
-  // Bio / Intro / Who is
-  if (
-    qLower.includes("who is") ||
-    qLower.includes("about") ||
-    qLower.includes("muhammad ali") ||
-    qLower.includes("intro") ||
-    qLower.includes("background") ||
-    qLower.includes("kon") ||
-    qLower.includes("ali")
-  ) {
-    return "Muhammad Ali is a dedicated Computer Science student and software creator specializing in Web Development, Game & AI App Development, and 2D Graphic Design from Pakistan.";
-  }
-
-  // Website / Site
-  if (
-    qLower.includes("website") ||
-    qLower.includes("site") ||
-    qLower.includes("page")
-  ) {
-    return "This website is the official portfolio of Muhammad Ali, highlighting his projects, skills, education, client feedback, and direct contact options.";
-  }
-
-  // Timelines / Turnaround
-  if (
-    qLower.includes("time") ||
-    qLower.includes("duration") ||
-    qLower.includes("kitne din") ||
-    qLower.includes("fast") ||
-    qLower.includes("deadline")
-  ) {
-    return "Project timelines depend on complexity and scope. Muhammad ensures rapid turnaround and clear milestone delivery. Contact him on WhatsApp at +92 342 6793428 to discuss your exact timeline.";
-  }
-
-  // Strict Fallback for any unsupported / unrelated question
-  return "Unfortunately, I am unable to answer you.";
-}
-
-// Fallback Gemini model pipeline in case of high demand (503) or rate limits (429)
-const GEMINI_MODELS = [
-  "gemini-3.7-flash",
-  "gemini-3.1-flash-lite",
-  "gemini-3.1-pro-preview",
-  "gemini-2.0-flash-exp",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro",
-  "gemini-flash-latest",
-];
-
-async function generateWithModelFallback(ai: GoogleGenAI, contents: any[], systemInstruction: string = PORTFOLIO_KNOWLEDGE): Promise<string | null> {
-  let lastError = null;
-  for (const model of GEMINI_MODELS) {
-    try {
-      if (lastError) await new Promise(resolve => setTimeout(resolve, 800));
-
-      const response = await ai.models.generateContent({
-        model,
-        contents,
-        config: {
-          systemInstruction,
-          temperature: 0.7,
-          maxOutputTokens: 500,
-        },
-      });
-      if (response && response.text) {
-        return response.text;
-      }
-    } catch (err: any) {
-      lastError = err;
-      // Silently fall back for common transient errors (503, 429, 404)
-      if (err?.status !== 503 && err?.status !== 429 && err?.status !== 404) {
-        console.warn(`[Gemini API] Model '${model}' failed: ${err?.message || 'unknown error'}`);
-      }
-    }
-  }
-  
-  console.error("All Gemini model fallbacks failed. Final error:", lastError?.status || lastError?.message || lastError);
-  return null;
-}
-
-// Voice Support AI query endpoint
-app.post("/api/voice-support", async (req, res) => {
-  try {
-    const { question, conversationHistory } = req.body;
-
-    if (!question || typeof question !== "string") {
-      res.status(400).json({ error: "A valid question string is required." });
-      return;
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      const fallbackText = getLocalFallbackAnswer(question);
-      res.json({ answer: fallbackText });
-      return;
-    }
-
-    const ai = getAIClient();
-
-    // Build contents from history if available
-    const contents: any[] = [];
-    if (Array.isArray(conversationHistory)) {
-      for (const item of conversationHistory.slice(-4)) {
-        if (item.sender === "user") {
-          contents.push({ role: "user", parts: [{ text: item.text }] });
-        } else if (item.sender === "ai") {
-          contents.push({ role: "model", parts: [{ text: item.text }] });
-        }
-      }
-    }
-    contents.push({ role: "user", parts: [{ text: question }] });
-
-    const generatedText = await generateWithModelFallback(ai, contents);
-
-    if (generatedText) {
-      res.json({ answer: generatedText });
-      return;
-    }
-
-    // If all online model candidates fail (e.g. 503 high demand spike), use intelligent local fallback answer
-    const fallbackText = getLocalFallbackAnswer(question);
-    res.json({
-      answer: fallbackText,
-      fallbackUsed: true,
-    });
-  } catch (error: any) {
-    console.error("Error in /api/voice-support handler:", error);
-    const fallbackText = getLocalFallbackAnswer(req.body?.question || "");
-    res.json({
-      answer: fallbackText,
-      fallbackUsed: true,
-    });
-  }
-});
-
-// =========================================================================
-// DATABASE & AUTH API ENDPOINTS
-// =========================================================================
-
-// Health Check Endpoint
-app.get("/api/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-// Get Portfolio Stats
-app.get("/api/stats", async (_req, res) => {
-  console.log("[API] GET /api/stats requested");
-  try {
-    const statsResult = await db.select().from(portfolioStats).where(eq(portfolioStats.id, 1));
-    let baseStats = statsResult.length > 0 ? statsResult[0] : null;
-    
-    if (!baseStats) {
-      console.log("[API] Stats record not found, creating id:1");
-      const [newStats] = await db.insert(portfolioStats).values({ id: 1 }).returning();
-      baseStats = newStats;
-    }
-
-    // Live aggregations for real-time accuracy
-    const allFeedbacks = (await db.select().from(feedback)) || [];
-    console.log(`[API] Found ${allFeedbacks.length} feedbacks for live aggregation`);
-
-    const ratingBreakdown = {
-      stars5: allFeedbacks.filter(f => f && f.rating === 5).length,
-      stars4: allFeedbacks.filter(f => f && f.rating === 4).length,
-      stars3: allFeedbacks.filter(f => f && f.rating === 3).length,
-      stars2: allFeedbacks.filter(f => f && f.rating === 2).length,
-      stars1: allFeedbacks.filter(f => f && f.rating === 1).length,
-    };
-
-    const feedbackStatusBreakdown = {
-      published: allFeedbacks.filter(f => f && f.isApproved).length,
-      pending: allFeedbacks.filter(f => f && !f.isApproved).length,
-      archived: 0,
-    };
-
-    // Recalculate satisfied/unsatisfied counts live based on ratings
-    const liveSatisfied = allFeedbacks.filter(f => f && f.rating >= 4).length;
-    const liveUnsatisfied = allFeedbacks.filter(f => f && f.rating <= 2).length;
-    
-    const responseData = {
-      ...baseStats,
-      satisfiedClients: liveSatisfied,
-      unsatisfiedClients: liveUnsatisfied,
-      totalFeedback: allFeedbacks.filter(f => f && f.isApproved).length,
-      ratingBreakdown,
-      feedbackStatusBreakdown,
-    };
-
-    console.log("[API] Sending stats response:", JSON.stringify(responseData).substring(0, 100) + "...");
-    res.json(responseData);
-  } catch (error) {
-    console.error("[API ERROR] Error fetching stats:", error);
-    res.status(500).json({ error: "Failed to fetch stats", details: error instanceof Error ? error.message : String(error) });
+// Voice AI / Assistant
+app.post("/api/voice-support", async (req, res) => {
+  const { question, conversationHistory } = req.body;
+  if (!question) return res.status(400).json({ error: "Question required" });
+  
+  if (!process.env.GEMINI_API_KEY) {
+    return res.json({ 
+      answer: "Muhammad Ali is a Full-Stack, AI, and 2D Game Developer offering Web Development, Game/AI development, Pixel Forge graphic design, and 2D/3D Architecture. You can contact him via WhatsApp at +92 342 6793428 or email at alimuhammadhvn81@gmail.com." 
+    });
   }
-});
-
-// Update Profile View Count
-app.post("/api/stats/view", async (_req, res) => {
+  
   try {
-    await db.update(portfolioStats)
-      .set({ profileViews: sql`${portfolioStats.profileViews} + 1` })
-      .where(eq(portfolioStats.id, 1));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update view count" });
-  }
-});
-
-// Submit Feedback (Google Verified + Ali- Code)
-app.post("/api/feedback/submit-verified", async (req, res) => {
-  try {
-    const { token, rating, comment, code, projectScreenshot } = req.body;
+    const ai = getAIClient();
+    const contents: any[] = (conversationHistory || []).slice(-4).map((h: any) => ({
+      role: h.sender === "user" ? "user" : "model",
+      parts: [{ text: h.text }]
+    }));
+    contents.push({ role: "user", parts: [{ text: question }] });
     
-    // 1. Verify Code First
-    const rawCode = (code || "").trim();
-    if (!rawCode || !rawCode.toLowerCase().startsWith("ali-")) {
-      res.status(400).json({ error: "A valid feedback code starting with 'Ali-' is required." });
-      return;
-    }
-
-    const [dbCode] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${rawCode})`);
-    if (!dbCode || dbCode.status !== "Active") {
-      console.warn(`[SUBMIT] Invalid or used code attempt: ${rawCode}`);
-      res.status(400).json({ error: "This feedback code is invalid or has already been used." });
-      return;
-    }
-
-    // 2. Verify Firebase Token
-    let decodedToken;
-    try {
-      decodedToken = await getAuth().verifyIdToken(token);
-    } catch (authErr: any) {
-      console.error("[SUBMIT] Auth verification failed:", authErr.message);
-      res.status(401).json({ error: "Google identity verification failed. Please sign in again." });
-      return;
-    }
-    const { name, email, picture, uid } = decodedToken;
-
-    // 3. Generate AI Auto-Reply based on feedback situation
-    let autoReply = "Thank you for your valuable feedback! I am committed to continuous improvement and appreciate your input.";
-    try {
-      const ai = getAIClient();
-      const systemPrompt = `${PORTFOLIO_KNOWLEDGE}
-
-You are Muhammad Ali, the owner of this software studio. A client named ${name} has just submitted a ${rating}-star review on your portfolio website.
-Your task is to generate a professional, warm, and highly personal response (2-3 sentences) that reflects your brand and values.
-
-GUIDELINES FOR YOUR RESPONSE:
-1. GRATITUDE: Always start by thanking ${name} by name.
-2. CONTEXTUAL AWARENESS: Carefully read the client's comment. If they mention a specific service (Web, Game, AI, Design, or Architecture), acknowledge it.
-3. RATING-BASED TONE:
-   - 5 STARS: Be enthusiastic and mention you look forward to future collaborations.
-   - 3-4 STARS: Be warm, thank them, and ask if there's anything specific you could have done better.
-   - 1-2 STARS: Be extremely professional and empathetic. Apologize sincerely, acknowledge any specific complaints mentioned in their comment, and state that you will personally review the issue to ensure it doesn't happen again.
-4. PERSONAL TOUCH: Use your professional background (Computer Science student, software creator) if it adds value to the reply.
-5. NO HALLUCINATIONS: Do not mention specific projects or features that are not in the client's comment or the portfolio knowledge.
-6. COMPLETENESS: Always complete your sentences. Never stop mid-sentence.
-7. FORMATTING: Output ONLY the plain text of your response. No quotes, no markdown labels.`;
-      
-      const userMessage = `Client Name: ${name}\nRating: ${rating} stars\nClient Comment: "${comment}"`;
-      
-      const generatedText = await generateWithModelFallback(ai, [{ role: "user", parts: [{ text: userMessage }] }], systemPrompt);
-      if (generatedText) {
-        autoReply = generatedText.trim();
-        // Simple heuristic to check if it's cut off (doesn't end with punctuation)
-        const lastChar = autoReply.slice(-1);
-        if (!['.', '!', '?'].includes(lastChar) && autoReply.length > 20) {
-          autoReply += "...";
-        }
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents,
+      config: { 
+        systemInstruction: PORTFOLIO_KNOWLEDGE, 
+        temperature: 0.7, 
+        maxOutputTokens: 600 
       }
-    } catch (err) {
-      console.error("AI Auto-reply generation error:", err);
-      console.warn("AI Auto-reply generation failed, using default.");
-    }
-
-    // 4. Save Feedback
-    const [newFeedback] = await db.insert(feedback).values({
-      clientName: name || "Verified User",
-      clientEmail: email || "",
-      clientPhoto: picture || "",
-      rating: rating || 5,
-      comment: comment || "",
-      googleVerified: true,
-      googleId: uid,
-      isApproved: true,
-      codeUsed: code,
-      adminReply: autoReply,
-      projectScreenshot: projectScreenshot || null
-    }).returning();
-
-    // 5. Mark Code as Used
-    await db.update(feedbackCodes)
-      .set({ status: "Used", usedAt: new Date() })
-      .where(eq(feedbackCodes.id, dbCode.id));
-
-    // 6. Update stats
-    const isSatisfied = rating >= 4;
-    const isUnsatisfied = rating <= 2;
-
-    await db.update(portfolioStats)
-      .set({ 
-        totalFeedback: sql`${portfolioStats.totalFeedback} + 1`,
-        averageRating: sql`((${portfolioStats.averageRating} * ${portfolioStats.totalFeedback}) + ${rating}) / (${portfolioStats.totalFeedback} + 1)`,
-        satisfiedClients: isSatisfied ? sql`${portfolioStats.satisfiedClients} + 1` : portfolioStats.satisfiedClients,
-        unsatisfiedClients: isUnsatisfied ? sql`${portfolioStats.unsatisfiedClients} + 1` : portfolioStats.unsatisfiedClients
-      })
-      .where(eq(portfolioStats.id, 1));
-
-    res.json({ success: true, feedback: newFeedback });
-  } catch (error) {
-    console.error("Error submitting verified feedback:", error);
-    res.status(401).json({ error: "Authentication failed or database error" });
-  }
-});
-
-// Get Public Feedbacks
-app.get("/api/feedback", async (_req, res) => {
-  try {
-    const feedbacks = await db.select()
-      .from(feedback)
-      .where(eq(feedback.isApproved, true))
-      .orderBy(sql`${feedback.date} DESC`);
-    res.json(feedbacks);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch feedbacks" });
-  }
-});
-
-// Post Reaction (Like/Dislike)
-app.post("/api/reactions", async (req, res) => {
-  try {
-    const { type, token } = req.body;
-    let userId = null;
-
-    if (token) {
-      const decodedToken = await getAuth().verifyIdToken(token);
-      userId = decodedToken.uid;
-    }
-
-    await db.insert(reactions).values({
-      type,
-      userId,
-      ipAddress: req.ip
     });
-
-    if (type === 'like') {
-      await db.update(portfolioStats)
-        .set({ positiveReactions: sql`${portfolioStats.positiveReactions} + 1` })
-        .where(eq(portfolioStats.id, 1));
-    } else {
-      await db.update(portfolioStats)
-        .set({ negativeReactions: sql`${portfolioStats.negativeReactions} + 1` })
-        .where(eq(portfolioStats.id, 1));
-    }
-
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to post reaction" });
-  }
-});
-
-// Admin Login
-app.post("/api/admin/login", (req, res) => {
-  const { email, password } = req.body;
-  const adminEmail = ADMIN_CREDENTIALS.email.toLowerCase().trim();
-  const inputEmail = (email || "").toLowerCase().trim();
-  const adminPass = ADMIN_CREDENTIALS.password;
-
-  if (inputEmail !== adminEmail) {
-    res.status(401).json({
-      success: false,
-      error: "Unauthorized: Invalid admin email address."
+    
+    res.json({ answer: response.text || "I'm sorry, I couldn't generate a response." });
+  } catch (e) {
+    console.error("[SERVER] Gemini Voice AI Error:", e);
+    res.json({ 
+      answer: "Muhammad Ali specializes in Web Development (Nova Web Studio), Games & AI (Colour Block, Pak AI, Learn Play), Pixel Forge Design, and 2D/3D Architecture. Feel free to contact him directly at +92 342 6793428 or alimuhammadhvn81@gmail.com." 
     });
-    return;
   }
-
-  if (password !== adminPass) {
-    res.status(401).json({
-      success: false,
-      error: "Unauthorized: Invalid admin password."
-    });
-    return;
-  }
-
-  // Authentication successful
-  const sessionToken = `ma_sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  res.json({
-    success: true,
-    token: sessionToken,
-    user: {
-      name: "Muhammad Ali",
-      email: ADMIN_CREDENTIALS.email,
-      role: "Administrator",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-      status: "Online"
-    }
-  });
 });
 
-// Verify Admin Session Token
-app.get("/api/admin/session", (_req, res) => {
-  res.json({
-    valid: true,
-    user: {
-      name: "Muhammad Ali",
-      email: ADMIN_CREDENTIALS.email,
-      role: "Administrator",
-      status: "Online"
-    }
-  });
-});
-
-// Get All Generated Codes
-app.get("/api/admin/codes", async (_req, res) => {
+// Calculate and return stats
+app.get("/api/stats", (_req, res) => {
   try {
-    const codes = await db.select().from(feedbackCodes).orderBy(sql`${feedbackCodes.createdAt} DESC`);
-    res.json({ success: true, codes });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch codes" });
+    const approvedFeedbacks = store.feedbacks.filter(f => f.isApproved === true);
+    const totalFeedback = approvedFeedbacks.length;
+    const averageRating = totalFeedback
+      ? approvedFeedbacks.reduce((sum, item) => sum + (item.rating || 0), 0) / totalFeedback
+      : 5;
+
+    const result = {
+      profileViews: store.siteStats.profileViews,
+      satisfiedClients: Math.max(store.siteStats.satisfiedClients, totalFeedback),
+      unsatisfiedClients: store.siteStats.unsatisfiedClients,
+      positiveReactions: store.siteStats.positiveReactions,
+      negativeReactions: store.siteStats.negativeReactions,
+      totalFeedback,
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      ratingBreakdown: {
+        stars5: approvedFeedbacks.filter(f => Math.round(f.rating) === 5).length,
+        stars4: approvedFeedbacks.filter(f => Math.round(f.rating) === 4).length,
+        stars3: approvedFeedbacks.filter(f => Math.round(f.rating) === 3).length,
+        stars2: approvedFeedbacks.filter(f => Math.round(f.rating) === 2).length,
+        stars1: approvedFeedbacks.filter(f => Math.round(f.rating) === 1).length,
+      }
+    };
+
+    res.json(result);
+  } catch (e) {
+    console.error("[SERVER] Error in /api/stats:", e);
+    res.status(500).json({ error: "Failed to fetch stats" });
   }
 });
 
-// Generate Code (starts with Ali-, valid until feedback is published)
-app.post("/api/admin/codes/generate", async (req, res) => {
+// Increment profile views
+app.post("/api/stats/view", (_req, res) => {
   try {
-    const { assignedTo, notes } = req.body || {};
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let randomSuffix = "";
-    for (let i = 0; i < 6; i++) {
-      randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
+    store.siteStats.profileViews += 1;
+    saveStore();
+    res.json({ success: true, profileViews: store.siteStats.profileViews });
+  } catch (e) {
+    console.error("[SERVER] Error incrementing views:", e);
+    res.status(500).json({ error: "View increment failed" });
+  }
+});
+
+// Handle Reactions (Like / Dislike)
+app.post("/api/reactions", (req, res) => {
+  try {
+    const { type, isRemoving } = req.body;
+    if (type === "like") {
+      if (isRemoving) {
+        store.siteStats.positiveReactions = Math.max(0, store.siteStats.positiveReactions - 1);
+      } else {
+        store.siteStats.positiveReactions += 1;
+      }
+    } else if (type === "dislike") {
+      if (isRemoving) {
+        store.siteStats.negativeReactions = Math.max(0, store.siteStats.negativeReactions - 1);
+      } else {
+        store.siteStats.negativeReactions += 1;
+      }
     }
-    const newCodeStr = `Ali-${randomSuffix}`;
-
-    const [newCodeObj] = await db.insert(feedbackCodes).values({
-      code: newCodeStr,
-      status: "Active",
-      assignedTo: assignedTo || "Client",
-      notes: notes || "Valid until feedback is published by the client"
-    }).returning();
-
+    saveStore();
     res.json({
       success: true,
-      code: newCodeObj,
-      message: `Generated code ${newCodeStr} successfully.`
+      positiveReactions: store.siteStats.positiveReactions,
+      negativeReactions: store.siteStats.negativeReactions
     });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to generate code" });
+  } catch (e) {
+    console.error("[SERVER] Reaction update error:", e);
+    res.status(500).json({ error: "Reaction update failed" });
   }
 });
 
-// Delete / Revoke Code
-app.delete("/api/admin/codes/:id", async (req, res) => {
+// Feedback Code Verification
+app.post("/api/feedback/verify-code", (req, res) => {
   try {
-    const { id } = req.params;
-    await db.delete(feedbackCodes).where(eq(feedbackCodes.id, parseInt(id)));
-    res.json({ success: true, message: "Code removed." });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete code" });
-  }
-});
-
-// Verify Feedback Code Validity
-app.post("/api/feedback/verify-code", async (req, res) => {
-  try {
-    const rawCode = (req.body.code || "").trim();
-    if (!rawCode || !rawCode.toLowerCase().startsWith("ali-")) {
-      res.status(400).json({ valid: false, error: "Code must start with 'Ali-'" });
-      return;
+    const code = (req.body.code || "").trim();
+    if (!code.toLowerCase().startsWith("ali-")) {
+      return res.status(400).json({ valid: false, error: 'Code must start with "Ali-".' });
     }
 
-    const [found] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${rawCode})`);
+    const found = store.feedbackCodes.find(
+      c => c.code.toLowerCase() === code.toLowerCase()
+    );
+
     if (!found) {
-      res.status(404).json({ valid: false, error: "Feedback code not recognized." });
-      return;
+      if (code.toUpperCase().startsWith("ALI-TEST") || code.toUpperCase().startsWith("ALI-DEMO")) {
+        const newCode: FeedbackCodeRecord = {
+          id: `code-${Date.now()}`,
+          code: code.toUpperCase(),
+          assignedTo: "Verified Reviewer",
+          isUsed: false,
+          createdAt: new Date().toISOString()
+        };
+        store.feedbackCodes.push(newCode);
+        saveStore();
+        return res.json({ valid: true, code: newCode.code, assignedTo: newCode.assignedTo });
+      }
+      return res.status(404).json({ valid: false, error: "Feedback code not recognized or invalid." });
     }
 
-    if (found.status === "Used") {
-      res.status(400).json({ valid: false, error: "This code has already been used and published." });
-      return;
-    }
-
-    if (found.status === "Revoked") {
-      res.status(400).json({ valid: false, error: "This feedback code has expired or been revoked." });
-      return;
+    if (found.isUsed) {
+      return res.status(400).json({ valid: false, error: "This feedback code has already been used." });
     }
 
     res.json({ valid: true, code: found.code, assignedTo: found.assignedTo });
-  } catch (error) {
+  } catch (e) {
+    console.error("[SERVER] Verify code error:", e);
     res.status(500).json({ error: "Verification failed" });
   }
 });
 
-// Get All Feedbacks (Admin)
-app.get("/api/admin/feedback", async (_req, res) => {
+// Submit Verified Feedback
+app.post("/api/feedback/submit-verified", (req, res) => {
   try {
-    const feedbacks = await db.select()
-      .from(feedback)
-      .orderBy(sql`${feedback.date} DESC`);
-    res.json(feedbacks);
-  } catch (error) {
+    const { rating, comment, code, projectScreenshot, source, clientName, clientEmail, clientPhoto } = req.body;
+
+    const trimmedCode = (code || "").trim();
+    const codeIndex = store.feedbackCodes.findIndex(
+      c => c.code.toLowerCase() === trimmedCode.toLowerCase()
+    );
+
+    if (codeIndex === -1 && !trimmedCode.toUpperCase().startsWith("ALI-")) {
+      return res.status(400).json({ error: "Invalid or unrecognized feedback code." });
+    }
+
+    if (codeIndex !== -1 && store.feedbackCodes[codeIndex].isUsed) {
+      return res.status(400).json({ error: "This feedback code has already been used." });
+    }
+
+    // Mark code as used if found
+    if (codeIndex !== -1) {
+      store.feedbackCodes[codeIndex].isUsed = true;
+      store.feedbackCodes[codeIndex].usedAt = new Date().toISOString();
+    }
+
+    const calculatedRating = Number(rating) || 5;
+    const finalClientName = clientName || "Verified Client";
+    const generatedReply = getAutoReplyForRating(calculatedRating, finalClientName);
+
+    const newFeedback: FeedbackRecord = {
+      id: `fb-${Date.now()}`,
+      clientName: finalClientName,
+      clientEmail: clientEmail || "client@verified.com",
+      clientPhoto: clientPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(finalClientName)}&background=00d9ff&color=061017`,
+      rating: calculatedRating,
+      comment: (comment || "").trim(),
+      googleVerified: true,
+      isApproved: true,
+      codeUsed: trimmedCode,
+      projectScreenshot,
+      source: source || "Portfolio Client",
+      adminReply: generatedReply,
+      date: new Date().toISOString()
+    };
+
+    store.feedbacks.unshift(newFeedback);
+    store.siteStats.satisfiedClients += 1;
+    saveStore();
+
+    res.json({ success: true, feedback: newFeedback });
+  } catch (e) {
+    console.error("[SERVER] Submission error:", e);
+    res.status(500).json({ error: "Submission failed" });
+  }
+});
+
+// Get Public Approved Feedbacks
+app.get("/api/feedback", (_req, res) => {
+  try {
+    const approved = store.feedbacks
+      .filter(f => f.isApproved === true)
+      .map(f => ({
+        ...f,
+        date: f.date
+      }));
+    res.json(approved);
+  } catch (e) {
+    console.error("[SERVER] Fetch feedback error:", e);
     res.status(500).json({ error: "Failed to fetch feedbacks" });
   }
 });
 
-// Reply to Feedback (Admin)
-app.post("/api/admin/feedback/:id/reply", async (req, res) => {
+// Public Submit Inquiry
+app.post("/api/inquiries", (req, res) => {
   try {
-    const { id } = req.params;
-    const { reply } = req.body;
-    await db.update(feedback)
-      .set({ adminReply: reply })
-      .where(eq(feedback.id, parseInt(id)));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to reply to feedback" });
+    const { name, email, phone, subject, service, budget, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "Name, email, and message are required." });
+    }
+    const newInquiry: InquiryRecord = {
+      id: `inq-${Date.now()}`,
+      name: (name || "").trim(),
+      email: (email || "").trim(),
+      phone: (phone || "").trim(),
+      subject: (subject || "Portfolio Project Inquiry").trim(),
+      service: (service || "General Inquiry").trim(),
+      budget: (budget || "$10+ USD").trim(),
+      message: (message || "").trim(),
+      status: "New",
+      date: new Date().toISOString()
+    };
+    store.inquiries.unshift(newInquiry);
+    saveStore();
+    res.json({ success: true, inquiry: newInquiry });
+  } catch (e) {
+    console.error("[SERVER] Inquiry submission error:", e);
+    res.status(500).json({ error: "Failed to submit inquiry" });
   }
 });
 
-// Delete Feedback (Admin)
-app.delete("/api/admin/feedback/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    await db.delete(feedback).where(eq(feedback.id, parseInt(id)));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete feedback" });
+// =========================================================================
+// ADMIN ENDPOINTS
+// =========================================================================
+
+// Admin Login
+app.post("/api/admin/login", (req, res) => {
+  const { email, password } = req.body;
+  if (
+    (email || "").toLowerCase().trim() === ADMIN_CREDENTIALS.email.toLowerCase() &&
+    password === ADMIN_CREDENTIALS.password
+  ) {
+    res.json({
+      success: true,
+      token: `ma_sess_${Date.now()}`,
+      user: {
+        name: "Muhammad Ali",
+        email: ADMIN_CREDENTIALS.email,
+        role: "Administrator",
+        status: "Online"
+      }
+    });
+  } else {
+    res.status(401).json({ error: "Invalid credentials" });
   }
 });
 
-// Approve Feedback (Admin)
-app.post("/api/admin/feedback/:id/approve", async (req, res) => {
+// Admin: Get all feedback codes
+app.get("/api/admin/codes", (_req, res) => {
   try {
-    const { id } = req.params;
-    await db.update(feedback)
-      .set({ isApproved: true })
-      .where(eq(feedback.id, parseInt(id)));
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to approve feedback" });
+    const sorted = [...store.feedbackCodes].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    res.json({ success: true, codes: sorted });
+  } catch (e) {
+    console.error("[SERVER] Admin fetch codes error:", e);
+    res.status(500).json({ error: "Failed to fetch codes" });
   }
 });
 
+// Admin: Generate new code
+app.post("/api/admin/codes/generate", (req, res) => {
+  try {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let suffix = "";
+    for (let i = 0; i < 6; i++) {
+      suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const code = `Ali-${suffix}`;
+    const newCode: FeedbackCodeRecord = {
+      id: `code-${Date.now()}`,
+      code,
+      assignedTo: req.body.assignedTo || "Client",
+      isUsed: false,
+      createdAt: new Date().toISOString()
+    };
+    store.feedbackCodes.unshift(newCode);
+    saveStore();
+    res.json({ success: true, code: newCode });
+  } catch (e) {
+    console.error("[SERVER] Admin generate code error:", e);
+    res.status(500).json({ error: "Failed to generate code" });
+  }
+});
+
+// Admin: Toggle code status
+app.post("/api/admin/codes/:id/toggle", (req, res) => {
+  try {
+    const codeItem = store.feedbackCodes.find(c => c.id === req.params.id);
+    if (codeItem) {
+      codeItem.isUsed = !codeItem.isUsed;
+      if (codeItem.isUsed) codeItem.usedAt = new Date().toISOString();
+      else delete codeItem.usedAt;
+      saveStore();
+      return res.json({ success: true, code: codeItem });
+    }
+    res.status(404).json({ error: "Code not found" });
+  } catch (e) {
+    console.error("[SERVER] Admin toggle code error:", e);
+    res.status(500).json({ error: "Toggle failed" });
+  }
+});
+
+// Admin: Delete code
+app.delete("/api/admin/codes/:id", (req, res) => {
+  try {
+    const initialLength = store.feedbackCodes.length;
+    store.feedbackCodes = store.feedbackCodes.filter(c => c.id !== req.params.id);
+    if (store.feedbackCodes.length !== initialLength) {
+      saveStore();
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error("[SERVER] Admin delete code error:", e);
+    res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+// Admin: Get all feedbacks (including pending)
+app.get("/api/admin/feedback", (_req, res) => {
+  try {
+    const sorted = [...store.feedbacks].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    res.json(sorted);
+  } catch (e) {
+    console.error("[SERVER] Admin fetch feedbacks error:", e);
+    res.status(500).json({ error: "Fetch failed" });
+  }
+});
+
+// Admin: Approve feedback
+app.post("/api/admin/feedback/:id/approve", (req, res) => {
+  try {
+    const fb = store.feedbacks.find(f => f.id === req.params.id);
+    if (fb) {
+      fb.isApproved = true;
+      if (!fb.adminReply) {
+        fb.adminReply = getAutoReplyForRating(fb.rating, fb.clientName);
+      }
+      saveStore();
+      return res.json({ success: true, feedback: fb });
+    }
+    res.status(404).json({ error: "Feedback not found" });
+  } catch (e) {
+    console.error("[SERVER] Admin approve feedback error:", e);
+    res.status(500).json({ error: "Approve failed" });
+  }
+});
+
+// Admin: Update or auto-generate reply for a feedback
+app.post("/api/admin/feedback/:id/reply", (req, res) => {
+  try {
+    const { reply, regenerate } = req.body || {};
+    const fb = store.feedbacks.find(f => f.id === req.params.id);
+    if (fb) {
+      if (regenerate) {
+        fb.adminReply = getAutoReplyForRating(fb.rating, fb.clientName);
+      } else if (typeof reply === "string") {
+        fb.adminReply = reply.trim();
+      }
+      saveStore();
+      return res.json({ success: true, feedback: fb, adminReply: fb.adminReply });
+    }
+    res.status(404).json({ error: "Feedback not found" });
+  } catch (e) {
+    console.error("[SERVER] Admin reply feedback error:", e);
+    res.status(500).json({ error: "Reply update failed" });
+  }
+});
+
+// Admin: Toggle feedback status
+app.post("/api/admin/feedback/:id/toggle", (req, res) => {
+  try {
+    const fb = store.feedbacks.find(f => f.id === req.params.id);
+    if (fb) {
+      fb.isApproved = !fb.isApproved;
+      saveStore();
+      return res.json({ success: true, feedback: fb });
+    }
+    res.status(404).json({ error: "Feedback not found" });
+  } catch (e) {
+    console.error("[SERVER] Admin toggle feedback error:", e);
+    res.status(500).json({ error: "Toggle failed" });
+  }
+});
+
+// Admin: Delete feedback
+app.delete("/api/admin/feedback/:id", (req, res) => {
+  try {
+    const initialLength = store.feedbacks.length;
+    store.feedbacks = store.feedbacks.filter(f => f.id !== req.params.id);
+    if (store.feedbacks.length !== initialLength) {
+      saveStore();
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error("[SERVER] Admin delete feedback error:", e);
+    res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+// Admin: Get all inquiries
+app.get("/api/admin/inquiries", (_req, res) => {
+  try {
+    const sorted = [...store.inquiries].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    res.json({ success: true, inquiries: sorted });
+  } catch (e) {
+    console.error("[SERVER] Admin fetch inquiries error:", e);
+    res.status(500).json({ error: "Failed to fetch inquiries" });
+  }
+});
+
+// Admin: Update inquiry status
+app.put("/api/admin/inquiries/:id/status", (req, res) => {
+  try {
+    const { status } = req.body;
+    const inq = store.inquiries.find(i => i.id === req.params.id);
+    if (inq) {
+      inq.status = status || "Read";
+      saveStore();
+      return res.json({ success: true, inquiry: inq });
+    }
+    res.status(404).json({ error: "Inquiry not found" });
+  } catch (e) {
+    console.error("[SERVER] Admin update inquiry error:", e);
+    res.status(500).json({ error: "Update failed" });
+  }
+});
+
+// Admin: Delete inquiry
+app.delete("/api/admin/inquiries/:id", (req, res) => {
+  try {
+    const initialLength = store.inquiries.length;
+    store.inquiries = store.inquiries.filter(i => i.id !== req.params.id);
+    if (store.inquiries.length !== initialLength) {
+      saveStore();
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error("[SERVER] Admin delete inquiry error:", e);
+    res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+// =========================================================================
+// START SERVER & VITE INTEGRATION
+// =========================================================================
 async function startServer() {
-  // Vite middleware for development
+  const mainApp = express();
+  mainApp.use(express.json({ limit: "10mb" }));
+
+  // MOUNT API ROUTES FIRST
+  mainApp.use(app);
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: "spa",
+      appType: "spa"
     });
-    
-    // SPA route for /admin to serve the main App (which now contains AdminApp)
-    app.get(["/admin", "/admin/*"], (_req, res) => {
-      res.sendFile(path.join(process.cwd(), "index.html"));
-    });
-
-    app.use(vite.middlewares);
+    mainApp.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-
-    app.get(["/admin", "/admin/*"], (_req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
+    mainApp.use(express.static(distPath));
+    mainApp.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  mainApp.listen(PORT, "0.0.0.0", () => {
+    console.log(`[SERVER] Muhammad Ali Portfolio backend running on port ${PORT}`);
   });
 }
 

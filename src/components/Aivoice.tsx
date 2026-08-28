@@ -254,7 +254,7 @@ function getInstantAnswer(question: string): { text: string; actionLinks?: Messa
   return null;
 }
 
-export default function AIVoiceSupportModal({ isOpen, onClose }: AIVoiceSupportModalProps) {
+export default function Aivoice({ isOpen, onClose }: AIVoiceSupportModalProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome-1',

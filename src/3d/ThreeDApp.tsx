@@ -63,7 +63,7 @@ export default function ThreeDApp({ onExitTo2D, initialModelFile = null }: Three
     if (onExitTo2D) {
       onExitTo2D();
     } else {
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }
   };
 

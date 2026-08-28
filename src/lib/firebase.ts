@@ -2,27 +2,23 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, Auth } from "firebase/auth";
 
+// These values are sourced from the provisioned Firebase project for this applet
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDDocF1doKNDFgQPaANDbUnPWvj7q1b3m0",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "rugged-objective-d7dgj.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "rugged-objective-d7dgj",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "rugged-objective-d7dgj.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "973064181447",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:973064181447:web:0bc14d9d39a3c39bec90e2",
 };
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const getFirebaseApp = () => {
   if (!app) {
-    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-    if (!apiKey) {
-      console.error("Firebase API Key is missing in the browser environment. Please ensure VITE_FIREBASE_API_KEY is set.");
-      // Fallback: try to see if it's available in some other way or just return null
-      return null;
-    }
     if (getApps().length === 0) {
       app = initializeApp(firebaseConfig);
     } else {
@@ -42,26 +38,16 @@ export const getFirebaseAuth = () => {
 
 export { googleProvider };
 
-export const signInWithGoogle = async (useRedirect = false) => {
+export const signInWithGoogle = async () => {
   const firebaseAuth = getFirebaseAuth();
-  if (!firebaseAuth) {
-    console.error("Auth object is null during signInWithGoogle call.");
-    throw new Error("Firebase Auth could not be initialized. Missing config?");
-  }
+  if (!firebaseAuth) throw new Error("Firebase Auth could not be initialized.");
+
   try {
-    if (useRedirect || (window.self !== window.top)) {
-       console.log("Using Redirect instead of Popup (due to iframe or manual request)...");
-       return await signInWithRedirect(firebaseAuth, googleProvider);
-    }
-    console.log("Attempting Google Sign-In with Popup...");
+    console.log("Opening Google Sign-In Popup...");
     const result = await signInWithPopup(firebaseAuth, googleProvider);
-    console.log("Google Sign-In successful for:", result.user.email);
     return result.user;
   } catch (error: any) {
-    console.error("Full Firebase Auth Error:", error);
-    if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
-      console.error("Error signing in with Google:", error);
-    }
+    console.error("Firebase Auth Error:", error);
     throw error;
   }
 };
@@ -73,8 +59,7 @@ export const getGoogleRedirectResult = async () => {
     const result = await getRedirectResult(firebaseAuth);
     return result?.user || null;
   } catch (error) {
-    console.error("Error getting redirect result:", error);
+    // Redirect not used inside iframe to avoid 403
     return null;
   }
 };
-
