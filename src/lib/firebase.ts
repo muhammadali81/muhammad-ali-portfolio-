@@ -1,6 +1,6 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, Auth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,8 +17,10 @@ const googleProvider = new GoogleAuthProvider();
 
 export const getFirebaseApp = () => {
   if (!app) {
-    if (!firebaseConfig.apiKey) {
-      console.error("Firebase API Key is missing. Check your VITE_FIREBASE_API_KEY environment variable.");
+    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+    if (!apiKey) {
+      console.error("Firebase API Key is missing in the browser environment. Please ensure VITE_FIREBASE_API_KEY is set.");
+      // Fallback: try to see if it's available in some other way or just return null
       return null;
     }
     if (getApps().length === 0) {
@@ -40,18 +42,39 @@ export const getFirebaseAuth = () => {
 
 export { googleProvider };
 
-export const signInWithGoogle = async () => {
+export const signInWithGoogle = async (useRedirect = false) => {
   const firebaseAuth = getFirebaseAuth();
   if (!firebaseAuth) {
-    throw new Error("Firebase is not configured. Please check your environment variables.");
+    console.error("Auth object is null during signInWithGoogle call.");
+    throw new Error("Firebase Auth could not be initialized. Missing config?");
   }
   try {
+    if (useRedirect || (window.self !== window.top)) {
+       console.log("Using Redirect instead of Popup (due to iframe or manual request)...");
+       return await signInWithRedirect(firebaseAuth, googleProvider);
+    }
+    console.log("Attempting Google Sign-In with Popup...");
     const result = await signInWithPopup(firebaseAuth, googleProvider);
+    console.log("Google Sign-In successful for:", result.user.email);
     return result.user;
   } catch (error: any) {
+    console.error("Full Firebase Auth Error:", error);
     if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
       console.error("Error signing in with Google:", error);
     }
     throw error;
   }
 };
+
+export const getGoogleRedirectResult = async () => {
+  const firebaseAuth = getFirebaseAuth();
+  if (!firebaseAuth) return null;
+  try {
+    const result = await getRedirectResult(firebaseAuth);
+    return result?.user || null;
+  } catch (error) {
+    console.error("Error getting redirect result:", error);
+    return null;
+  }
+};
+

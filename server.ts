@@ -23,6 +23,12 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[SERVER] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // =========================================================================
 // ADMIN AUTHENTICATION CONFIGURATION
 // =========================================================================
@@ -445,6 +451,11 @@ app.post("/api/voice-support", async (req, res) => {
 // DATABASE & AUTH API ENDPOINTS
 // =========================================================================
 
+// Health Check Endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
+});
+
 // Get Portfolio Stats
 app.get("/api/stats", async (_req, res) => {
   console.log("[API] GET /api/stats requested");
@@ -515,19 +526,28 @@ app.post("/api/feedback/submit-verified", async (req, res) => {
     const { token, rating, comment, code, projectScreenshot } = req.body;
     
     // 1. Verify Code First
-    if (!code || !code.toLowerCase().startsWith("ali-")) {
+    const rawCode = (code || "").trim();
+    if (!rawCode || !rawCode.toLowerCase().startsWith("ali-")) {
       res.status(400).json({ error: "A valid feedback code starting with 'Ali-' is required." });
       return;
     }
 
-    const [dbCode] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    const [dbCode] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${rawCode})`);
     if (!dbCode || dbCode.status !== "Active") {
+      console.warn(`[SUBMIT] Invalid or used code attempt: ${rawCode}`);
       res.status(400).json({ error: "This feedback code is invalid or has already been used." });
       return;
     }
 
     // 2. Verify Firebase Token
-    const decodedToken = await getAuth().verifyIdToken(token);
+    let decodedToken;
+    try {
+      decodedToken = await getAuth().verifyIdToken(token);
+    } catch (authErr: any) {
+      console.error("[SUBMIT] Auth verification failed:", authErr.message);
+      res.status(401).json({ error: "Google identity verification failed. Please sign in again." });
+      return;
+    }
     const { name, email, picture, uid } = decodedToken;
 
     // 3. Generate AI Auto-Reply based on feedback situation
@@ -756,13 +776,13 @@ app.delete("/api/admin/codes/:id", async (req, res) => {
 // Verify Feedback Code Validity
 app.post("/api/feedback/verify-code", async (req, res) => {
   try {
-    const { code } = req.body;
-    if (!code || !code.toLowerCase().startsWith("ali-")) {
+    const rawCode = (req.body.code || "").trim();
+    if (!rawCode || !rawCode.toLowerCase().startsWith("ali-")) {
       res.status(400).json({ valid: false, error: "Code must start with 'Ali-'" });
       return;
     }
 
-    const [found] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    const [found] = await db.select().from(feedbackCodes).where(sql`LOWER(${feedbackCodes.code}) = LOWER(${rawCode})`);
     if (!found) {
       res.status(404).json({ valid: false, error: "Feedback code not recognized." });
       return;

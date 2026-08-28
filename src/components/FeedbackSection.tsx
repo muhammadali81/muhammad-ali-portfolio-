@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HOW_DO_YOU_KNOW_OPTIONS } from '../data/portfolioData';
-import { signInWithGoogle, getFirebaseAuth } from '../lib/firebase';
+import { signInWithGoogle, getFirebaseAuth, getGoogleRedirectResult } from '../lib/firebase';
 import {
   Upload,
   Image as ImageIcon,
@@ -61,6 +61,21 @@ export default function FeedbackSection() {
   useEffect(() => {
     const auth = getFirebaseAuth();
     if (!auth) return;
+
+    // Check for redirect result on mount
+    getGoogleRedirectResult().then(user => {
+      if (user) {
+        console.log("Found redirect user:", user.email);
+        setAuthUser({
+          name: user.displayName || 'Verified User',
+          email: user.email || '',
+          picture: user.photoURL || '',
+          provider: 'Google'
+        });
+        setIsAuth(true);
+        setStatus('Welcome back! Identity verified via Google.');
+      }
+    });
 
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -140,30 +155,32 @@ export default function FeedbackSection() {
 
   // Google Authentication Trigger
   const handleGoogleSignIn = async () => {
+    console.log("Google Button Clicked");
     if (isAuthenticating) return;
     setIsAuthenticating(true);
-    setStatus('Waiting for Google authentication...');
+    setStatus('Initializing Google Identity...');
     setIsError(false);
     try {
       const auth = getFirebaseAuth();
       if (!auth) {
-        throw new Error("Firebase is not configured. Please check your environment variables.");
+        const msg = "Firebase is not initialized. Please ensure VITE_FIREBASE_API_KEY is available in the browser.";
+        console.error(msg);
+        setStatus(msg);
+        setIsError(true);
+        setIsAuthenticating(false);
+        return;
       }
+      setStatus('Waiting for Google authentication popup...');
+      console.log("Starting Google Sign-In process...");
       const user = await signInWithGoogle();
-      setAuthUser({
-        name: user.displayName || 'Verified User',
-        email: user.email || '',
-        picture: user.photoURL || '',
-        provider: 'Google'
-      });
-      setIsAuth(true);
       setStatus('Google Identity authenticated successfully!');
       setIsError(false);
     } catch (error: any) {
+      console.error("Login Handler Error:", error);
       if (error?.code === 'auth/cancelled-popup-request' || error?.code === 'auth/popup-closed-by-user') {
-        setStatus('Google Sign-In was cancelled.');
+        setStatus('Google Sign-In was cancelled by user.');
       } else {
-        setStatus('Google Sign-In failed. Please try again.');
+        setStatus(`Google Sign-In failed: ${error.message || 'Please check your internet connection and try again.'}`);
       }
       setIsError(true);
     } finally {
@@ -185,26 +202,40 @@ export default function FeedbackSection() {
     setStatus('Verifying your unique feedback code...');
 
     try {
+      console.log("Verifying code:", trimmedCode);
       const res = await fetch('/api/feedback/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: trimmedCode })
+      }).catch(err => {
+        throw new Error(`Fetch failed: ${err.message}. The server might be unreachable.`);
       });
 
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => {
+          throw new Error("Server returned invalid JSON.");
+        });
+        console.log("Verification success:", data);
         setIsCodeValid(true);
-        setAliCode(data.code); // Normalize to the correct case from DB
+        setAliCode(data.code); 
         setStatus(`Code verified for ${data.assignedTo || 'client'}. You can now proceed.`);
         setIsError(false);
       } else {
-        const err = await res.json();
-        setStatus(err.error || 'Invalid or used code.');
+        let errMsg = 'Invalid or used code.';
+        try {
+          const err = await res.json();
+          errMsg = err.error || errMsg;
+        } catch (e) {
+          errMsg = `Server Error (${res.status}): ${res.statusText}`;
+        }
+        console.warn("Verification failed response:", errMsg);
+        setStatus(errMsg);
         setIsError(true);
         setIsCodeValid(false);
       }
-    } catch (err) {
-      setStatus('Connection error during code verification.');
+    } catch (err: any) {
+      console.error("Verification fetch error:", err);
+      setStatus(`Verification Error: ${err.message}`);
       setIsError(true);
     } finally {
       setVerifyingCode(false);
@@ -568,14 +599,42 @@ export default function FeedbackSection() {
             {/* Status Message */}
             {status && (
               <div
-                className={`p-3.5 rounded-xl text-xs flex items-center gap-2 ${
+                className={`p-3.5 rounded-xl text-xs flex flex-col gap-2 ${
                   isError
                     ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
                     : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
                 }`}
               >
-                {isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
-                <span>{status}</span>
+                <div className="flex items-center gap-2">
+                  {isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                  <span>{status}</span>
+                </div>
+                {isError && (
+                  <div className="flex gap-2 mt-1">
+                    <button 
+                      type="button"
+                      onClick={() => window.open(window.location.href, '_blank')}
+                      className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold border border-white/10 flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Open in New Tab
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/health');
+                          const data = await res.json();
+                          alert(`Connection Test: ${data.status === 'ok' ? 'SUCCESS ✅' : 'FAILED ❌'}`);
+                        } catch (e) {
+                          alert('Connection Test: FAILED ❌ (Could not reach server)');
+                        }
+                      }}
+                      className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold border border-white/10 flex items-center gap-1"
+                    >
+                      <ShieldCheck className="w-3 h-3" /> Test Connection
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -706,6 +765,7 @@ export default function FeedbackSection() {
           </div>
         </div>
       </div>
+
     </section>
   );
 }

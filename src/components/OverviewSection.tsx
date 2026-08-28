@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ShieldCheck, CheckCircle2, Star } from 'lucide-react';
 
 export default function OverviewSection() {
   const [stats, setStats] = useState({
@@ -71,8 +72,63 @@ export default function OverviewSection() {
             <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Live System Statistics</span>
           </div>
           <h2 className="text-[40px] font-black mb-[10px]">Portfolio <span>Overview</span></h2>
-          <p className="text-[#818c9c]">A live snapshot of reach, client satisfaction and community feedback.</p>
+          <p className="text-[#818c9c] max-w-2xl mx-auto">
+            A real-time snapshot of Muhammad Ali's professional reach and client satisfaction, reflecting a dedicated focus on Web, Game, AI, and Architectural innovation.
+          </p>
         </div>
+
+        {/* Dynamic Portfolio Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+          <div className="lg:col-span-8 p-8 rounded-[32px] bg-gradient-to-br from-[#10151f] to-[#161d2b] border border-white/5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+              <ShieldCheck className="w-32 h-32 text-[#00d9ff]" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-[#00d9ff]/10 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-[#00d9ff]" />
+              </span>
+              Operational Status & Function
+            </h3>
+            <div className="space-y-4 text-slate-400 text-sm leading-relaxed">
+              <p>
+                Muhammad Ali's portfolio is currently operating as a <span className="text-[#00d9ff] font-bold">Verified Professional Studio</span>. 
+                Every piece of feedback shown is authenticated via Google Identity and a unique project-specific code, ensuring 100% integrity in client reviews.
+              </p>
+              <p>
+                The studio specializes in four high-impact divisions: <span className="text-white font-medium italic">Nova Web Studio</span> for enterprise web solutions, 
+                <span className="text-white font-medium italic">Colour Block & Pak AI</span> for interactive gaming and Urdu-voice assistants, 
+                <span className="text-white font-medium italic">Pixel Forge</span> for graphic identity, and <span className="text-white font-medium italic">Smart Flooring CAD</span> for architectural precision.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-2">
+                {['Verified Auth', 'Secure Inquiries', 'AI-Powered Support', 'Real-time Stats'].map(tag => (
+                  <span key={tag} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 p-8 rounded-[32px] bg-[#0c111a] border border-[#00d9ff]/20 flex flex-col justify-center items-center text-center">
+             <div className="w-16 h-16 rounded-2xl bg-[#00d9ff]/10 flex items-center justify-center mb-4">
+                <Star className="w-8 h-8 text-[#00d9ff] fill-[#00d9ff]" />
+             </div>
+             <h4 className="text-2xl font-black text-white mb-1">{stats.average_rating.toFixed(1)}</h4>
+             <p className="text-[10px] uppercase tracking-widest text-[#00d9ff] font-black mb-4">Global Excellence Rating</p>
+             <div className="flex gap-1 mb-6">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className={`w-3 h-3 ${i <= Math.round(stats.average_rating) ? 'text-[#00d9ff] fill-[#00d9ff]' : 'text-slate-700'}`} />
+                ))}
+             </div>
+             <button 
+              onClick={() => document.getElementById('feedback')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full py-3 rounded-xl bg-[#00d9ff] text-[#061017] font-bold text-xs uppercase tracking-widest hover:bg-white transition-all shadow-lg shadow-[#00d9ff]/20"
+             >
+               View Client Reviews
+             </button>
+          </div>
+        </div>
+
         <div className="overview-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-[14px]">
           <div className="overview-card min-h-[138px] p-[22px] border border-[rgba(255,255,255,.08)] bg-[#10151f] rounded-[22px] flex flex-col justify-between">
             <strong className="text-[32px] leading-none text-[#00d9ff]">{stats.profile_views.toLocaleString()}</strong>
