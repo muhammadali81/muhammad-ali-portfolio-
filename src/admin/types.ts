@@ -38,7 +38,7 @@ export interface InquiryItem {
 }
 
 export interface GeneratedCode {
-  id?: number;
+  id?: number | string;
   code: string;
   createdAt: string;
   status: 'Active' | 'Used' | 'Revoked';

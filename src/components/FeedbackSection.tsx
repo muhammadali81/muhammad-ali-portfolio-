@@ -172,14 +172,16 @@ export default function FeedbackSection() {
       }
     } catch (error: any) {
       console.error("Login Handler Error:", error);
+      setIsError(true);
       if (error?.code === 'auth/cancelled-popup-request' || error?.code === 'auth/popup-closed-by-user') {
-        setStatus('Google Sign-In popup was closed. Please try again.');
+        setStatus('Google Sign-In popup was closed. Please click "Sign in with Google" again.');
       } else if (error?.code === 'auth/popup-blocked') {
-        setStatus('Popup was blocked by your browser. Please allow popups for this site.');
+        setStatus('Browser blocked the popup window. Please click "Open in New Tab" below or allow popups.');
+      } else if (error?.code === 'auth/unauthorized-domain') {
+        setStatus('Domain authorization check: Please open the app in a new tab to complete Google Sign-In.');
       } else {
-        setStatus(`Google Sign-In notice: ${error.message || 'Please retry sign-in'}.`);
+        setStatus(`Sign-in status: ${error.message || 'Popup closed'}. If blocked by browser, open in a new tab.`);
       }
-      setIsError(false);
     } finally {
       setIsAuthenticating(false);
     }
@@ -521,9 +523,21 @@ export default function FeedbackSection() {
                     : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  {isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
-                  <span>{status}</span>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    {isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+                    <span>{status}</span>
+                  </div>
+                  {isError && (
+                    <a
+                      href={window.location.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Open in New Tab
+                    </a>
+                  )}
                 </div>
               </div>
             )}

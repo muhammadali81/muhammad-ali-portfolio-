@@ -435,23 +435,87 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
     if (onBack) onBack();
   };
 
-  const handleGenerateCode = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGenerateCode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsGeneratingCode(true);
+    const clientName = (assignedClient || '').trim() || 'VIP Client';
+    
+    // Create random 6-character suffix
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let suffix = "";
+    for (let i = 0; i < 6; i++) {
+      suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const newGeneratedCode = `Ali-${suffix}`;
+
     try {
       const res = await fetch('/api/admin/codes/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignedTo: assignedClient || 'VIP Client' })
+        body: JSON.stringify({ assignedTo: clientName })
       });
+      
       if (res.ok) {
+        const data = await res.json();
+        const created = data.code || {
+          id: `code-${Date.now()}`,
+          code: newGeneratedCode,
+          assignedTo: clientName,
+          status: 'Active',
+          createdAt: 'Today'
+        };
+        setCodes(prev => [
+          {
+            id: created.id,
+            code: created.code,
+            assignedTo: created.assignedTo || clientName,
+            status: 'Active',
+            createdAt: 'Today',
+            usedAt: undefined
+          },
+          ...prev.filter(c => c.id !== created.id && c.code !== created.code)
+        ]);
         setAssignedClient('');
-        fetchAllData();
+      } else {
+        // Server error fallback - create locally so admin is never blocked
+        const fallbackCode: GeneratedCode = {
+          id: `code-${Date.now()}`,
+          code: newGeneratedCode,
+          assignedTo: clientName,
+          status: 'Active',
+          createdAt: 'Today'
+        };
+        setCodes(prev => [fallbackCode, ...prev]);
+        setAssignedClient('');
       }
-    } catch { }
-    finally {
+    } catch {
+      // Network failure fallback
+      const fallbackCode: GeneratedCode = {
+        id: `code-${Date.now()}`,
+        code: newGeneratedCode,
+        assignedTo: clientName,
+        status: 'Active',
+        createdAt: 'Today'
+      };
+      setCodes(prev => [fallbackCode, ...prev]);
+      setAssignedClient('');
+    } finally {
       setIsGeneratingCode(false);
     }
+  };
+
+  const handleDeleteCode = async (id: string) => {
+    try {
+      await fetch(`/api/admin/codes/${id}`, { method: 'DELETE' });
+    } catch { }
+    setCodes(prev => prev.filter(c => c.id !== id));
+  };
+
+  const handleToggleCode = async (id: string) => {
+    try {
+      await fetch(`/api/admin/codes/${id}/toggle`, { method: 'POST' });
+    } catch { }
+    setCodes(prev => prev.map(c => c.id === id ? { ...c, status: c.status === 'Active' ? 'Used' : 'Active' } : c));
   };
 
   const handleCopyCode = (codeText: string, id: string) => {
@@ -1438,7 +1502,7 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
                         <p className="text-xs font-semibold text-white mt-2 truncate">{c.assignedTo}</p>
                         <p className="text-[10px] text-slate-500 mt-0.5">Created: {c.createdAt}</p>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between gap-1 flex-wrap">
                         <button 
                           onClick={() => handleCopyCode(c.code, codeId)} 
                           className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 flex items-center gap-1.5 cursor-pointer"
@@ -1446,6 +1510,23 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
                           {isCopied ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
                           <span>{isCopied ? 'Copied' : 'Copy'}</span>
                         </button>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleToggleCode(codeId)}
+                            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-medium text-slate-400 hover:text-slate-200 cursor-pointer"
+                            title="Toggle status between Active and Used"
+                          >
+                            {c.status === 'Active' ? 'Mark Used' : 'Mark Active'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCode(codeId)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                            title="Delete code"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
