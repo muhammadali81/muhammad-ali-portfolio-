@@ -15,11 +15,12 @@ export default function ReactionSection() {
         const res = await fetch('/api/stats');
         if (res.ok) {
           const data = await res.json();
-          setLikes(data.likes || 0);
-          setDislikes(data.dislikes || 0);
+          setLikes(data.positiveReactions || 0);
+          setDislikes(data.negativeReactions || 0);
         }
       } catch (err) {
-        console.error("Failed to fetch reaction counts:", err);
+        // Ignore network errors on initial load to prevent console noise
+        console.warn("Transient fetch error for reaction counts:", err instanceof Error ? err.message : err);
       }
     };
     fetchCounts();

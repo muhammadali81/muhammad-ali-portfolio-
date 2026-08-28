@@ -31,7 +31,13 @@ export default function OverviewSection() {
         });
         retryCount = 0; // Reset on success
       } catch (error) {
-        console.error("Failed to fetch real-time stats:", error);
+        // Only log if we have exhausted retries or it's not a standard network error
+        if (retryCount >= maxRetries) {
+          console.error("Failed to fetch real-time stats after retries:", error);
+        } else {
+          console.warn(`Transient fetch error (attempt ${retryCount + 1}/${maxRetries}):`, error instanceof Error ? error.message : error);
+        }
+
         if (retryCount < maxRetries) {
           retryCount++;
           setTimeout(fetchStats, 2000 * retryCount);
@@ -47,7 +53,9 @@ export default function OverviewSection() {
     // Register a view once per session
     const hasViewed = sessionStorage.getItem('portfolio_viewed');
     if (!hasViewed) {
-      fetch('/api/stats/view', { method: 'POST' });
+      fetch('/api/stats/view', { method: 'POST' }).catch(() => {
+        // Ignore view count network errors to prevent console noise
+      });
       sessionStorage.setItem('portfolio_viewed', 'true');
     }
 
