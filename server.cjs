@@ -126,6 +126,10 @@ if (!(0, import_app.getApps)().length) {
 var app = (0, import_express.default)();
 var PORT = 3e3;
 app.use(import_express.default.json());
+app.use((req, res, next) => {
+  console.log(`[SERVER] ${(/* @__PURE__ */ new Date()).toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
 var ADMIN_CREDENTIALS = {
   email: process.env.ADMIN_EMAIL || "alimuhammadhvn81@gmail.com",
   password: process.env.ADMIN_PASSWORD || "Ali2007"
@@ -330,6 +334,9 @@ app.post("/api/voice-support", async (req, res) => {
     });
   }
 });
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", time: (/* @__PURE__ */ new Date()).toISOString() });
+});
 app.get("/api/stats", async (_req, res) => {
   console.log("[API] GET /api/stats requested");
   try {
@@ -382,16 +389,25 @@ app.post("/api/stats/view", async (_req, res) => {
 app.post("/api/feedback/submit-verified", async (req, res) => {
   try {
     const { token, rating, comment, code, projectScreenshot } = req.body;
-    if (!code || !code.toLowerCase().startsWith("ali-")) {
+    const rawCode = (code || "").trim();
+    if (!rawCode || !rawCode.toLowerCase().startsWith("ali-")) {
       res.status(400).json({ error: "A valid feedback code starting with 'Ali-' is required." });
       return;
     }
-    const [dbCode] = await db.select().from(feedbackCodes).where(import_drizzle_orm.sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    const [dbCode] = await db.select().from(feedbackCodes).where(import_drizzle_orm.sql`LOWER(${feedbackCodes.code}) = LOWER(${rawCode})`);
     if (!dbCode || dbCode.status !== "Active") {
+      console.warn(`[SUBMIT] Invalid or used code attempt: ${rawCode}`);
       res.status(400).json({ error: "This feedback code is invalid or has already been used." });
       return;
     }
-    const decodedToken = await (0, import_auth.getAuth)().verifyIdToken(token);
+    let decodedToken;
+    try {
+      decodedToken = await (0, import_auth.getAuth)().verifyIdToken(token);
+    } catch (authErr) {
+      console.error("[SUBMIT] Auth verification failed:", authErr.message);
+      res.status(401).json({ error: "Google identity verification failed. Please sign in again." });
+      return;
+    }
     const { name, email, picture, uid } = decodedToken;
     let autoReply = "Thank you for your valuable feedback! I am committed to continuous improvement and appreciate your input.";
     try {
@@ -572,12 +588,12 @@ app.delete("/api/admin/codes/:id", async (req, res) => {
 });
 app.post("/api/feedback/verify-code", async (req, res) => {
   try {
-    const { code } = req.body;
-    if (!code || !code.toLowerCase().startsWith("ali-")) {
+    const rawCode = (req.body.code || "").trim();
+    if (!rawCode || !rawCode.toLowerCase().startsWith("ali-")) {
       res.status(400).json({ valid: false, error: "Code must start with 'Ali-'" });
       return;
     }
-    const [found] = await db.select().from(feedbackCodes).where(import_drizzle_orm.sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    const [found] = await db.select().from(feedbackCodes).where(import_drizzle_orm.sql`LOWER(${feedbackCodes.code}) = LOWER(${rawCode})`);
     if (!found) {
       res.status(404).json({ valid: false, error: "Feedback code not recognized." });
       return;
