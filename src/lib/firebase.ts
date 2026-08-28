@@ -16,7 +16,11 @@ let auth: Auth | null = null;
 const googleProvider = new GoogleAuthProvider();
 
 export const getFirebaseApp = () => {
-  if (!app && firebaseConfig.apiKey) {
+  if (!app) {
+    if (!firebaseConfig.apiKey) {
+      console.error("Firebase API Key is missing. Check your VITE_FIREBASE_API_KEY environment variable.");
+      return null;
+    }
     if (getApps().length === 0) {
       app = initializeApp(firebaseConfig);
     } else {
@@ -51,4 +55,3 @@ export const signInWithGoogle = async () => {
     throw error;
   }
 };
-
