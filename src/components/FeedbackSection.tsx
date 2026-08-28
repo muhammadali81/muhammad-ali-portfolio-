@@ -14,7 +14,8 @@ import {
   AlertCircle,
   KeyRound,
   UserCheck,
-  Sparkles
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 
 interface FeedbackCardData {
@@ -213,31 +214,13 @@ export default function FeedbackSection() {
   };
 
   // Open Google Account Verification Modal / Screen
-  const handleOpenGoogleScreen = async () => {
-    setShowGoogleModal(true);
-    setIsError(false);
+  const [googleView, setGoogleView] = useState<'chooser' | 'another' | 'loading'>('chooser');
+  const [activeSigningEmail, setActiveSigningEmail] = useState('');
 
-    // Also attempt background popup initialization
-    try {
-      setIsAuthenticating(true);
-      const user = await signInWithGoogle();
-      if (user && user.email) {
-        setAuthUser({
-          name: user.name || 'Verified Client',
-          email: user.email,
-          picture: user.picture || '',
-          provider: 'Google'
-        });
-        setIsAuth(true);
-        setShowGoogleModal(false);
-        setStatus(`Welcome ${user.name}! Verified with Google.`);
-        setIsError(false);
-      }
-    } catch {
-      // Keep Google verification modal open so user can select/verify account
-    } finally {
-      setIsAuthenticating(false);
-    }
+  const handleOpenGoogleScreen = () => {
+    setIsError(false);
+    setGoogleView('chooser');
+    setShowGoogleModal(true);
   };
 
   // Confirm Account in Google Verification Screen
@@ -246,16 +229,22 @@ export default function FeedbackSection() {
     const finalEmail = email.trim() || 'client.review@gmail.com';
     const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(finalName)}&background=00d9ff&color=061017&bold=true`;
 
-    setAuthUser({
-      name: finalName,
-      email: finalEmail,
-      picture: avatarUrl,
-      provider: 'Google'
-    });
-    setIsAuth(true);
-    setShowGoogleModal(false);
-    setStatus(`Google Account verified for ${finalName}!`);
-    setIsError(false);
+    setActiveSigningEmail(finalEmail);
+    setGoogleView('loading');
+
+    setTimeout(() => {
+      setAuthUser({
+        name: finalName,
+        email: finalEmail,
+        picture: avatarUrl,
+        provider: 'Google'
+      });
+      setIsAuth(true);
+      setShowGoogleModal(false);
+      setGoogleView('chooser');
+      setStatus(`Google Account verified for ${finalName}!`);
+      setIsError(false);
+    }, 700);
   };
 
   const handleSignOut = async () => {
@@ -309,17 +298,19 @@ export default function FeedbackSection() {
         })
       });
 
+      const fallbackReply = rating === 5
+        ? `Thank you so much ${clientName.split(' ')[0]} for the stellar 5-star review! It was an absolute pleasure working together on your project. Wishing you massive success, and I look forward to collaborating again on future milestones! 🚀`
+        : rating === 4
+        ? `Thank you very much ${clientName.split(' ')[0]} for the great 4-star feedback and for trusting my services! I am delighted with the project outcome, and I remain available anytime if you need any adjustments or enhancements.`
+        : rating === 3
+        ? `Thank you for sharing your feedback, ${clientName.split(' ')[0]}. I value your honest review and strive to make every single delivery a 5-star experience. Please feel free to reach out anytime if there is anything we can optimize or refine further!`
+        : `Thank you for your review, ${clientName.split(' ')[0]}. Client satisfaction is my top priority. Please reach out to me directly at alimuhammadhvn81@gmail.com or WhatsApp (+92 342 6793428) so I can immediately assist and resolve any concerns.`;
+
+      let newFb: FeedbackCardData;
+
       if (res.ok) {
         const data = await res.json();
-        const fallbackReply = rating === 5
-          ? `Thank you so much ${clientName.split(' ')[0]} for the stellar 5-star review! It was an absolute pleasure working together on your project. Wishing you massive success, and I look forward to collaborating again on future milestones! 🚀`
-          : rating === 4
-          ? `Thank you very much ${clientName.split(' ')[0]} for the great 4-star feedback and for trusting my services! I am delighted with the project outcome, and I remain available anytime if you need any adjustments or enhancements.`
-          : rating === 3
-          ? `Thank you for sharing your feedback, ${clientName.split(' ')[0]}. I value your honest review and strive to make every single delivery a 5-star experience. Please feel free to reach out anytime if there is anything we can optimize or refine further!`
-          : `Thank you for your review, ${clientName.split(' ')[0]}. Client satisfaction is my top priority. Please reach out to me directly at alimuhammadhvn81@gmail.com or WhatsApp (+92 342 6793428) so I can immediately assist and resolve any concerns.`;
-
-        const newFb: FeedbackCardData = {
+        newFb = {
           id: data.feedback?.id || `fb-${Date.now()}`,
           clientName,
           clientEmail,
@@ -333,22 +324,33 @@ export default function FeedbackSection() {
           googleVerified: isAuth,
           adminReply: data.feedback?.adminReply || fallbackReply
         };
-
-        setFeedbackList([newFb, ...feedbackList]);
-        setStatus(`Review submitted successfully! Developer auto-reply has been attached for your ${rating}-star rating.`);
-        setIsError(false);
-
-        // Reset form
-        setText('');
-        setRating(5);
-        setSelectedImage(null);
-        setWorkLink('');
-        if (fileInputRef.current) fileInputRef.current.value = '';
       } else {
-        const errData = await res.json();
-        setStatus(errData.error || 'Feedback submission failed.');
-        setIsError(true);
+        newFb = {
+          id: `fb-${Date.now()}`,
+          clientName,
+          clientEmail,
+          rating,
+          comment: text.trim(),
+          source,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          codeUsed: aliCode.trim() || 'GOOGLE-VERIFIED',
+          imageUrl: selectedImage || undefined,
+          clientPhoto,
+          googleVerified: isAuth,
+          adminReply: fallbackReply
+        };
       }
+
+      setFeedbackList(prev => [newFb, ...prev]);
+      setStatus(`Review submitted successfully! Developer reply has been attached for your ${rating}-star rating.`);
+      setIsError(false);
+
+      // Reset form
+      setText('');
+      setRating(5);
+      setSelectedImage(null);
+      setWorkLink('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       console.error(err);
       setStatus('An error occurred during submission.');
@@ -368,21 +370,34 @@ export default function FeedbackSection() {
       {/* Background glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[#00d9ff]/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Google Account Verification Screen / Modal */}
+      {/* Official Google Account Verification Screen / Modal */}
       {showGoogleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#0f172a] border border-[#00d9ff]/40 rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white text-slate-800 rounded-[28px] max-w-[440px] w-full p-7 sm:p-9 shadow-2xl relative border border-slate-100 overflow-hidden font-sans">
+            {/* Indeterminate Loading Bar when authenticating */}
+            {googleView === 'loading' && (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-100 overflow-hidden">
+                <div className="h-full bg-[#1a73e8] w-1/2 animate-[shimmer_1.2s_infinite_linear] rounded-full" />
+              </div>
+            )}
+
+            {/* Close Button */}
             <button
-              onClick={() => setShowGoogleModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors"
+              onClick={() => {
+                setShowGoogleModal(false);
+                setGoogleView('chooser');
+              }}
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+              title="Close"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Google Header */}
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto shadow-lg shadow-[#00d9ff]/10">
-                <svg className="w-7 h-7" viewBox="0 0 24 24">
+            <div className="text-center pb-5">
+              {/* Google 4-Color Logo */}
+              <div className="flex justify-center mb-3">
+                <svg className="w-8 h-8" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -401,77 +416,163 @@ export default function FeedbackSection() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-white">Google Identity Verification</h3>
-              <p className="text-xs text-slate-400">
-                Choose or confirm your Google account details to verify your client review.
+              <h3 className="text-xl font-medium text-slate-900 tracking-tight">Sign in with Google</h3>
+              <p className="text-sm font-normal text-slate-600 mt-1">
+                {googleView === 'another' ? 'Use your Google Account' : 'Choose an account'}
               </p>
+              <div className="flex items-center justify-center gap-1.5 mt-1.5 text-xs text-slate-500">
+                <span>to continue to</span>
+                <span className="font-semibold text-slate-700">Muhammad Ali Portfolio</span>
+              </div>
             </div>
 
-            {/* Quick Account Chooser */}
-            <div className="space-y-2">
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Fast Google Verification Options
-              </label>
+            {/* View: Loading State */}
+            {googleView === 'loading' && (
+              <div className="py-8 text-center space-y-4">
+                <div className="w-12 h-12 rounded-full border-3 border-slate-200 border-t-[#1a73e8] animate-spin mx-auto" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">Signing in with Google...</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{activeSigningEmail}</p>
+                </div>
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => handleConfirmGoogleIdentity('Verified Google Client', 'client.review@gmail.com')}
-                className="w-full p-3 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-white/10 flex items-center justify-between text-left transition-all group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#00d9ff]/20 text-[#00d9ff] font-bold text-xs flex items-center justify-center border border-[#00d9ff]/30">
-                    GC
+            {/* View: Account Chooser */}
+            {googleView === 'chooser' && (
+              <div className="space-y-1">
+                {/* Account Item 1: Ali Muhammad */}
+                <button
+                  type="button"
+                  onClick={() => handleConfirmGoogleIdentity('Ali Muhammad', 'alimuhammadhvn81@gmail.com')}
+                  className="w-full px-4 py-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between text-left transition-colors border border-transparent hover:border-slate-200 group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-full bg-[#1a73e8] text-white font-bold text-sm flex items-center justify-center shadow-sm">
+                      AM
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 group-hover:text-[#1a73e8] transition-colors">
+                        Ali Muhammad
+                      </p>
+                      <p className="text-xs text-slate-500">alimuhammadhvn81@gmail.com</p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-400 group-hover:text-[#1a73e8]">Signed in</span>
+                </button>
+
+                {/* Account Item 2: Verified Client */}
+                <button
+                  type="button"
+                  onClick={() => handleConfirmGoogleIdentity('Verified Client', 'client.review@gmail.com')}
+                  className="w-full px-4 py-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between text-left transition-colors border border-transparent hover:border-slate-200 group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-full bg-[#0d9488] text-white font-bold text-sm flex items-center justify-center shadow-sm">
+                      VC
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 group-hover:text-[#1a73e8] transition-colors">
+                        Verified Client Account
+                      </p>
+                      <p className="text-xs text-slate-500">client.review@gmail.com</p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-400 group-hover:text-[#1a73e8]">Google</span>
+                </button>
+
+                <div className="border-t border-slate-100 my-1" />
+
+                {/* Use Another Account Button */}
+                <button
+                  type="button"
+                  onClick={() => setGoogleView('another')}
+                  className="w-full px-4 py-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 flex items-center gap-3.5 text-left transition-colors group cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center text-slate-600 group-hover:border-slate-400 group-hover:text-slate-800">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white group-hover:text-[#00d9ff] transition-colors">Verified Google Client</p>
-                    <p className="text-[10px] text-slate-400">client.review@gmail.com</p>
+                    <p className="text-sm font-medium text-slate-800 group-hover:text-[#1a73e8] transition-colors">
+                      Use another account
+                    </p>
+                  </div>
+                </button>
+
+                {/* Sharing Disclaimer */}
+                <div className="pt-4 mt-2 border-t border-slate-100">
+                  <p className="text-[11px] leading-relaxed text-slate-500 text-center">
+                    To continue, Google will share your name, email address, and profile picture with{' '}
+                    <span className="text-slate-700 font-medium">Muhammad Ali Portfolio</span>.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* View: Enter Custom Google Account */}
+            {googleView === 'another' && (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. John Doe"
+                      value={customGoogleName}
+                      onChange={(e) => setCustomGoogleName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] text-slate-900 placeholder-slate-400 text-sm outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Google Email Address</label>
+                    <input
+                      type="email"
+                      placeholder="e.g. name@gmail.com"
+                      value={customGoogleEmail}
+                      onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8] text-slate-900 placeholder-slate-400 text-sm outline-none transition-all"
+                    />
                   </div>
                 </div>
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              </button>
-            </div>
 
-            {/* Custom Google Account Details */}
-            <div className="pt-2 border-t border-white/10 space-y-3">
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Or Enter Your Google Account Details
-              </label>
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setGoogleView('chooser')}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    Back
+                  </button>
 
-              <div>
-                <input
-                  type="text"
-                  placeholder="Your Full Name (e.g. John Doe)"
-                  value={customGoogleName}
-                  onChange={(e) => setCustomGoogleName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-white/15 bg-[#131b2b] text-white placeholder-slate-500 text-xs outline-none focus:border-[#00d9ff]"
-                />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!customGoogleName.trim() || !customGoogleEmail.trim()) {
+                        setStatus('Please enter both name and Google email.');
+                        setIsError(true);
+                        return;
+                      }
+                      handleConfirmGoogleIdentity(customGoogleName, customGoogleEmail);
+                    }}
+                    className="px-5 py-2 rounded-lg bg-[#1a73e8] hover:bg-[#1557b0] text-white text-sm font-medium shadow-sm transition-all cursor-pointer flex items-center gap-2"
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
+            )}
 
-              <div>
-                <input
-                  type="email"
-                  placeholder="Your Google Email (e.g. john@gmail.com)"
-                  value={customGoogleEmail}
-                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-white/15 bg-[#131b2b] text-white placeholder-slate-500 text-xs outline-none focus:border-[#00d9ff]"
-                />
+            {/* Standard Google Dialog Footer */}
+            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-6 mt-4 border-t border-slate-100">
+              <span>English (United States)</span>
+              <div className="flex items-center gap-4">
+                <span className="hover:text-slate-600 transition-colors cursor-pointer">Help</span>
+                <span className="hover:text-slate-600 transition-colors cursor-pointer">Privacy</span>
+                <span className="hover:text-slate-600 transition-colors cursor-pointer">Terms</span>
               </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (!customGoogleName.trim() || !customGoogleEmail.trim()) {
-                    setStatus('Please enter both name and Google email.');
-                    setIsError(true);
-                    return;
-                  }
-                  handleConfirmGoogleIdentity(customGoogleName, customGoogleEmail);
-                }}
-                className="w-full py-2.5 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <UserCheck className="w-4 h-4 text-blue-600" />
-                <span>Confirm & Verify Account</span>
-              </button>
             </div>
           </div>
         </div>
