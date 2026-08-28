@@ -37,7 +37,92 @@ var import_path = __toESM(require("path"), 1);
 var import_vite = require("vite");
 var import_genai = require("@google/genai");
 var import_dotenv = __toESM(require("dotenv"), 1);
+var import_app = require("firebase-admin/app");
+var import_auth = require("firebase-admin/auth");
+
+// src/db/index.ts
+var import_node_postgres = require("drizzle-orm/node-postgres");
+var import_pg = __toESM(require("pg"), 1);
+
+// src/db/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  feedback: () => feedback,
+  feedbackCodes: () => feedbackCodes,
+  portfolioStats: () => portfolioStats,
+  reactions: () => reactions
+});
+var import_pg_core = require("drizzle-orm/pg-core");
+var portfolioStats = (0, import_pg_core.pgTable)("portfolio_stats", {
+  id: (0, import_pg_core.serial)("id").primaryKey(),
+  profileViews: (0, import_pg_core.integer)("profile_views").default(0),
+  satisfiedClients: (0, import_pg_core.integer)("satisfied_clients").default(0),
+  unsatisfiedClients: (0, import_pg_core.integer)("unsatisfied_clients").default(0),
+  totalFeedback: (0, import_pg_core.integer)("total_feedback").default(0),
+  averageRating: (0, import_pg_core.doublePrecision)("average_rating").default(0),
+  positiveReactions: (0, import_pg_core.integer)("positive_reactions").default(0),
+  negativeReactions: (0, import_pg_core.integer)("negative_reactions").default(0),
+  updatedAt: (0, import_pg_core.timestamp)("updated_at").defaultNow()
+});
+var feedback = (0, import_pg_core.pgTable)("feedback", {
+  id: (0, import_pg_core.serial)("id").primaryKey(),
+  clientName: (0, import_pg_core.text)("client_name").notNull(),
+  clientEmail: (0, import_pg_core.text)("client_email").notNull(),
+  clientPhoto: (0, import_pg_core.text)("client_photo"),
+  rating: (0, import_pg_core.integer)("rating").notNull(),
+  comment: (0, import_pg_core.text)("comment").notNull(),
+  source: (0, import_pg_core.text)("source").default("Direct"),
+  date: (0, import_pg_core.timestamp)("date").defaultNow(),
+  googleVerified: (0, import_pg_core.boolean)("google_verified").default(false),
+  googleId: (0, import_pg_core.text)("google_id"),
+  adminReply: (0, import_pg_core.text)("admin_reply"),
+  isApproved: (0, import_pg_core.boolean)("is_approved").default(true),
+  codeUsed: (0, import_pg_core.text)("code_used"),
+  projectScreenshot: (0, import_pg_core.text)("project_screenshot")
+});
+var feedbackCodes = (0, import_pg_core.pgTable)("feedback_codes", {
+  id: (0, import_pg_core.serial)("id").primaryKey(),
+  code: (0, import_pg_core.text)("code").notNull().unique(),
+  assignedTo: (0, import_pg_core.text)("assigned_to"),
+  notes: (0, import_pg_core.text)("notes"),
+  status: (0, import_pg_core.text)("status").default("Active"),
+  // 'Active', 'Used', 'Revoked'
+  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow(),
+  usedAt: (0, import_pg_core.timestamp)("used_at")
+});
+var reactions = (0, import_pg_core.pgTable)("reactions", {
+  id: (0, import_pg_core.serial)("id").primaryKey(),
+  userId: (0, import_pg_core.text)("user_id"),
+  // Firebase UID if logged in
+  type: (0, import_pg_core.text)("type").notNull(),
+  // 'like' or 'dislike'
+  ipAddress: (0, import_pg_core.text)("ip_address"),
+  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow()
+});
+
+// src/db/index.ts
+var { Pool } = import_pg.default;
+var createPool = () => {
+  return new Pool({
+    host: process.env.SQL_HOST,
+    user: process.env.SQL_USER,
+    password: process.env.SQL_PASSWORD,
+    database: process.env.SQL_DB_NAME,
+    max: 10,
+    connectionTimeoutMillis: 15e3
+  });
+};
+var pool = createPool();
+var db = (0, import_node_postgres.drizzle)(pool, { schema: schema_exports });
+
+// server.ts
+var import_drizzle_orm = require("drizzle-orm");
 import_dotenv.default.config();
+if (!(0, import_app.getApps)().length) {
+  (0, import_app.initializeApp)({
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID
+  });
+}
 var app = (0, import_express.default)();
 var PORT = 3e3;
 app.use(import_express.default.json());
@@ -45,16 +130,6 @@ var ADMIN_CREDENTIALS = {
   email: process.env.ADMIN_EMAIL || "alimuhammadhvn81@gmail.com",
   password: process.env.ADMIN_PASSWORD || "Ali2007"
 };
-var generatedCodesStore = [
-  { code: "Ali-9K2L8P", createdAt: "Aug 24, 2025", status: "Used", assignedTo: "Ali Raza", usedAt: "Aug 25, 2025", notes: "Corporate Client" },
-  { code: "Ali-3M7X1V", createdAt: "Aug 23, 2025", status: "Used", assignedTo: "Sara Khan", usedAt: "Aug 24, 2025", notes: "Agency Project" },
-  { code: "Ali-5W8N4Q", createdAt: "Aug 22, 2025", status: "Used", assignedTo: "Usman Ahmed", usedAt: "Aug 23, 2025", notes: "Freelance Contract" },
-  { code: "Ali-7B2C9M", createdAt: "Aug 21, 2025", status: "Used", assignedTo: "Hammad Ali", usedAt: "Aug 22, 2025", notes: "Web App" },
-  { code: "Ali-4K9P2W", createdAt: "Aug 20, 2025", status: "Used", assignedTo: "Zainab Noor", usedAt: "Aug 20, 2025", notes: "Design Client" },
-  { code: "Ali-8H4F2L", createdAt: "Aug 26, 2025", status: "Active", assignedTo: "Hamza Khan", notes: "Valid until feedback is published" },
-  { code: "Ali-6D1V9Z", createdAt: "Aug 27, 2025", status: "Active", assignedTo: "New Client", notes: "Valid until feedback is published" },
-  { code: "Ali-2R7T5M", createdAt: "Aug 27, 2025", status: "Active", assignedTo: "General Client", notes: "Valid until feedback is published" }
-];
 var PORTFOLIO_KNOWLEDGE = `
 You are the official AI Assistant for Muhammad Ali\u2019s Portfolio & Software Studio website.
 
@@ -176,21 +251,22 @@ function getLocalFallbackAnswer(question) {
   return "Unfortunately, I am unable to answer you.";
 }
 var GEMINI_MODELS = [
-  "gemini-2.5-flash",
   "gemini-2.0-flash",
   "gemini-1.5-flash",
-  "gemini-2.5-pro"
+  "gemini-1.5-flash-8b",
+  "gemini-3.7-flash",
+  "gemini-3.1-pro-preview"
 ];
-async function generateWithModelFallback(ai, contents) {
+async function generateWithModelFallback(ai, contents, systemInstruction = PORTFOLIO_KNOWLEDGE) {
   for (const model of GEMINI_MODELS) {
     try {
       const response = await ai.models.generateContent({
         model,
         contents,
         config: {
-          systemInstruction: PORTFOLIO_KNOWLEDGE,
+          systemInstruction,
           temperature: 0.7,
-          maxOutputTokens: 300
+          maxOutputTokens: 500
         }
       });
       if (response && response.text) {
@@ -247,6 +323,141 @@ app.post("/api/voice-support", async (req, res) => {
     });
   }
 });
+app.get("/api/stats", async (_req, res) => {
+  try {
+    const statsResult = await db.select().from(portfolioStats).where((0, import_drizzle_orm.eq)(portfolioStats.id, 1));
+    let baseStats = statsResult.length > 0 ? statsResult[0] : null;
+    if (!baseStats) {
+      const [newStats] = await db.insert(portfolioStats).values({ id: 1 }).returning();
+      baseStats = newStats;
+    }
+    const allFeedbacks = await db.select().from(feedback) || [];
+    const ratingBreakdown = {
+      stars5: allFeedbacks.filter((f) => f && f.rating === 5).length,
+      stars4: allFeedbacks.filter((f) => f && f.rating === 4).length,
+      stars3: allFeedbacks.filter((f) => f && f.rating === 3).length,
+      stars2: allFeedbacks.filter((f) => f && f.rating === 2).length,
+      stars1: allFeedbacks.filter((f) => f && f.rating === 1).length
+    };
+    const feedbackStatusBreakdown = {
+      published: allFeedbacks.filter((f) => f && f.isApproved).length,
+      pending: allFeedbacks.filter((f) => f && !f.isApproved).length,
+      archived: 0
+    };
+    res.json({
+      ...baseStats,
+      ratingBreakdown,
+      feedbackStatusBreakdown
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+app.post("/api/stats/view", async (_req, res) => {
+  try {
+    await db.update(portfolioStats).set({ profileViews: import_drizzle_orm.sql`${portfolioStats.profileViews} + 1` }).where((0, import_drizzle_orm.eq)(portfolioStats.id, 1));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update view count" });
+  }
+});
+app.post("/api/feedback/submit-verified", async (req, res) => {
+  try {
+    const { token, rating, comment, code, projectScreenshot } = req.body;
+    if (!code || !code.toLowerCase().startsWith("ali-")) {
+      res.status(400).json({ error: "A valid feedback code starting with 'Ali-' is required." });
+      return;
+    }
+    const [dbCode] = await db.select().from(feedbackCodes).where(import_drizzle_orm.sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    if (!dbCode || dbCode.status !== "Active") {
+      res.status(400).json({ error: "This feedback code is invalid or has already been used." });
+      return;
+    }
+    const decodedToken = await (0, import_auth.getAuth)().verifyIdToken(token);
+    const { name, email, picture, uid } = decodedToken;
+    let autoReply = "Thank you for your valuable feedback! I am committed to continuous improvement and appreciate your input.";
+    try {
+      const ai = getAIClient();
+      const systemPrompt = `You are Muhammad Ali, a software developer. A client named ${name} left a ${rating}-star review.
+      Generate a professional, warm, and personal response (around 2-3 complete sentences) from Muhammad Ali.
+      CRITICAL: ALWAYS complete your sentences. Never stop mid-sentence.
+      - If the feedback is positive, express gratitude and enthusiasm.
+      - If the client points out a mistake, bug, or problem, acknowledge it specifically, apologize, and mention you'll fix or improve it.
+      - If they have a specific complaint, show empathy and professionalism.
+      Avoid generic "Thank you" messages if they are reporting an issue. Output ONLY the response text.`;
+      const userMessage = `Client Comment: "${comment}"`;
+      const generatedText = await generateWithModelFallback(ai, [{ role: "user", parts: [{ text: userMessage }] }], systemPrompt);
+      if (generatedText) {
+        autoReply = generatedText.trim();
+        const lastChar = autoReply.slice(-1);
+        if (![".", "!", "?"].includes(lastChar) && autoReply.length > 20) {
+          autoReply += "...";
+        }
+      }
+    } catch (err) {
+      console.error("AI Auto-reply generation error:", err);
+      console.warn("AI Auto-reply generation failed, using default.");
+    }
+    const [newFeedback] = await db.insert(feedback).values({
+      clientName: name || "Verified User",
+      clientEmail: email || "",
+      clientPhoto: picture || "",
+      rating: rating || 5,
+      comment: comment || "",
+      googleVerified: true,
+      googleId: uid,
+      isApproved: true,
+      codeUsed: code,
+      adminReply: autoReply,
+      projectScreenshot: projectScreenshot || null
+    }).returning();
+    await db.update(feedbackCodes).set({ status: "Used", usedAt: /* @__PURE__ */ new Date() }).where((0, import_drizzle_orm.eq)(feedbackCodes.id, dbCode.id));
+    const isSatisfied = rating >= 4;
+    const isUnsatisfied = rating <= 2;
+    await db.update(portfolioStats).set({
+      totalFeedback: import_drizzle_orm.sql`${portfolioStats.totalFeedback} + 1`,
+      averageRating: import_drizzle_orm.sql`((${portfolioStats.averageRating} * ${portfolioStats.totalFeedback}) + ${rating}) / (${portfolioStats.totalFeedback} + 1)`,
+      satisfiedClients: isSatisfied ? import_drizzle_orm.sql`${portfolioStats.satisfiedClients} + 1` : portfolioStats.satisfiedClients,
+      unsatisfiedClients: isUnsatisfied ? import_drizzle_orm.sql`${portfolioStats.unsatisfiedClients} + 1` : portfolioStats.unsatisfiedClients
+    }).where((0, import_drizzle_orm.eq)(portfolioStats.id, 1));
+    res.json({ success: true, feedback: newFeedback });
+  } catch (error) {
+    console.error("Error submitting verified feedback:", error);
+    res.status(401).json({ error: "Authentication failed or database error" });
+  }
+});
+app.get("/api/feedback", async (_req, res) => {
+  try {
+    const feedbacks = await db.select().from(feedback).where((0, import_drizzle_orm.eq)(feedback.isApproved, true)).orderBy(import_drizzle_orm.sql`${feedback.date} DESC`);
+    res.json(feedbacks);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch feedbacks" });
+  }
+});
+app.post("/api/reactions", async (req, res) => {
+  try {
+    const { type, token } = req.body;
+    let userId = null;
+    if (token) {
+      const decodedToken = await (0, import_auth.getAuth)().verifyIdToken(token);
+      userId = decodedToken.uid;
+    }
+    await db.insert(reactions).values({
+      type,
+      userId,
+      ipAddress: req.ip
+    });
+    if (type === "like") {
+      await db.update(portfolioStats).set({ positiveReactions: import_drizzle_orm.sql`${portfolioStats.positiveReactions} + 1` }).where((0, import_drizzle_orm.eq)(portfolioStats.id, 1));
+    } else {
+      await db.update(portfolioStats).set({ negativeReactions: import_drizzle_orm.sql`${portfolioStats.negativeReactions} + 1` }).where((0, import_drizzle_orm.eq)(portfolioStats.id, 1));
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to post reaction" });
+  }
+});
 app.post("/api/admin/login", (req, res) => {
   const { email, password } = req.body;
   const adminEmail = ADMIN_CREDENTIALS.email.toLowerCase().trim();
@@ -290,89 +501,107 @@ app.get("/api/admin/session", (_req, res) => {
     }
   });
 });
-app.get("/api/admin/codes", (_req, res) => {
-  res.json({
-    success: true,
-    codes: generatedCodesStore
-  });
+app.get("/api/admin/codes", async (_req, res) => {
+  try {
+    const codes = await db.select().from(feedbackCodes).orderBy(import_drizzle_orm.sql`${feedbackCodes.createdAt} DESC`);
+    res.json({ success: true, codes });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch codes" });
+  }
 });
-app.post("/api/admin/codes/generate", (req, res) => {
-  const { assignedTo, notes } = req.body || {};
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let randomSuffix = "";
-  for (let i = 0; i < 6; i++) {
-    randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  const newCodeStr = `Ali-${randomSuffix}`;
-  const newCodeObj = {
-    code: newCodeStr,
-    createdAt: (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    status: "Active",
-    assignedTo: assignedTo || "Client",
-    notes: notes || "Valid until feedback is published by the client"
-  };
-  generatedCodesStore.unshift(newCodeObj);
-  res.json({
-    success: true,
-    code: newCodeObj,
-    message: `Generated code ${newCodeStr} successfully.`
-  });
-});
-app.delete("/api/admin/codes/:code", (req, res) => {
-  const { code } = req.params;
-  generatedCodesStore = generatedCodesStore.filter((c) => c.code !== code);
-  res.json({ success: true, message: `Code ${code} removed.` });
-});
-app.post("/api/feedback/verify-code", (req, res) => {
-  const { code } = req.body;
-  if (!code || !code.startsWith("Ali-")) {
-    res.status(400).json({ valid: false, error: "Code must start with 'Ali-'" });
-    return;
-  }
-  const found = generatedCodesStore.find((c) => c.code.toUpperCase() === code.toUpperCase());
-  if (!found) {
-    res.status(404).json({ valid: false, error: "Feedback code not recognized." });
-    return;
-  }
-  if (found.status === "Used") {
-    res.status(400).json({ valid: false, error: "This code has already been used and published." });
-    return;
-  }
-  if (found.status === "Revoked") {
-    res.status(400).json({ valid: false, error: "This feedback code has expired or been revoked." });
-    return;
-  }
-  res.json({ valid: true, code: found.code, assignedTo: found.assignedTo });
-});
-app.post("/api/feedback/submit", (req, res) => {
-  const { code, clientName, clientEmail, rating, comment, source } = req.body;
-  if (!code || !code.startsWith("Ali-")) {
-    res.status(400).json({ success: false, error: "Valid code starting with 'Ali-' is required." });
-    return;
-  }
-  const codeIndex = generatedCodesStore.findIndex((c) => c.code.toUpperCase() === code.toUpperCase());
-  if (codeIndex !== -1) {
-    generatedCodesStore[codeIndex].status = "Used";
-    generatedCodesStore[codeIndex].usedAt = (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    if (clientName) {
-      generatedCodesStore[codeIndex].assignedTo = clientName;
+app.post("/api/admin/codes/generate", async (req, res) => {
+  try {
+    const { assignedTo, notes } = req.body || {};
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let randomSuffix = "";
+    for (let i = 0; i < 6; i++) {
+      randomSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    const newCodeStr = `Ali-${randomSuffix}`;
+    const [newCodeObj] = await db.insert(feedbackCodes).values({
+      code: newCodeStr,
+      status: "Active",
+      assignedTo: assignedTo || "Client",
+      notes: notes || "Valid until feedback is published by the client"
+    }).returning();
+    res.json({
+      success: true,
+      code: newCodeObj,
+      message: `Generated code ${newCodeStr} successfully.`
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to generate code" });
   }
-  res.json({
-    success: true,
-    message: "Feedback submitted and published successfully! Code has now been consumed.",
-    feedback: {
-      id: `fb-${Date.now()}`,
-      clientName: clientName || "Verified Client",
-      clientEmail: clientEmail || "",
-      rating: rating || 5,
-      comment: comment || "",
-      source: source || "Direct",
-      date: (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      status: "Published",
-      codeUsed: code
+});
+app.delete("/api/admin/codes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.delete(feedbackCodes).where((0, import_drizzle_orm.eq)(feedbackCodes.id, parseInt(id)));
+    res.json({ success: true, message: "Code removed." });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete code" });
+  }
+});
+app.post("/api/feedback/verify-code", async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code || !code.toLowerCase().startsWith("ali-")) {
+      res.status(400).json({ valid: false, error: "Code must start with 'Ali-'" });
+      return;
     }
-  });
+    const [found] = await db.select().from(feedbackCodes).where(import_drizzle_orm.sql`LOWER(${feedbackCodes.code}) = LOWER(${code})`);
+    if (!found) {
+      res.status(404).json({ valid: false, error: "Feedback code not recognized." });
+      return;
+    }
+    if (found.status === "Used") {
+      res.status(400).json({ valid: false, error: "This code has already been used and published." });
+      return;
+    }
+    if (found.status === "Revoked") {
+      res.status(400).json({ valid: false, error: "This feedback code has expired or been revoked." });
+      return;
+    }
+    res.json({ valid: true, code: found.code, assignedTo: found.assignedTo });
+  } catch (error) {
+    res.status(500).json({ error: "Verification failed" });
+  }
+});
+app.get("/api/admin/feedback", async (_req, res) => {
+  try {
+    const feedbacks = await db.select().from(feedback).orderBy(import_drizzle_orm.sql`${feedback.date} DESC`);
+    res.json(feedbacks);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch feedbacks" });
+  }
+});
+app.post("/api/admin/feedback/:id/reply", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reply } = req.body;
+    await db.update(feedback).set({ adminReply: reply }).where((0, import_drizzle_orm.eq)(feedback.id, parseInt(id)));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to reply to feedback" });
+  }
+});
+app.delete("/api/admin/feedback/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.delete(feedback).where((0, import_drizzle_orm.eq)(feedback.id, parseInt(id)));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete feedback" });
+  }
+});
+app.post("/api/admin/feedback/:id/approve", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.update(feedback).set({ isApproved: true }).where((0, import_drizzle_orm.eq)(feedback.id, parseInt(id)));
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to approve feedback" });
+  }
 });
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -380,15 +609,15 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: "spa"
     });
-    app.get(["/admin", "/admin/"], (_req, res) => {
-      res.redirect("/admin.html");
+    app.get(["/admin", "/admin/*"], (_req, res) => {
+      res.sendFile(import_path.default.join(process.cwd(), "index.html"));
     });
     app.use(vite.middlewares);
   } else {
     const distPath = import_path.default.join(process.cwd(), "dist");
     app.use(import_express.default.static(distPath));
-    app.get(["/admin", "/admin/", "/admin.html"], (_req, res) => {
-      res.sendFile(import_path.default.join(distPath, "admin.html"));
+    app.get(["/admin", "/admin/*"], (_req, res) => {
+      res.sendFile(import_path.default.join(distPath, "index.html"));
     });
     app.get("*", (_req, res) => {
       res.sendFile(import_path.default.join(distPath, "index.html"));
