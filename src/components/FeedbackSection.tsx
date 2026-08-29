@@ -385,38 +385,7 @@ export default function FeedbackSection() {
         <div className="max-w-4xl mx-auto bg-[#0f1523] border border-[#00d9ff]/30 rounded-2xl p-6 sm:p-8 shadow-2xl">
           {/* Submission Form */}
           <form onSubmit={handleSubmit} className="space-y-5 bg-[#0b101c] p-6 rounded-xl border border-white/10">
-            {/* 1. Verified Identity (Shown if logged in) */}
-            {isAuth && authUser && (
-              <div className="p-4 rounded-xl border bg-[#121929] border-emerald-500/30">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={authUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.name)}&background=00d9ff&color=061017`}
-                      alt={authUser.name}
-                      className="w-11 h-11 rounded-full border-2 border-emerald-400 object-cover shrink-0 shadow-md"
-                    />
-                    <div>
-                      <h4 className="text-sm font-bold text-white flex items-center gap-1.5 flex-wrap">
-                        {authUser?.name}
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Google Verified
-                        </span>
-                      </h4>
-                      <p className="text-xs text-slate-400 mt-0.5">{authUser?.email}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/10 transition-colors cursor-pointer"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 2. One-Time Feedback Code Input (Ali-XXXXXX) */}
+            {/* 1. One-Time Feedback Code Input (Ali-XXXXXX) */}
             <div className={`p-4 rounded-xl border transition-all ${isCodeValid ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-[#121929] border-white/10'}`}>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -634,42 +603,67 @@ export default function FeedbackSection() {
             )}
 
             {/* Submit Button */}
-            <button
-              id="submit-feedback-button"
-              type="submit"
-              disabled={submitting}
-              className={`w-full py-4 px-6 font-black text-sm rounded-xl hover:shadow-xl active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 ${
-                !isAuth && !isCodeValid 
-                  ? 'bg-white text-slate-900 hover:bg-slate-100' 
-                  : 'bg-gradient-to-r from-[#00d9ff] to-[#00b4d8] text-[#061017] hover:shadow-[#00d9ff]/20'
-              }`}
-            >
-              {submitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  <span>{isAuth || isCodeValid ? 'Publishing Verified Review…' : 'Verifying Identity…'}</span>
-                </>
-              ) : (
-                <>
-                  {!isAuth && !isCodeValid ? (
-                    <>
-                      <svg className="w-5 h-5" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                      </svg>
-                      <span>Verify Google Identity & Submit</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-5 h-5" />
-                      <span>Submit Verified Client Feedback</span>
-                    </>
-                  )}
-                </>
+            <div className="space-y-3">
+              {isAuth && authUser && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[#0d1421] border border-emerald-500/20">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={authUser.picture}
+                      alt={authUser.name}
+                      className="w-8 h-8 rounded-full border border-emerald-500/50"
+                    />
+                    <div>
+                      <p className="text-[11px] font-bold text-white leading-none">{authUser.name}</p>
+                      <p className="text-[9px] text-slate-400 mt-0.5">Verified Reviewer</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="text-[10px] font-bold text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                  >
+                    Switch Account
+                  </button>
+                </div>
               )}
-            </button>
+
+              <button
+                id="submit-feedback-button"
+                type="submit"
+                disabled={submitting}
+                className={`w-full py-4 px-6 font-black text-sm rounded-xl hover:shadow-xl active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 ${
+                  !isAuth && !isCodeValid 
+                    ? 'bg-white text-slate-900 hover:bg-slate-100' 
+                    : 'bg-gradient-to-r from-[#00d9ff] to-[#00b4d8] text-[#061017] hover:shadow-[#00d9ff]/20'
+                }`}
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    <span>{isAuth || isCodeValid ? 'Publishing Verified Review…' : 'Verifying Identity…'}</span>
+                  </>
+                ) : (
+                  <>
+                    {!isAuth && !isCodeValid ? (
+                      <>
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Verify Identity & Submit Feedback</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-5 h-5" />
+                        <span>Submit Verified Client Feedback</span>
+                      </>
+                    )}
+                  </>
+                )}
+              </button>
+            </div>
           </form>
 
           {/* Public Feedback Feed */}
