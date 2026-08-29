@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { db, signInWithGoogle } from '../lib/firebase';
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, orderBy, addDoc } from 'firebase/firestore';
 import {
   Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, Sparkles, CheckCircle2,
   AlertCircle, X, KeyRound, Phone, Globe, Award, LayoutDashboard,
@@ -109,7 +111,7 @@ function AdminLogin({
             >
               <div className="w-20 h-20 rounded-2xl p-[2px] bg-gradient-to-tr from-[#00d9ff] via-[#38bdf8] to-[#0ea5e9] shadow-[0_0_20px_rgba(0,217,255,0.4)]">
                 <img 
-                  src="/images/profile.jpg" 
+                  src="https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true" 
                   alt="Muhammad Ali" 
                   className="w-full h-full object-cover rounded-[14px]" 
                 />
@@ -259,7 +261,7 @@ function AdminLogin({
             </button>
             <div className="text-center">
               <div className="w-20 h-20 mx-auto rounded-2xl p-1 bg-gradient-to-tr from-[#00d9ff] to-[#38bdf8] mb-3">
-                <img src="/images/profile.jpg" className="w-full h-full object-cover rounded-xl" alt="Muhammad Ali" />
+                <img src="https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true" className="w-full h-full object-cover rounded-xl" alt="Muhammad Ali" />
               </div>
               <h3 className="text-lg font-black text-white">Muhammad Ali</h3>
               <p className="text-xs text-[#00d9ff] font-semibold">Full-Stack, AI & 2D Game Developer</p>
@@ -624,7 +626,7 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
             <div className="bg-[#101726] border border-white/10 rounded-2xl p-3.5 flex items-center gap-3 shadow-lg">
               <div className="relative">
                 <div className="w-11 h-11 rounded-xl p-0.5 bg-gradient-to-tr from-[#00d9ff] to-[#38bdf8]">
-                  <img src="/images/profile.jpg" alt="Muhammad Ali" className="w-full h-full object-cover rounded-[10px]" />
+                  <img src="https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true" alt="Muhammad Ali" className="w-full h-full object-cover rounded-[10px]" />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#101726]" />
               </div>
@@ -1627,7 +1629,7 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
               <div className="bg-[#0e1422] border border-white/10 p-6 rounded-2xl space-y-4">
                 <div className="flex items-center gap-4 pb-4 border-b border-white/5">
                   <div className="w-16 h-16 rounded-2xl p-0.5 bg-[#00d9ff]">
-                    <img src="/images/profile.jpg" alt="Muhammad Ali" className="w-full h-full object-cover rounded-[14px]" />
+                    <img src="https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true" alt="Muhammad Ali" className="w-full h-full object-cover rounded-[14px]" />
                   </div>
                   <div>
                     <h3 className="font-bold text-white text-base">Muhammad Ali</h3>

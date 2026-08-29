@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HOW_DO_YOU_KNOW_OPTIONS } from '../data/portfolioData';
-import { signInWithGoogle, getFirebaseAuth, getGoogleRedirectResult } from '../lib/firebase';
+import { signInWithGoogle, getFirebaseAuth, getGoogleRedirectResult, db } from '../lib/firebase';
+import { collection, getDocs, addDoc, query, where, updateDoc, doc } from 'firebase/firestore';
 import {
   Upload,
   Image as ImageIcon,
@@ -105,24 +106,23 @@ export default function FeedbackSection() {
   useEffect(() => {
     const fetchFeedbacks = async () => {
       try {
-        const res = await fetch('/api/feedback');
-        if (res.ok) {
-          const data = await res.json();
-          setFeedbackList(data.map((fb: any) => ({
-            id: fb.id,
-            clientName: fb.clientName,
-            clientEmail: fb.clientEmail,
-            rating: fb.rating,
-            comment: fb.comment,
-            source: fb.source,
-            date: new Date(fb.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            codeUsed: fb.codeUsed || 'VERIFIED-CLIENT',
-            imageUrl: fb.projectScreenshot,
-            clientPhoto: fb.clientPhoto,
-            googleVerified: fb.googleVerified,
-            adminReply: fb.adminReply
-          })));
-        }
+        const q = query(collection(db, 'feedbacks'), where('isApproved', '==', true));
+        const snap = await getDocs(q);
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setFeedbackList(data.map((fb: any) => ({
+          id: fb.id,
+          clientName: fb.clientName,
+          clientEmail: fb.clientEmail,
+          rating: fb.rating,
+          comment: fb.comment,
+          source: fb.source,
+          date: new Date(fb.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          codeUsed: fb.codeUsed || 'VERIFIED-CLIENT',
+          imageUrl: fb.projectScreenshot,
+          clientPhoto: fb.clientPhoto,
+          googleVerified: fb.googleVerified,
+          adminReply: fb.adminReply
+        })));
       } catch (err) {
         console.error("Failed to fetch feedbacks:", err);
       }
@@ -159,8 +159,8 @@ export default function FeedbackSection() {
   // Verify One-Time Code
   const handleVerifyCode = async () => {
     const trimmed = aliCode.trim();
-    if (!trimmed.toLowerCase().startsWith('ali-')) {
-      setStatus('Code must start with "Ali-" (e.g. Ali-XXXXXX).');
+    if (!trimmed) {
+      setStatus('Please enter an Ali-Code.');
       setIsError(true);
       return;
     }
@@ -170,37 +170,40 @@ export default function FeedbackSection() {
     setStatus('Verifying your unique feedback code...');
 
     try {
-      const res = await fetch('/api/feedback/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: trimmed })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.valid) {
-        setIsCodeValid(true);
-        setAliCode(data.code);
-        setStatus(`Code verified for ${data.assignedTo || 'client'}! You can now submit your review.`);
-        setIsError(false);
+      const q = query(collection(db, 'feedbackCodes'), where('code', '==', trimmed));
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+        const codeDoc = snap.docs[0];
+        const codeData = codeDoc.data();
+        if (!codeData.isUsed) {
+          setIsCodeValid(true);
+          setAliCode(codeData.code);
+          setStatus(`Code verified for ${codeData.assignedTo || 'client'}! You can now submit your review.`);
+          setIsError(false);
+        } else {
+          setIsCodeValid(false);
+          setStatus('Invalid or already used code.');
+          setIsError(true);
+        }
       } else {
-        // If code format is valid Ali-XXXXXX, allow graceful acceptance
         if (trimmed.length >= 6) {
           setIsCodeValid(true);
           setStatus(`Code "${trimmed}" verified! You can proceed.`);
           setIsError(false);
         } else {
           setIsCodeValid(false);
-          setStatus(data.error || 'Invalid or already used code.');
+          setStatus('Invalid or already used code.');
           setIsError(true);
         }
       }
     } catch {
       if (trimmed.length >= 6) {
         setIsCodeValid(true);
-        setStatus(`Code "${trimmed}" verified successfully.`);
+        setStatus(`Code "${trimmed}" verified! You can proceed.`);
         setIsError(false);
       } else {
-        setStatus('Verification server unreachable. Please check connection.');
+        setStatus('Failed to verify code.');
         setIsError(true);
       }
     } finally {
@@ -355,6 +358,12 @@ export default function FeedbackSection() {
 
     if (!text.trim()) {
       setStatus('Please write your feedback review message.');
+      setIsError(true);
+      return;
+    }
+
+    if (authUser?.email === 'alimuhammadhvn81@gmail.com') {
+      setStatus('Admin cannot post feedback. You can only reply from the admin dashboard.');
       setIsError(true);
       return;
     }
@@ -940,7 +949,7 @@ export default function FeedbackSection() {
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <img
-                            src="/images/profile.jpg"
+                            src="https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true"
                             alt="Muhammad Ali"
                             className="w-6 h-6 rounded-full object-cover border border-[#00d9ff]/40 shadow-sm shrink-0"
                           />

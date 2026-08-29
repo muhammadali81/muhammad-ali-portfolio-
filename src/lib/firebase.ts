@@ -130,3 +130,6 @@ export const getGoogleRedirectResult = async () => {
   }
 };
 
+
+import { getFirestore } from 'firebase/firestore';
+export const db = getFirestore(getFirebaseApp(), "ai-studio-muhammadaliportf-398bd4c4-1313-40c7-9f53-76fe0265c406");

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function InquirySection() {
   const [formData, setFormData] = useState({
@@ -16,18 +18,30 @@ export default function InquirySection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.website) return; // honeypot caught spam
+
     if (!formData.name || !formData.email || !formData.message) {
       setStatus('Please complete your name, email and message.');
       return;
     }
+
     setLoading(true);
     setStatus('Sending inquiry securely…');
+
     try {
-      // Simulate or call backend
-      await new Promise(r => setTimeout(r, 900));
+      await addDoc(collection(db, 'inquiries'), {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        subject: formData.subject.trim() || 'Portfolio Project Inquiry',
+        service: formData.service.trim() || 'General Inquiry',
+        budget: formData.budget.trim() || '$10+ USD',
+        message: formData.message.trim(),
+        status: 'New',
+        date: new Date().toISOString()
+      });
       setStatus('Inquiry sent successfully. Thank you — your message has been received.');
       setFormData({ name: '', email: '', subject: '', service: '', budget: '$10 - $50', message: '', website: '' });
-    } catch {
+    } catch (error) {
+      console.error(error);
       setStatus('Unable to submit inquiry right now.');
     } finally {
       setLoading(false);
@@ -47,7 +61,6 @@ export default function InquirySection() {
             <span>💡 <strong>Budget Criteria:</strong> Projects start from <span className="text-[#00d9ff] font-bold">$10 or above</span>.</span>
             <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded">Min $10 USD</span>
           </div>
-
           <form onSubmit={handleSubmit}>
             <div className="inquiry-grid grid grid-cols-1 md:grid-cols-2 gap-[16px]">
               <div className="inquiry-field flex flex-col gap-2">
@@ -102,7 +115,6 @@ export default function InquirySection() {
                   <option>Custom Project / Consultancy</option>
                 </select>
               </div>
-
               {/* Budget Field */}
               <div className="inquiry-field full col-span-1 md:col-span-2 flex flex-col gap-2">
                 <label htmlFor="inquiryBudget" className="flex items-center justify-between">

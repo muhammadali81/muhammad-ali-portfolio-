@@ -1,43 +1,68 @@
 {
-  "collections": {
-    "feedbackCodes": {
-      "code": "string",
-      "assignedTo": "string",
-      "isUsed": "boolean",
-      "createdAt": "timestamp",
-      "notes": "string"
+  "entities": {
+    "Feedback": {
+      "title": "Feedback",
+      "description": "Client feedback/review",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string", "maxLength": 100 },
+        "clientEmail": { "type": "string", "maxLength": 100 },
+        "clientPhoto": { "type": "string", "maxLength": 500 },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string", "maxLength": 2000 },
+        "googleVerified": { "type": "boolean" },
+        "adminReply": { "type": "string", "maxLength": 2000 },
+        "isApproved": { "type": "boolean" },
+        "codeUsed": { "type": "string", "maxLength": 50 },
+        "projectScreenshot": { "type": "string", "maxLength": 500 },
+        "source": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["clientName", "rating", "comment", "isApproved", "date"]
     },
-    "feedbacks": {
-      "clientName": "string",
-      "clientEmail": "string",
-      "rating": "number",
-      "comment": "string",
-      "date": "timestamp",
-      "isApproved": "boolean",
-      "codeUsed": "string",
-      "adminReply": "string",
-      "clientPhoto": "string",
-      "projectScreenshot": "string",
-      "source": "string"
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Project inquiry from a potential client",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "service": { "type": "string", "maxLength": 50 },
+        "budget": { "type": "string", "maxLength": 50 },
+        "message": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["New", "Read", "Replied"] },
+        "date": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["name", "email", "message", "status", "date"]
     },
-    "inquiries": {
-      "name": "string",
-      "email": "string",
-      "category": "string",
-      "budget": "string",
-      "message": "string",
-      "date": "timestamp",
-      "status": "string"
+    "FeedbackCode": {
+      "title": "FeedbackCode",
+      "description": "One-time code for verified feedback",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 50 },
+        "assignedTo": { "type": "string", "maxLength": 100 },
+        "isUsed": { "type": "boolean" },
+        "usedAt": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["code", "assignedTo", "isUsed", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/feedbacks/{feedbackId}": {
+      "schema": { "$ref": "#/entities/Feedback" },
+      "description": "Store all feedbacks"
     },
-    "siteStats": {
-      "id": "string",
-      "profileViews": "number",
-      "totalFeedbacks": "number",
-      "averageRating": "number",
-      "positiveReactions": "number",
-      "negativeReactions": "number",
-      "satisfiedClients": "number",
-      "unsatisfiedClients": "number"
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Store all project inquiries"
+    },
+    "/feedbackCodes/{codeId}": {
+      "schema": { "$ref": "#/entities/FeedbackCode" },
+      "description": "Store one-time feedback codes"
     }
   }
 }

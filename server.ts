@@ -445,6 +445,201 @@ app.post("/api/feedback/verify-code", (req, res) => {
   }
 });
 
+// =========================================================================
+// OFFICIAL GOOGLE OAUTH 2.0 AUTHENTICATION ENDPOINTS
+// =========================================================================
+
+// Get OAuth Authorize URL for Real Google Login
+app.get("/api/auth/google/url", (req, res) => {
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
+    const appUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
+    const redirectUri = `${appUrl.replace(/\/+$/, "")}/auth/google/callback`;
+
+    if (!clientId) {
+      return res.status(400).json({
+        configured: false,
+        error: "GOOGLE_CLIENT_ID is not set in environment.",
+        redirectUri
+      });
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid profile email",
+      access_type: "offline",
+      prompt: "select_account"
+    });
+
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    res.json({ configured: true, url, redirectUri, clientId });
+  } catch (e) {
+    console.error("[OAUTH] Error generating Google OAuth URL:", e);
+    res.status(500).json({ error: "Failed to generate Google auth URL" });
+  }
+});
+
+// OAuth Callback from Google
+app.get(["/auth/google/callback", "/auth/google/callback/"], async (req, res) => {
+  const { code, error } = req.query;
+
+  if (error || !code) {
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Google Authentication</title></head>
+        <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
+          <div style="text-align: center; max-width: 400px; padding: 24px;">
+            <h3 style="color: #ef4444;">Authentication Failed</h3>
+            <p style="font-size: 14px; color: #94a3b8;">${error || "No authorization code provided."}</p>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: '${error || "cancelled"}' }, '*');
+                setTimeout(() => window.close(), 1500);
+              }
+            </script>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET || "";
+    const appUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
+    const redirectUri = `${appUrl.replace(/\/+$/, "")}/auth/google/callback`;
+
+    // Exchange authorization code for Google ID Token & Access Token
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code: code as string,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }).toString()
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) {
+      throw new Error(tokenData.error_description || tokenData.error || "Token exchange failed");
+    }
+
+    // Fetch official User Profile from Google UserInfo endpoint
+    const userRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+
+    const userData = await userRes.json();
+    if (!userRes.ok || !userData.email) {
+      throw new Error("Failed to fetch verified user info from Google");
+    }
+
+    const payload = {
+      name: userData.name || "Google User",
+      email: userData.email,
+      picture: userData.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || "Google User")}&background=1a73e8&color=ffffff`,
+      sub: userData.sub
+    };
+
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Google Authentication Verified</title></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #ffffff; color: #1e293b; margin: 0;">
+          <div style="text-align: center; max-width: 360px; padding: 24px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #e8f0fe; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+            </div>
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #1a73e8;">Google Account Verified</h3>
+            <p style="margin: 0; font-size: 13px; color: #5f6368;">Signed in as <strong>${payload.name}</strong></p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #80868b;">Closing window...</p>
+            <script>
+              try {
+                if (window.opener) {
+                  window.opener.postMessage({
+                    type: 'GOOGLE_AUTH_SUCCESS',
+                    user: ${JSON.stringify(payload)}
+                  }, '*');
+                  setTimeout(() => window.close(), 600);
+                } else {
+                  window.location.href = '/';
+                }
+              } catch (e) {
+                window.close();
+              }
+            </script>
+          </div>
+        </body>
+      </html>
+    `);
+  } catch (err: any) {
+    console.error("[OAUTH] Google Token Exchange Error:", err);
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Google Authentication Error</title></head>
+        <body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: white;">
+          <div style="text-align: center; max-width: 400px; padding: 24px;">
+            <h3 style="color: #ef4444;">Verification Failed</h3>
+            <p style="font-size: 13px; color: #94a3b8;">${err.message || "Failed to exchange token with Google"}</p>
+            <button onclick="window.close()" style="margin-top: 16px; padding: 8px 16px; background: #334155; color: white; border: none; border-radius: 8px; cursor: pointer;">Close Window</button>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: '${err.message || "failed"}' }, '*');
+              }
+            </script>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+});
+
+// Verify Google Identity Token / Credential (from Google One Tap or GSI popup)
+app.post("/api/auth/google/verify-token", async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ error: "Missing credential token" });
+    }
+
+    // Verify token with official Google endpoint
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    if (!response.ok) {
+      return res.status(401).json({ error: "Invalid Google ID token" });
+    }
+
+    const payload = await response.json();
+    if (!payload.email) {
+      return res.status(400).json({ error: "No email returned from Google token" });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        name: payload.name || "Google User",
+        email: payload.email,
+        picture: payload.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(payload.name || "Google User")}&background=1a73e8&color=ffffff`,
+        sub: payload.sub
+      }
+    });
+  } catch (e: any) {
+    console.error("[OAUTH] Error verifying ID token:", e);
+    res.status(500).json({ error: "Internal token verification failure" });
+  }
+});
+
 // Submit Verified Feedback via Google Authentication
 app.post("/api/feedback/submit-verified", (req, res) => {
   try {
