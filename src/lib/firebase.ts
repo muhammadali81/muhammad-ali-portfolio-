@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult, Auth }
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || firebaseConfig.oAuthClientId || "456371132973-jmra1kk9au7un81au95vm3mg5e8feud5.apps.googleusercontent.com";
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || firebaseConfig.oAuthClientId || "1057584179825-ebgauidoppj7qfc4d3lrf99c7rokag9c.apps.googleusercontent.com";
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
