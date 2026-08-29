@@ -213,7 +213,6 @@ export default function FeedbackSection() {
 
   // Real Google OAuth & Identity Verification
   const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
-  const [activeSigningEmail, setActiveSigningEmail] = useState('');
   const [oauthConfigured, setOauthConfigured] = useState<boolean | null>(null);
   const [oauthRedirectUri, setOauthRedirectUri] = useState<string>('');
 
@@ -228,32 +227,6 @@ export default function FeedbackSection() {
       .catch(() => setOauthConfigured(false));
   }, []);
 
-  // Listen for official Google OAuth postMessage callback
-  useEffect(() => {
-    const handleGoogleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'GOOGLE_AUTH_SUCCESS' && event.data?.user) {
-        const user = event.data.user;
-        setAuthUser({
-          name: user.name,
-          email: user.email,
-          picture: user.picture,
-          provider: 'Google'
-        });
-        setIsAuth(true);
-        setIsSigningInWithGoogle(false);
-        setStatus(`Successfully verified with Google as ${user.name} (${user.email})!`);
-        setIsError(false);
-      } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
-        setStatus(`Google Sign-In failed: ${event.data.error || 'Authentication cancelled'}`);
-        setIsError(true);
-        setIsSigningInWithGoogle(false);
-      }
-    };
-
-    window.addEventListener('message', handleGoogleMessage);
-    return () => window.removeEventListener('message', handleGoogleMessage);
-  }, []);
-
   // Launch Official Modern Google OAuth 2.0 Login
   const handleLaunchOfficialGoogleOAuth = async () => {
     setIsError(false);
@@ -261,77 +234,28 @@ export default function FeedbackSection() {
     setStatus('Opening official Google Sign-In...');
 
     try {
-      // 1. Try official client-side Google Sign-In first
-      try {
-        const user = await signInWithGoogle();
-        if (user && user.email) {
-          setAuthUser({
-            name: user.name || 'Verified User',
-            email: user.email,
-            picture: user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=1a73e8&color=ffffff`,
-            provider: 'Google'
-          });
-          setIsAuth(true);
-          setIsSigningInWithGoogle(false);
-          setStatus(`Google Account verified for ${user.name}!`);
-          return;
-        }
-      } catch (clientErr) {
-        console.warn("Client Google Sign-In:", clientErr);
-      }
-
-      // 2. Fetch server-side Google OAuth 2.0 Auth URL
-      const res = await fetch('/api/auth/google/url');
-      const data = await res.json();
-
-      if (data.configured && data.url) {
-        const width = 500;
-        const height = 620;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
-        
-        const popup = window.open(
-          data.url,
-          'google_oauth_popup',
-          `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`
-        );
-
-        if (!popup) {
-          setStatus('Please allow browser popups to sign in with your Google Account.');
-          setIsError(true);
-          setIsSigningInWithGoogle(false);
-        }
-      } else {
-        // Direct authenticated identity fallback
-        handleConfirmGoogleIdentity('Ali Muhammad', 'alimuhammadhvn81@gmail.com');
+      const user = await signInWithGoogle();
+      if (user && user.email) {
+        setAuthUser({
+          name: user.name || 'Verified User',
+          email: user.email,
+          picture: user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=1a73e8&color=ffffff`,
+          provider: 'Google'
+        });
+        setIsAuth(true);
+        setStatus(`Google Account verified for ${user.name}!`);
       }
     } catch (err: any) {
-      console.warn("OAuth popup error:", err);
-      handleConfirmGoogleIdentity('Ali Muhammad', 'alimuhammadhvn81@gmail.com');
-    }
-  };
-
-  // Direct Authenticated Google Identity linking
-  const handleConfirmGoogleIdentity = (name: string, email: string) => {
-    const finalName = name.trim() || 'Ali Muhammad';
-    const finalEmail = email.trim() || 'alimuhammadhvn81@gmail.com';
-    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(finalName)}&background=1a73e8&color=ffffff&bold=true&size=128`;
-
-    setActiveSigningEmail(finalEmail);
-    setIsSigningInWithGoogle(true);
-
-    setTimeout(() => {
-      setAuthUser({
-        name: finalName,
-        email: finalEmail,
-        picture: avatarUrl,
-        provider: 'Google'
-      });
-      setIsAuth(true);
+      console.warn("Client Google Sign-In Error:", err);
+      if (err.message?.includes('popup')) {
+        setStatus('Please allow popups for this site to sign in with Google.');
+      } else {
+        setStatus('Google sign-in failed. Please try again.');
+      }
+      setIsError(true);
+    } finally {
       setIsSigningInWithGoogle(false);
-      setStatus(`Google Account verified for ${finalName} (${finalEmail})!`);
-      setIsError(false);
-    }, 500);
+    }
   };
 
   const handleSignOut = async () => {
@@ -376,21 +300,6 @@ export default function FeedbackSection() {
     const clientPhoto = authUser?.picture || (selectedImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=00d9ff&color=061017&bold=true`);
 
     try {
-      const res = await fetch('/api/feedback/submit-verified', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientName,
-          clientEmail,
-          clientPhoto,
-          rating,
-          comment: text.trim(),
-          source,
-          code: aliCode.trim(),
-          projectScreenshot: selectedImage
-        })
-      });
-
       const fallbackReply = rating === 5
         ? `Thank you so much ${clientName.split(' ')[0]} for the stellar 5-star review! It was an absolute pleasure working together on your project. Wishing you massive success, and I look forward to collaborating again on future milestones! 🚀`
         : rating === 4
@@ -399,40 +308,45 @@ export default function FeedbackSection() {
         ? `Thank you for sharing your feedback, ${clientName.split(' ')[0]}. I value your honest review and strive to make every single delivery a 5-star experience. Please feel free to reach out anytime if there is anything we can optimize or refine further!`
         : `Thank you for your review, ${clientName.split(' ')[0]}. Client satisfaction is my top priority. Please reach out to me directly at alimuhammadhvn81@gmail.com or WhatsApp (+92 342 6793428) so I can immediately assist and resolve any concerns.`;
 
-      let newFb: FeedbackCardData;
+      const newFeedbackData = {
+        clientName,
+        clientEmail,
+        clientPhoto,
+        rating,
+        comment: text.trim(),
+        source,
+        codeUsed: aliCode.trim() || 'GOOGLE-VERIFIED',
+        projectScreenshot: selectedImage || null,
+        googleVerified: isAuth,
+        adminReply: fallbackReply,
+        isApproved: true,
+        date: new Date().toISOString()
+      };
 
-      if (res.ok) {
-        const data = await res.json();
-        newFb = {
-          id: data.feedback?.id || `fb-${Date.now()}`,
-          clientName,
-          clientEmail,
-          rating,
-          comment: text.trim(),
-          source,
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          codeUsed: aliCode.trim() || 'GOOGLE-VERIFIED',
-          imageUrl: selectedImage || undefined,
-          clientPhoto,
-          googleVerified: isAuth,
-          adminReply: data.feedback?.adminReply || fallbackReply
-        };
-      } else {
-        newFb = {
-          id: `fb-${Date.now()}`,
-          clientName,
-          clientEmail,
-          rating,
-          comment: text.trim(),
-          source,
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          codeUsed: aliCode.trim() || 'GOOGLE-VERIFIED',
-          imageUrl: selectedImage || undefined,
-          clientPhoto,
-          googleVerified: isAuth,
-          adminReply: fallbackReply
-        };
+      const docRef = await addDoc(collection(db, 'feedbacks'), newFeedbackData);
+      
+      if (aliCode.trim()) {
+        const q = query(collection(db, 'feedbackCodes'), where('code', '==', aliCode.trim()));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          await updateDoc(doc(db, 'feedbackCodes', snap.docs[0].id), { isUsed: true, usedAt: new Date().toISOString() });
+        }
       }
+
+      const newFb = {
+        id: docRef.id,
+        clientName,
+        clientEmail,
+        rating,
+        comment: text.trim(),
+        source,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        codeUsed: aliCode.trim() || 'GOOGLE-VERIFIED',
+        imageUrl: selectedImage || undefined,
+        clientPhoto,
+        googleVerified: isAuth,
+        adminReply: fallbackReply
+      };
 
       setFeedbackList(prev => [newFb, ...prev]);
       setStatus(`Review submitted successfully! Developer reply has been attached for your ${rating}-star rating.`);
@@ -460,40 +374,9 @@ export default function FeedbackSection() {
 
   return (
     <section id="feedback" className="py-20 bg-[#070b12] text-slate-200 relative overflow-hidden">
-      {/* Background glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[#00d9ff]/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Official Google Sign-In In-Progress Loading Indicator */}
-      {isSigningInWithGoogle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#0f172a] text-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-white/10 text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto shadow-inner">
-              <svg className="w-6 h-6 animate-pulse" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">Google Authentication</h3>
-              <p className="text-xs text-slate-400 mt-1">Connecting to official Google identity verification...</p>
-            </div>
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsSigningInWithGoogle(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-6xl mx-auto px-4 relative z-10">
-        {/* Section Title */}
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-black text-white">
             Client <span className="text-[#00d9ff]">Feedback & Testimonials</span>
@@ -503,11 +386,9 @@ export default function FeedbackSection() {
           </p>
         </div>
 
-        {/* Main Box */}
         <div className="max-w-4xl mx-auto bg-[#0f1523] border border-[#00d9ff]/30 rounded-2xl p-6 sm:p-8 shadow-2xl">
-          {/* Submission Form */}
           <form onSubmit={handleSubmit} className="space-y-5 bg-[#0b101c] p-6 rounded-xl border border-white/10">
-            {/* 1. Google Auth Identity Box */}
+            {/* Google Identity Verification Box */}
             <div className={`p-4 rounded-xl border transition-all ${isAuth ? 'bg-[#121929] border-emerald-500/30' : 'bg-[#121929] border-[#00d9ff]/30'}`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -554,22 +435,10 @@ export default function FeedbackSection() {
                       className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-900 shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                       </svg>
                       <span>{isSigningInWithGoogle || isAuthenticating ? 'Signing in...' : 'Sign in with Google'}</span>
                     </button>
@@ -586,7 +455,7 @@ export default function FeedbackSection() {
               </div>
             </div>
 
-            {/* 2. One-Time Feedback Code Input (Ali-XXXXXX) */}
+            {/* One-Time Code Input */}
             <div className={`p-4 rounded-xl border transition-all ${isCodeValid ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-[#121929] border-white/10'}`}>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -647,7 +516,7 @@ export default function FeedbackSection() {
               </p>
             </div>
 
-            {/* 3. Rating Selection */}
+            {/* Rating */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                 Rating Score
@@ -671,7 +540,7 @@ export default function FeedbackSection() {
               </div>
             </div>
 
-            {/* 4. Written Feedback */}
+            {/* Written Feedback */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                 Written Feedback Review
@@ -685,7 +554,7 @@ export default function FeedbackSection() {
               />
             </div>
 
-            {/* 5. Picture Uploading Option */}
+            {/* Attachment Upload */}
             <div className="p-4 bg-[#121929] border border-white/10 rounded-xl space-y-2">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-[#00d9ff]" /> Upload Picture / Attachment (Optional)
@@ -732,7 +601,7 @@ export default function FeedbackSection() {
               />
             </div>
 
-            {/* 6. How do you know about me? */}
+            {/* Source dropdown */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                 Client Relationship / Source
@@ -761,7 +630,7 @@ export default function FeedbackSection() {
               </div>
             </div>
 
-            {/* 7. Optional Project Link */}
+            {/* Project Link */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                 Completed Project Link (Optional)
@@ -789,16 +658,6 @@ export default function FeedbackSection() {
                     {isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
                     <span>{status}</span>
                   </div>
-                  {isError && (
-                    <a
-                      href={window.location.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[11px] font-semibold flex items-center gap-1 transition-colors"
-                    >
-                      <ExternalLink className="w-3 h-3" /> Open in New Tab
-                    </a>
-                  )}
                 </div>
               </div>
             )}
@@ -867,22 +726,10 @@ export default function FeedbackSection() {
                         {fb.googleVerified && (
                           <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-md border border-slate-200" title="Google Verified Account">
                             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                              <path
-                                fill="#4285F4"
-                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                              />
-                              <path
-                                fill="#34A853"
-                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                              />
-                              <path
-                                fill="#FBBC05"
-                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                              />
-                              <path
-                                fill="#EA4335"
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                              />
+                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                             </svg>
                           </div>
                         )}
@@ -914,12 +761,10 @@ export default function FeedbackSection() {
                     </div>
                   </div>
 
-                  {/* Comment */}
                   <p className="text-xs text-slate-200 leading-relaxed bg-[#121929] p-3.5 rounded-xl border border-white/5">
                     "{fb.comment}"
                   </p>
 
-                  {/* Attached Picture Screenshot / Photo if available */}
                   {fb.imageUrl && (
                     <div className="pt-1">
                       <p className="text-[10px] font-bold text-slate-400 mb-1">Project Screenshot / Work Attachment:</p>
@@ -931,7 +776,6 @@ export default function FeedbackSection() {
                     </div>
                   )}
 
-                  {/* Work link */}
                   {fb.workLink && (
                     <a
                       href={fb.workLink}
@@ -943,7 +787,6 @@ export default function FeedbackSection() {
                     </a>
                   )}
 
-                  {/* Developer Auto-Reply */}
                   {fb.adminReply && (
                     <div className="p-3.5 bg-[#00d9ff]/5 border border-[#00d9ff]/20 rounded-xl text-xs space-y-2 mt-2">
                       <div className="flex items-center justify-between gap-2">
@@ -978,4 +821,3 @@ export default function FeedbackSection() {
     </section>
   );
 }
-
