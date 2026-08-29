@@ -445,6 +445,19 @@ app.post("/api/feedback/verify-code", (req, res) => {
   }
 });
 
+// Helper to get OAuth Client ID from env or firebase-applet-config.json
+const getOAuthClientId = () => {
+  let appletClientId = "";
+  try {
+    const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+      appletClientId = config.oAuthClientId || "";
+    }
+  } catch (e) {}
+  return process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || appletClientId || "1057584179825-ebgauidoppj7qfc4d3lrf99c7rokag9c.apps.googleusercontent.com";
+};
+
 // =========================================================================
 // OFFICIAL GOOGLE OAUTH 2.0 AUTHENTICATION ENDPOINTS
 // =========================================================================
@@ -452,7 +465,7 @@ app.post("/api/feedback/verify-code", (req, res) => {
 // Get OAuth Authorize URL for Real Google Login
 app.get("/api/auth/google/url", (req, res) => {
   try {
-    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
+    const clientId = getOAuthClientId();
     const appUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
     const redirectUri = `${appUrl.replace(/\/+$/, "")}/auth/google/callback`;
 
@@ -507,7 +520,7 @@ app.get(["/auth/google/callback", "/auth/google/callback/"], async (req, res) =>
   }
 
   try {
-    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
+    const clientId = getOAuthClientId();
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET || "";
     const appUrl = process.env.APP_URL || `${req.protocol}://${req.get("host")}`;
     const redirectUri = `${appUrl.replace(/\/+$/, "")}/auth/google/callback`;
