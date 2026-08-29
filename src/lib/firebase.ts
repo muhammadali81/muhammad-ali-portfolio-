@@ -47,57 +47,7 @@ export interface GoogleUserProfile {
   provider: 'Google';
 }
 
-/**
- * Initiates Google Identity sign-in using Google Identity Services (GIS)
- * with graceful fallback to Firebase Popup.
- */
 export const signInWithGoogle = async (): Promise<GoogleUserProfile> => {
-  // Method 1: Google Identity Services (GIS) Token Client (Authentic Google Account OAuth)
-  if (typeof window !== "undefined" && (window as any).google?.accounts?.oauth2) {
-    try {
-      const userProfile = await new Promise<GoogleUserProfile>((resolve, reject) => {
-        const client = (window as any).google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: "openid profile email",
-          callback: async (tokenResponse: any) => {
-            if (tokenResponse.error) {
-              reject(new Error(tokenResponse.error_description || tokenResponse.error));
-              return;
-            }
-            try {
-              const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-                headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-              });
-              const info = await res.json();
-              if (info && (info.email || info.name)) {
-                resolve({
-                  name: info.name || info.given_name || "Verified Client",
-                  email: info.email || "client.review@gmail.com",
-                  picture: info.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(info.name || "Client")}&background=00d9ff&color=061017&bold=true`,
-                  provider: "Google"
-                });
-              } else {
-                reject(new Error("Unable to retrieve Google user profile"));
-              }
-            } catch (err) {
-              reject(err);
-            }
-          },
-          error_callback: (err: any) => {
-            reject(new Error(err?.message || "Google popup closed"));
-          }
-        });
-
-        client.requestAccessToken({ prompt: "select_account" });
-      });
-
-      if (userProfile) return userProfile;
-    } catch (gisError) {
-      console.warn("GIS token flow failed, falling back to Firebase popup:", gisError);
-    }
-  }
-
-  // Method 2: Firebase signInWithPopup
   const firebaseAuth = getFirebaseAuth();
   if (firebaseAuth) {
     try {
@@ -107,7 +57,7 @@ export const signInWithGoogle = async (): Promise<GoogleUserProfile> => {
           name: result.user.displayName || "Verified Client",
           email: result.user.email || "",
           picture: result.user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(result.user.displayName || "Client")}&background=00d9ff&color=061017&bold=true`,
-          provider: "Google"
+          provider: 'Google'
         };
       }
     } catch (fbError: any) {
@@ -115,7 +65,6 @@ export const signInWithGoogle = async (): Promise<GoogleUserProfile> => {
       throw fbError;
     }
   }
-
   throw new Error("Google Identity could not be initialized.");
 };
 
@@ -129,7 +78,6 @@ export const getGoogleRedirectResult = async () => {
     return null;
   }
 };
-
 
 import { getFirestore } from 'firebase/firestore';
 export const db = getFirestore(getFirebaseApp(), "ai-studio-muhammadaliportf-398bd4c4-1313-40c7-9f53-76fe0265c406");
