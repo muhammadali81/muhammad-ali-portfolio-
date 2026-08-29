@@ -38,11 +38,12 @@ export default function InquirySection() {
         status: 'New',
         date: new Date().toISOString()
       });
+
       setStatus('Inquiry sent successfully. Thank you — your message has been received.');
       setFormData({ name: '', email: '', subject: '', service: '', budget: '$10 - $50', message: '', website: '' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setStatus('Unable to submit inquiry right now.');
+      setStatus(`Unable to submit inquiry: ${error.message || 'Please try again later'}`);
     } finally {
       setLoading(false);
     }

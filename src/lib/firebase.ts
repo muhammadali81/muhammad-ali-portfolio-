@@ -167,4 +167,4 @@ export const getGoogleRedirectResult = async () => {
   }
 };
 
-export const db = getFirestore(getFirebaseApp(), firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(getFirebaseApp());

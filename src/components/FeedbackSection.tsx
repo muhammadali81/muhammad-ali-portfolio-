@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HOW_DO_YOU_KNOW_OPTIONS } from '../data/portfolioData';
-import { signInWithGoogle, getFirebaseAuth, getGoogleRedirectResult, db } from '../lib/firebase';
-import { collection, getDocs, addDoc, query, where, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc } from 'firebase/firestore';
+import { db, signInWithGoogle, getFirebaseAuth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import {
   Upload,
   Image as ImageIcon,
@@ -67,24 +68,10 @@ export default function FeedbackSection() {
     const auth = getFirebaseAuth();
     if (!auth) return;
 
-    // Check for redirect result on mount
-    getGoogleRedirectResult().then(user => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setAuthUser({
-          name: user.displayName || 'Verified User',
-          email: user.email || '',
-          picture: user.photoURL || '',
-          provider: 'Google'
-        });
-        setIsAuth(true);
-        setStatus('Welcome! Identity verified via Google.');
-      }
-    });
-
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setAuthUser({
-          name: user.displayName || 'Verified User',
+          name: user.displayName || user.email?.split('@')[0] || 'Verified User',
           email: user.email || '',
           picture: user.photoURL || '',
           provider: 'Google'
@@ -106,9 +93,14 @@ export default function FeedbackSection() {
   useEffect(() => {
     const fetchFeedbacks = async () => {
       try {
-        const q = query(collection(db, 'feedbacks'), where('isApproved', '==', true));
-        const snap = await getDocs(q);
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const q = query(
+          collection(db, 'feedbacks'),
+          where('isApproved', '==', true),
+          orderBy('date', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
         setFeedbackList(data.map((fb: any) => ({
           id: fb.id,
           clientName: fb.clientName,
@@ -116,7 +108,7 @@ export default function FeedbackSection() {
           rating: fb.rating,
           comment: fb.comment,
           source: fb.source,
-          date: new Date(fb.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          date: fb.date ? new Date(fb.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
           codeUsed: fb.codeUsed || 'VERIFIED-CLIENT',
           imageUrl: fb.projectScreenshot,
           clientPhoto: fb.clientPhoto,
@@ -170,16 +162,15 @@ export default function FeedbackSection() {
     setStatus('Verifying your unique feedback code...');
 
     try {
-      const q = query(collection(db, 'feedbackCodes'), where('code', '==', trimmed));
-      const snap = await getDocs(q);
+      const q = query(collection(db, 'feedback_codes'), where('code', '==', trimmed));
+      const querySnapshot = await getDocs(q);
       
-      if (!snap.empty) {
-        const codeDoc = snap.docs[0];
-        const codeData = codeDoc.data();
-        if (!codeData.isUsed) {
+      if (!querySnapshot.empty) {
+        const data = querySnapshot.docs[0].data();
+        if (!data.isUsed) {
           setIsCodeValid(true);
-          setAliCode(codeData.code);
-          setStatus(`Code verified for ${codeData.assignedTo || 'client'}! You can now submit your review.`);
+          setAliCode(data.code);
+          setStatus(`Code verified for ${data.assignedTo || 'client'}! You can now submit your review.`);
           setIsError(false);
         } else {
           setIsCodeValid(false);
@@ -187,6 +178,7 @@ export default function FeedbackSection() {
           setIsError(true);
         }
       } else {
+        // Fallback for codes not yet in DB but shared
         if (trimmed.length >= 6) {
           setIsCodeValid(true);
           setStatus(`Code "${trimmed}" verified! You can proceed.`);
@@ -213,45 +205,6 @@ export default function FeedbackSection() {
 
   // Real Google OAuth & Identity Verification
   const [isSigningInWithGoogle, setIsSigningInWithGoogle] = useState(false);
-    const [oauthConfigured, setOauthConfigured] = useState<boolean | null>(null);
-  const [oauthRedirectUri, setOauthRedirectUri] = useState<string>('');
-
-  // Check OAuth configuration status on mount
-  useEffect(() => {
-    fetch('/api/auth/google/url')
-      .then(res => res.json())
-      .then(data => {
-        setOauthConfigured(data.configured === true);
-        if (data.redirectUri) setOauthRedirectUri(data.redirectUri);
-      })
-      .catch(() => setOauthConfigured(false));
-  }, []);
-
-  // Listen for official Google OAuth postMessage callback
-  useEffect(() => {
-    const handleGoogleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'GOOGLE_AUTH_SUCCESS' && event.data?.user) {
-        const user = event.data.user;
-        setAuthUser({
-          name: user.name,
-          email: user.email,
-          picture: user.picture,
-          provider: 'Google'
-        });
-        setIsAuth(true);
-        setIsSigningInWithGoogle(false);
-        setStatus(`Successfully verified with Google as ${user.name} (${user.email})!`);
-        setIsError(false);
-      } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
-        setStatus(`Google Sign-In failed: ${event.data.error || 'Authentication cancelled'}`);
-        setIsError(true);
-        setIsSigningInWithGoogle(false);
-      }
-    };
-
-    window.addEventListener('message', handleGoogleMessage);
-    return () => window.removeEventListener('message', handleGoogleMessage);
-  }, []);
 
   // Launch Official Modern Google OAuth 2.0 Login
   const handleLaunchOfficialGoogleOAuth = async () => {
@@ -261,73 +214,36 @@ export default function FeedbackSection() {
 
     try {
       const user = await signInWithGoogle();
-      if (user && user.email) {
-        setAuthUser({
-          name: user.name || 'Verified User',
-          email: user.email,
-          picture: user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=1a73e8&color=ffffff`,
-          provider: 'Google'
-        });
+      if (user) {
+        setAuthUser(user);
         setIsAuth(true);
-        setStatus(`Google Account verified for ${user.name}!`);
+        setStatus(`Successfully verified with Google as ${user.name}!`);
         setIsError(false);
-        return;
       }
     } catch (err: any) {
-      console.warn("Client Google Sign-In Error:", err);
-      // Try server OAuth endpoint fallback
-      try {
-        const res = await fetch('/api/auth/google/url');
-        const data = await res.json();
-        if (data.configured && data.url) {
-          const width = 500;
-          const height = 620;
-          const left = window.screenX + (window.outerWidth - width) / 2;
-          const top = window.screenY + (window.outerHeight - height) / 2;
-          const popup = window.open(
-            data.url,
-            'google_oauth_popup',
-            `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`
-          );
-          if (!popup) {
-            setStatus('Please allow popups for this site to sign in with Google.');
-            setIsError(true);
-          }
-          return;
-        }
-      } catch (e) {
-        console.error("Server OAuth URL error:", e);
-      }
-      setStatus('Google sign-in failed. Please try again.');
+      console.error("Google Sign-In Error:", err);
+      setStatus(`Google sign-in failed: ${err.message || 'Please try again'}`);
       setIsError(true);
     } finally {
       setIsSigningInWithGoogle(false);
     }
   };
 
-  
-
   const handleSignOut = async () => {
-    try {
-      const auth = getFirebaseAuth();
-      if (auth) await auth.signOut();
+    const auth = getFirebaseAuth();
+    if (auth) {
+      await auth.signOut();
       setAuthUser(null);
       setIsAuth(false);
       setStatus('Signed out of Google identity.');
       setIsError(false);
-    } catch { }
+    }
   };
 
   // Submit Feedback Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsError(false);
-
-    if (!isAuth && !isCodeValid) {
-      setStatus('Please verify your Google Account OR enter your unique "Ali-" feedback code to post.');
-      setIsError(true);
-      return;
-    }
 
     if (!text.trim()) {
       setStatus('Please write your feedback review message.');
@@ -341,29 +257,38 @@ export default function FeedbackSection() {
       return;
     }
 
+    // NEW: Handle authentication on submit if not already authenticated and no code
+    let currentUser = authUser;
+    if (!isAuth && !isCodeValid) {
+      setSubmitting(true);
+      setStatus('Opening official Google Sign-In for verification...');
+      try {
+        const user = await signInWithGoogle();
+        if (!user) {
+          setSubmitting(false);
+          setStatus('Identity verification required to post public reviews.');
+          setIsError(true);
+          return;
+        }
+        currentUser = user;
+        setAuthUser(user);
+        setIsAuth(true);
+      } catch (err: any) {
+        setSubmitting(false);
+        setStatus(`Verification failed: ${err.message || 'Please try again'}`);
+        setIsError(true);
+        return;
+      }
+    }
+
     setSubmitting(true);
     setStatus('Submitting verified feedback…');
 
-    const clientName = authUser?.name || (aliCode ? `Client (${aliCode})` : 'Verified Client');
-    const clientEmail = authUser?.email || (aliCode ? `${aliCode.toLowerCase()}@client.verified` : 'client@verified.review');
-    const clientPhoto = authUser?.picture || (selectedImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=00d9ff&color=061017&bold=true`);
+    const clientName = currentUser?.name || (aliCode ? `Client (${aliCode})` : 'Verified Client');
+    const clientEmail = currentUser?.email || (aliCode ? `${aliCode.toLowerCase()}@client.verified` : 'client@verified.review');
+    const clientPhoto = currentUser?.picture || (selectedImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=00d9ff&color=061017&bold=true`);
 
     try {
-      const res = await fetch('/api/feedback/submit-verified', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientName,
-          clientEmail,
-          clientPhoto,
-          rating,
-          comment: text.trim(),
-          source,
-          code: aliCode.trim(),
-          projectScreenshot: selectedImage
-        })
-      });
-
       const fallbackReply = rating === 5
         ? `Thank you so much ${clientName.split(' ')[0]} for the stellar 5-star review! It was an absolute pleasure working together on your project. Wishing you massive success, and I look forward to collaborating again on future milestones! 🚀`
         : rating === 4
@@ -372,43 +297,52 @@ export default function FeedbackSection() {
         ? `Thank you for sharing your feedback, ${clientName.split(' ')[0]}. I value your honest review and strive to make every single delivery a 5-star experience. Please feel free to reach out anytime if there is anything we can optimize or refine further!`
         : `Thank you for your review, ${clientName.split(' ')[0]}. Client satisfaction is my top priority. Please reach out to me directly at alimuhammadhvn81@gmail.com or WhatsApp (+92 342 6793428) so I can immediately assist and resolve any concerns.`;
 
-      let newFb: FeedbackCardData;
+      // Insert into Firestore
+      const docRef = await addDoc(collection(db, 'feedbacks'), {
+        clientName,
+        clientEmail,
+        clientPhoto,
+        rating,
+        comment: text.trim(),
+        source,
+        codeUsed: aliCode.trim(),
+        projectScreenshot: selectedImage,
+        googleVerified: isAuth,
+        adminReply: fallbackReply,
+        isApproved: false, // Requires admin approval
+        date: new Date().toISOString()
+      });
 
-      if (res.ok) {
-        const data = await res.json();
-        newFb = {
-          id: data.feedback?.id || `fb-${Date.now()}`,
-          clientName,
-          clientEmail,
-          rating,
-          comment: text.trim(),
-          source,
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          codeUsed: aliCode.trim() || 'GOOGLE-VERIFIED',
-          imageUrl: selectedImage || undefined,
-          clientPhoto,
-          googleVerified: isAuth,
-          adminReply: data.feedback?.adminReply || fallbackReply
-        };
-      } else {
-        newFb = {
-          id: `fb-${Date.now()}`,
-          clientName,
-          clientEmail,
-          rating,
-          comment: text.trim(),
-          source,
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          codeUsed: aliCode.trim() || 'GOOGLE-VERIFIED',
-          imageUrl: selectedImage || undefined,
-          clientPhoto,
-          googleVerified: isAuth,
-          adminReply: fallbackReply
-        };
+      // Update code status if used in DB
+      if (aliCode.trim()) {
+        const q = query(collection(db, 'feedback_codes'), where('code', '==', aliCode.trim()));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const codeDocId = querySnapshot.docs[0].id;
+          await updateDoc(doc(db, 'feedback_codes', codeDocId), {
+            isUsed: true,
+            usedAt: new Date().toISOString()
+          });
+        }
       }
 
+      const newFb: FeedbackCardData = {
+        id: docRef.id,
+        clientName,
+        clientEmail,
+        rating,
+        comment: text.trim(),
+        source,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        codeUsed: aliCode.trim() || 'VERIFIED-CLIENT',
+        imageUrl: selectedImage || undefined,
+        clientPhoto,
+        googleVerified: isAuth,
+        adminReply: fallbackReply
+      };
+
       setFeedbackList(prev => [newFb, ...prev]);
-      setStatus(`Review submitted successfully! Developer reply has been attached for your ${rating}-star rating.`);
+      setStatus('Feedback submitted successfully! It will appear publicly once approved by Muhammad Ali.');
       setIsError(false);
 
       // Reset form
@@ -417,9 +351,9 @@ export default function FeedbackSection() {
       setSelectedImage(null);
       setWorkLink('');
       if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setStatus('An error occurred during submission.');
+      setStatus(`An error occurred during submission: ${err.message || 'Please try again later'}`);
       setIsError(true);
     } finally {
       setSubmitting(false);
@@ -451,84 +385,36 @@ export default function FeedbackSection() {
         <div className="max-w-4xl mx-auto bg-[#0f1523] border border-[#00d9ff]/30 rounded-2xl p-6 sm:p-8 shadow-2xl">
           {/* Submission Form */}
           <form onSubmit={handleSubmit} className="space-y-5 bg-[#0b101c] p-6 rounded-xl border border-white/10">
-            {/* 1. Google Auth Identity Box */}
-            <div className={`p-4 rounded-xl border transition-all ${isAuth ? 'bg-[#121929] border-emerald-500/30' : 'bg-[#121929] border-[#00d9ff]/30'}`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  {authUser ? (
+            {/* 1. Verified Identity (Shown if logged in) */}
+            {isAuth && authUser && (
+              <div className="p-4 rounded-xl border bg-[#121929] border-emerald-500/30">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
                     <img
                       src={authUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.name)}&background=00d9ff&color=061017`}
                       alt={authUser.name}
                       className="w-11 h-11 rounded-full border-2 border-emerald-400 object-cover shrink-0 shadow-md"
                     />
-                  ) : (
-                    <div className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-slate-300 shrink-0">
-                      <ShieldCheck className="w-6 h-6 text-[#00d9ff]" />
-                    </div>
-                  )}
-
-                  <div>
-                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5 flex-wrap">
-                      {isAuth ? authUser?.name : 'Google Identity Verification'}
-                      {isAuth ? (
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-1.5 flex-wrap">
+                        {authUser?.name}
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" /> Google Verified
                         </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-[#00d9ff]/10 text-[#00d9ff] border border-[#00d9ff]/30 text-[10px] font-semibold">
-                          Recommended
-                        </span>
-                      )}
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {isAuth
-                        ? authUser?.email
-                        : 'Verify identity via Google or use your unique Ali- code below'}
-                    </p>
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-0.5">{authUser?.email}</p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {!isAuth ? (
-                    <button
-                      id="google-signin-button"
-                      type="button"
-                      onClick={handleLaunchOfficialGoogleOAuth}
-                      disabled={isAuthenticating || isSigningInWithGoogle}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-900 shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                      </svg>
-                      <span>{isSigningInWithGoogle || isAuthenticating ? 'Signing in...' : 'Sign in with Google'}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/10 transition-colors cursor-pointer"
-                    >
-                      Sign Out
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/10 transition-colors cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* 2. One-Time Feedback Code Input (Ali-XXXXXX) */}
             <div className={`p-4 rounded-xl border transition-all ${isCodeValid ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-[#121929] border-white/10'}`}>
@@ -752,17 +638,35 @@ export default function FeedbackSection() {
               id="submit-feedback-button"
               type="submit"
               disabled={submitting}
-              className="w-full py-4 px-6 bg-gradient-to-r from-[#00d9ff] to-[#00b4d8] text-[#061017] font-black text-sm rounded-xl hover:shadow-xl hover:shadow-[#00d9ff]/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              className={`w-full py-4 px-6 font-black text-sm rounded-xl hover:shadow-xl active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 ${
+                !isAuth && !isCodeValid 
+                  ? 'bg-white text-slate-900 hover:bg-slate-100' 
+                  : 'bg-gradient-to-r from-[#00d9ff] to-[#00b4d8] text-[#061017] hover:shadow-[#00d9ff]/20'
+              }`}
             >
               {submitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-[#061017] border-t-transparent rounded-full animate-spin" />
-                  <span>Publishing Verified Review…</span>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <span>{isAuth || isCodeValid ? 'Publishing Verified Review…' : 'Verifying Identity…'}</span>
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-5 h-5" />
-                  <span>Submit Verified Client Feedback</span>
+                  {!isAuth && !isCodeValid ? (
+                    <>
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                      </svg>
+                      <span>Verify Google Identity & Submit</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-5 h-5" />
+                      <span>Submit Verified Client Feedback</span>
+                    </>
+                  )}
                 </>
               )}
             </button>

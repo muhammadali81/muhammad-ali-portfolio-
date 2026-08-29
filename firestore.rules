@@ -1,45 +1,31 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    function isAdmin() {
-      return request.auth != null && 
-             request.auth.token.email == 'alimuhammadhvn81@gmail.com' && 
-             request.auth.token.email_verified == true;
-    }
-    
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    // Allows anyone to read approved feedbacks
+    match /feedbacks/{feedbackId} {
+      allow read: if resource.data.isApproved == true || request.auth != null;
+      allow create: if true; // In a production app, you'd add more validation
+      allow update, delete: if request.auth != null;
     }
 
-    match /feedbacks/{feedbackId} {
-      allow read: if resource.data.isApproved == true || isAdmin();
-      
-      // Anyone can create feedback
-      allow create: if true; 
-      
-      // Admin can update or delete
-      allow update, delete: if isAdmin();
-    }
-    
+    // Allows anyone to submit inquiries
     match /inquiries/{inquiryId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if request.auth != null;
     }
-    
-    match /feedbackCodes/{codeId} {
-      // Anyone can read a code to check if it's valid/used
+
+    // Site stats
+    match /site_stats/{docId} {
       allow read: if true;
-      
-      // Admin can do anything
-      allow create, delete: if isAdmin();
-      
-      // Anyone can mark a code as used when they submit a feedback
-      // We should ideally restrict this to just updating `isUsed` and `usedAt`
-      allow update: if isAdmin() || (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isUsed', 'usedAt']) &&
-        request.resource.data.isUsed == true
-      );
+      allow update: if true; // We use increment() for views/reactions
+      allow create, delete: if request.auth != null;
+    }
+
+    // Feedback codes
+    match /feedback_codes/{codeId} {
+      allow read: if true;
+      allow update: if true;
+      allow create, delete: if request.auth != null;
     }
   }
 }

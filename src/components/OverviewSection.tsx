@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, CheckCircle2, Star } from 'lucide-react';
+import { collection, doc, getDoc, getDocs, query, where, updateDoc, increment, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function OverviewSection() {
   const [stats, setStats] = useState({
@@ -13,51 +15,70 @@ export default function OverviewSection() {
   });
 
   useEffect(() => {
-    let retryCount = 0;
-    const maxRetries = 3;
-
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/stats');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        setStats({
-          profile_views: data.profileViews || 0,
-          satisfied: data.satisfiedClients || 0,
-          unsatisfied: data.unsatisfiedClients || 0,
-          total_feedback: data.totalFeedback || 0,
-          average_rating: data.averageRating || 0,
-          positive: data.positiveReactions || 0,
-          negative: data.negativeReactions || 0
-        });
-        retryCount = 0; // Reset on success
-      } catch (error) {
-        // Only log if we have exhausted retries or it's not a standard network error
-        if (retryCount >= maxRetries) {
-          console.error("Failed to fetch real-time stats after retries:", error);
+        // 1. Fetch from site_stats
+        const statsRef = doc(db, 'site_stats', 'global');
+        const snap = await getDoc(statsRef);
+        let siteData: any = null;
+
+        if (snap.exists()) {
+          siteData = snap.data();
         } else {
-          console.warn(`Transient fetch error (attempt ${retryCount + 1}/${maxRetries}):`, error instanceof Error ? error.message : error);
+          siteData = {
+            profileViews: 168,
+            satisfiedClients: 0,
+            unsatisfiedClients: 0,
+            positiveReactions: 54,
+            negativeReactions: 0
+          };
+          await setDoc(statsRef, siteData);
         }
 
-        if (retryCount < maxRetries) {
-          retryCount++;
-          setTimeout(fetchStats, 2000 * retryCount);
-        }
+        // 2. Fetch feedback aggregates
+        const q = query(collection(db, 'feedbacks'), where('isApproved', '==', true));
+        const fbSnap = await getDocs(q);
+        const approvedFbs = fbSnap.docs.map(d => d.data());
+
+        const totalApproved = approvedFbs.length;
+        const avgRating = totalApproved > 0 
+          ? approvedFbs.reduce((acc, curr) => acc + (curr.rating || 0), 0) / totalApproved 
+          : 0;
+
+        setStats({
+          profile_views: siteData?.profileViews || 0,
+          satisfied: siteData?.satisfiedClients || 0,
+          unsatisfied: siteData?.unsatisfiedClients || 0,
+          total_feedback: totalApproved,
+          average_rating: avgRating,
+          positive: siteData?.positiveReactions || 0,
+          negative: siteData?.negativeReactions || 0
+        });
+      } catch (error) {
+        console.warn("Failed to fetch real-time stats:", error);
       }
     };
 
     fetchStats();
     
-    // Auto-refresh every 30 seconds for real-time feel
-    const interval = setInterval(fetchStats, 30000);
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(fetchStats, 60000);
     
     // Register a view once per session
     const hasViewed = sessionStorage.getItem('portfolio_viewed');
     if (!hasViewed) {
-      fetch('/api/stats/view', { method: 'POST' }).catch(() => {
-        // Ignore view count network errors to prevent console noise
-      });
-      sessionStorage.setItem('portfolio_viewed', 'true');
+      const incrementView = async () => {
+        try {
+          const statsRef = doc(db, 'site_stats', 'global');
+          await updateDoc(statsRef, {
+            profileViews: increment(1)
+          });
+          sessionStorage.setItem('portfolio_viewed', 'true');
+        } catch (err) {
+          console.warn("View track error:", err);
+        }
+      };
+      incrementView();
     }
 
     return () => clearInterval(interval);

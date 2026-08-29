@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function ReactionSection() {
   const [likes, setLikes] = useState(0);
@@ -8,60 +10,87 @@ export default function ReactionSection() {
   });
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
 
-  // Fetch real counts from DB
+  // Fetch real counts from Firestore
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const res = await fetch('/api/stats');
-        if (res.ok) {
-          const data = await res.json();
+        const statsRef = doc(db, 'site_stats', 'global');
+        const snap = await getDoc(statsRef);
+        
+        if (snap.exists()) {
+          const data = snap.data();
           setLikes(data.positiveReactions || 0);
           setDislikes(data.negativeReactions || 0);
+        } else {
+          // Initialize if not exists
+          await setDoc(statsRef, {
+            profileViews: 168,
+            satisfiedClients: 0,
+            unsatisfiedClients: 0,
+            positiveReactions: 54,
+            negativeReactions: 0
+          });
+          setLikes(54);
+          setDislikes(0);
         }
       } catch (err) {
-        // Ignore network errors on initial load to prevent console noise
-        console.warn("Transient fetch error for reaction counts:", err instanceof Error ? err.message : err);
+        console.warn("Transient fetch error for reaction counts:", err);
       }
     };
     fetchCounts();
   }, []);
 
   const handleReaction = async (type: 'like' | 'dislike') => {
-    // Optimistic UI update
     const previousReaction = userReaction;
     const isRemoving = previousReaction === type;
     
-    // Calculate new counts locally for instant feedback
+    // Calculate increments
+    let likeInc = 0;
+    let dislikeInc = 0;
+
     if (isRemoving) {
       setUserReaction(null);
-      if (type === 'like') setLikes(prev => prev - 1);
-      else setDislikes(prev => prev - 1);
+      if (type === 'like') {
+        setLikes(prev => prev - 1);
+        likeInc = -1;
+      } else {
+        setDislikes(prev => prev - 1);
+        dislikeInc = -1;
+      }
       localStorage.removeItem('portfolio_user_reaction');
       setFeedbackNotice('Your feedback was removed.');
     } else {
-      // If switching from one to another
-      if (previousReaction === 'like') setLikes(prev => prev - 1);
-      if (previousReaction === 'dislike') setDislikes(prev => prev - 1);
+      if (previousReaction === 'like') {
+        setLikes(prev => prev - 1);
+        likeInc -= 1;
+      }
+      if (previousReaction === 'dislike') {
+        setDislikes(prev => prev - 1);
+        dislikeInc -= 1;
+      }
 
       setUserReaction(type);
       if (type === 'like') {
         setLikes(prev => prev + 1);
+        likeInc += 1;
         setFeedbackNotice('Thank you for liking my portfolio!');
       } else {
         setDislikes(prev => prev + 1);
+        dislikeInc += 1;
         setFeedbackNotice('Thank you for the feedback. I will continue improving!');
       }
       localStorage.setItem('portfolio_user_reaction', type);
     }
 
     try {
-      await fetch('/api/reactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, isRemoving })
+      // Update counts in Firestore
+      const statsRef = doc(db, 'site_stats', 'global');
+      await updateDoc(statsRef, {
+        positiveReactions: increment(likeInc),
+        negativeReactions: increment(dislikeInc)
       });
     } catch (err) {
-      console.error("Failed to update reaction on server:", err);
+      console.error("Failed to update reaction on Firestore:", err);
     }
   };
 
