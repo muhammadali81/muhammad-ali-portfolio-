@@ -29,28 +29,28 @@ A full-stack, responsive developer portfolio and client management platform feat
 ### Installation & Setup
 
 1. **Clone the repository:**
-   \`\`\`bash
-   git clone https://github.com/muhammadali81/muhammad-ali-portfolio-.git
-   cd muhammad-ali-portfolio-
-   \`\`\`
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+   cd YOUR_REPOSITORY
+   ```
 
 2. **Install dependencies:**
-   \`\`\`bash
+   ```bash
    npm install
-   \`\`\`
+   ```
 
 3. **Set up environment variables:**
-   Copy \`.env.example\` to \`.env\`:
-   \`\`\`bash
-   cp .env.example .env
-   \`\`\`
-   Configure your environment variables in \`.env\` (e.g. \`GEMINI_API_KEY\`, \`ADMIN_PASSWORD\`).
+   Copy `.env.example` to `.env.local` or `.env`:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Configure your environment variables in `.env.local` (e.g. `GEMINI_API_KEY`, `ADMIN_PASSWORD`).
 
 4. **Start the development server:**
-   \`\`\`bash
+   ```bash
    npm run dev
-   \`\`\`
-   Open your browser at \`http://localhost:3000\`.
+   ```
+   Open your browser at `http://localhost:3000`.
 
 ---
 
@@ -58,13 +58,13 @@ A full-stack, responsive developer portfolio and client management platform feat
 
 To compile the application for production:
 
-\`\`\`bash
+```bash
 # Compile client assets and server bundle
 npm run build
 
 # Run the production server
 npm start
-\`\`\`
+```
 
 ---
 
@@ -76,3 +76,4 @@ npm start
 - **Email:** alimuhammadhvn81@gmail.com
 - **WhatsApp:** +92 342 6793428
 - **Call:** +92 330 0358799
+
