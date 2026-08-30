@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, updateDoc, doc as firestoreDoc, deleteDoc, addDoc, setDoc, increment } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, getFirebaseAuth } from '../lib/firebase';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, Sparkles, CheckCircle2,
   AlertCircle, X, KeyRound, Phone, Globe, Award, LayoutDashboard,
@@ -57,39 +58,44 @@ function AdminLogin({
     setErrorMessage('');
     setSuccessMessage('');
     setLoading(true);
+    
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      setErrorMessage('Firebase Auth not initialized.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password })
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const user = userCredential.user;
+      
+      if (user.uid === 'QyheR7VsOJZTmDFRclcA2PuLr7q1') {
         setSuccessMessage('Authenticated successfully! Loading Full Dashboard...');
-        if (keepSignedIn) {
-          localStorage.setItem('ma_admin_auth_token', data.token);
-          localStorage.setItem('ma_admin_user', JSON.stringify(data.user));
-        } else {
-          sessionStorage.setItem('ma_admin_auth_token', data.token);
-          sessionStorage.setItem('ma_admin_user', JSON.stringify(data.user));
-        }
-        setTimeout(() => onLoginSuccess(data.token, data.user), 500);
-      } else {
-        setErrorMessage(data.error || 'Invalid administrator credentials.');
-      }
-    } catch {
-      // Local fallback credentials validation
-      if (password === 'Ali2007' && email.toLowerCase().includes('ali')) {
-        const token = `ma_sess_${Date.now()}`;
-        setSuccessMessage('Authenticated successfully! Loading Full Dashboard...');
+        const adminUser: AdminUser = {
+          name: user.displayName || 'Muhammad Ali',
+          email: user.email || email,
+          role: 'Master Admin',
+          avatarUrl: user.photoURL || 'https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true',
+          status: 'Online'
+        };
+        
+        const token = await user.getIdToken();
         if (keepSignedIn) {
           localStorage.setItem('ma_admin_auth_token', token);
-          localStorage.setItem('ma_admin_user', JSON.stringify(DEFAULT_ADMIN_USER));
+          localStorage.setItem('ma_admin_user', JSON.stringify(adminUser));
+        } else {
+          sessionStorage.setItem('ma_admin_auth_token', token);
+          sessionStorage.setItem('ma_admin_user', JSON.stringify(adminUser));
         }
-        setTimeout(() => onLoginSuccess(token, DEFAULT_ADMIN_USER), 500);
+        setTimeout(() => onLoginSuccess(token, adminUser), 500);
       } else {
-        setErrorMessage('Access Denied. Please verify master admin credentials.');
+        await signOut(auth);
+        setErrorMessage('Access Denied: You do not have administrator privileges.');
       }
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setErrorMessage(error.message || 'Invalid administrator credentials.');
     } finally {
       setLoading(false);
     }
@@ -337,15 +343,33 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
   ];
 
   useEffect(() => {
-    const token = localStorage.getItem('ma_admin_auth_token') || sessionStorage.getItem('ma_admin_auth_token');
-    if (token) {
-      setIsAuthenticated(true);
-      const savedUser = localStorage.getItem('ma_admin_user') || sessionStorage.getItem('ma_admin_user');
-      if (savedUser) {
-        try { setUser(JSON.parse(savedUser)); } catch { }
+    const auth = getFirebaseAuth();
+    if (!auth) return;
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser && firebaseUser.uid === 'QyheR7VsOJZTmDFRclcA2PuLr7q1') {
+        const adminUser: AdminUser = {
+          name: firebaseUser.displayName || 'Muhammad Ali',
+          email: firebaseUser.email || '',
+          role: 'Master Admin',
+          avatarUrl: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true',
+          status: 'Online'
+        };
+        setUser(adminUser);
+        setIsAuthenticated(true);
+        const token = await firebaseUser.getIdToken();
+        localStorage.setItem('ma_admin_auth_token', token);
+        localStorage.setItem('ma_admin_user', JSON.stringify(adminUser));
+      } else {
+        const token = localStorage.getItem('ma_admin_auth_token') || sessionStorage.getItem('ma_admin_auth_token');
+        if (!token) {
+          setIsAuthenticated(false);
+        }
       }
-    }
+    });
+
     fetchAllData();
+    return () => unsubscribe();
   }, []);
 
   const fetchAllData = async () => {
@@ -457,7 +481,15 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
     setIsRefreshing(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const auth = getFirebaseAuth();
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
+    }
     localStorage.removeItem('ma_admin_auth_token');
     sessionStorage.removeItem('ma_admin_auth_token');
     localStorage.removeItem('ma_admin_user');
