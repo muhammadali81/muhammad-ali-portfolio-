@@ -1,7 +1,0 @@
-{
-  "name": "Muhammad Ali Portfolio",
-  "description": "Comprehensive portfolio of Muhammad Ali - Computer Science student, Web Developer, Game & AI App Developer, Graphic Designer, and 2D visual designer.",
-  "requestFramePermissions": ["microphone"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
-
