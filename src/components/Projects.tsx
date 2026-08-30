@@ -37,17 +37,17 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     subtitle: 'Interactive games and intelligent AI applications',
     description: 'Specialized game mechanics, custom puzzle engines, localized NLP AI architectures, and gamified learning platforms built with high performance.',
     icon: Gamepad2,
-    coverImage: '/src/assets/images/pakai_4_1787857101384.jpg',
+    coverImage: '/src/images/pakai_4.jpg',
     subdivisions: [
       {
         name: 'Colour Block',
         badge: 'Division 1 • 4 Photos',
         description: 'Interactive color block puzzle game logic featuring smooth animations, player mechanics, dynamic block matching physics, combo blast particles, and high score leaderboards.',
         photos: [
-          { id: 1, title: 'Colour Block - Intro Title Screen (Ali Game Hubs)', url: '/src/assets/images/color_block_1_1787857487973.jpg', caption: 'Photo 1: Ali Game Hubs Presents Color Blocks title intro screen' },
-          { id: 2, title: 'Colour Block - Mobile Puzzle Gameplay (Level 35)', url: '/src/assets/images/color_block_2_1787857501547.jpg', caption: 'Photo 2: Level 35 gameplay screen with Score 8,450 & Moves 23' },
-          { id: 3, title: 'Colour Block - Free Mode Board Grid', url: '/src/assets/images/color_block_3_1787857513079.jpg', caption: 'Photo 3: Free Mode puzzle grid with Score 1260 and Restart/Menu controls' },
-          { id: 4, title: 'Colour Block - Victory Trophy Screen (All 25 Levels)', url: '/src/assets/images/color_block_4_1787857524604.jpg', caption: 'Photo 4: You Win! All 25 Levels Complete victory screen with trophy' }
+          { id: 1, title: 'Colour Block - Intro Title Screen (Ali Game Hubs)', url: '/src/images/colorblock_1.jpg', caption: 'Photo 1: Ali Game Hubs Presents Color Blocks title intro screen' },
+          { id: 2, title: 'Colour Block - Mobile Puzzle Gameplay (Level 35)', url: '/src/images/colorblock_2.jpg', caption: 'Photo 2: Level 35 gameplay screen with Score 8,450 & Moves 23' },
+          { id: 3, title: 'Colour Block - Free Mode Board Grid', url: '/src/images/colorblock_3.jpg', caption: 'Photo 3: Free Mode puzzle grid with Score 1260 and Restart/Menu controls' },
+          { id: 4, title: 'Colour Block - Victory Trophy Screen (All 25 Levels)', url: '/src/images/color_block_4.jpg', caption: 'Photo 4: You Win! All 25 Levels Complete victory screen with trophy' }
         ]
       },
       {
@@ -55,10 +55,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 2 • 4 Photos',
         description: 'Next-gen artificial intelligence platform featuring intelligent Urdu & English NLP conversational chat, real-time voice processing, and custom vector document query solutions.',
         photos: [
-          { id: 1, title: 'Pak AI - AI Assistant Emblem & Logo', url: '/src/assets/images/pakai_1_1787857048969.jpg', caption: 'Photo 1: PakAI Logo, Brain Circuits & AI Assistant Badge' },
-          { id: 2, title: 'Pak AI - Mobile App Interface & Flag Mockup', url: '/src/assets/images/pakai_2_1787857065887.jpg', caption: 'Photo 2: Smartphone UI with Assalamualaikum PakAI greeting & Pakistan map' },
-          { id: 3, title: 'Pak AI - Conversational Chat UI', url: '/src/assets/images/pakai_3_1787857084683.jpg', caption: 'Photo 3: Dark theme chat screen with What is AI question & response' },
-          { id: 4, title: 'Pak AI - Smart AI Assistant Promotional Banner', url: '/src/assets/images/pakai_4_1787857101384.jpg', caption: 'Photo 4: Hero banner with Chat Now button & mobile viewport' }
+          { id: 1, title: 'Pak AI - AI Assistant Emblem & Logo', url: '/src/images/pakai_1.jpg', caption: 'Photo 1: PakAI Logo, Brain Circuits & AI Assistant Badge' },
+          { id: 2, title: 'Pak AI - Mobile App Interface & Flag Mockup', url: '/src/images/pakai_2.jpg', caption: 'Photo 2: Smartphone UI with Assalamualaikum PakAI greeting & Pakistan map' },
+          { id: 3, title: 'Pak AI - Conversational Chat UI', url: '/src/images/pakai_3.jpg', caption: 'Photo 3: Dark theme chat screen with What is AI question & response' },
+          { id: 4, title: 'Pak AI - Smart AI Assistant Promotional Banner', url: '/src/images/pakai_4.jpg', caption: 'Photo 4: Hero banner with Chat Now button & mobile viewport' }
         ]
       },
       {
@@ -66,10 +66,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 3 • 4 Photos',
         description: 'Gamified educational learning portal empowering students with interactive quizzes, real-time logic challenges, daily streak counters, and reward badges.',
         photos: [
-          { id: 1, title: 'Learn Play - Educational Hub Logo', url: '/src/assets/images/learnplay_1_1787857120632.jpg', caption: 'Photo 1: LearnPlay Logo with graduation cap & Learn Play Grow slogan' },
-          { id: 2, title: 'Learn Play - Tablet Learning Dashboard', url: '/src/assets/images/learnplay_2_1787857140692.jpg', caption: 'Photo 2: English, Maths, Science & Quiz modules on tablet UI' },
-          { id: 3, title: 'Learn Play - Student Hero Banner', url: '/src/assets/images/learnplay_3_1787857158410.jpg', caption: 'Photo 3: Learn Today, Lead Tomorrow banner with Start Learning button' },
-          { id: 4, title: 'Learn Play - Quiz Victory Score Screen', url: '/src/assets/images/learnplay_4_1787857174706.jpg', caption: 'Photo 4: Well Done victory modal with 3 gold stars & Score 8/10' }
+          { id: 1, title: 'Learn Play - Educational Hub Logo', url: '/src/learnplay_1.jpg', caption: 'Photo 1: LearnPlay Logo with graduation cap & Learn Play Grow slogan' },
+          { id: 2, title: 'Learn Play - Tablet Learning Dashboard', url: '/src/images/learnplay_2.jpg', caption: 'Photo 2: English, Maths, Science & Quiz modules on tablet UI' },
+          { id: 3, title: 'Learn Play - Student Hero Banner', url: '/src/learnplay_3.jpg', caption: 'Photo 3: Learn Today, Lead Tomorrow banner with Start Learning button' },
+          { id: 4, title: 'Learn Play - Quiz Victory Score Screen', url: '/src/images/learnplay_4.jpg', caption: 'Photo 4: Well Done victory modal with 3 gold stars & Score 8/10' }
         ]
       }
     ]
@@ -80,17 +80,17 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     subtitle: 'Graphic design, logo identity, visiting cards, and promotional banners',
     description: 'Comprehensive visual graphic studio providing custom vector logo branding, executive business card layouts, and eye-catching promotional advertising banners.',
     icon: Palette,
-    coverImage: '/src/assets/images/pixelforge_studio_1787857251121.jpg',
+    coverImage: '/src/images/pixelforge_studio.jpg',
     subdivisions: [
       {
         name: 'Logo Design',
         badge: 'Division 1 • 4 Photos',
         description: 'Professional vector logos, corporate brand identities, geometric emblems, gaming logos, and luxury typography crafted for digital and print media.',
         photos: [
-          { id: 1, title: 'Pixel Forge Studio - Creative Design Workspace', url: '/src/assets/images/pixelforge_studio_1787857251121.jpg', caption: 'Photo 1: Pixel Forge Studio monitor workspace, drawing tablet & color swatches' },
-          { id: 2, title: 'Logo Design - Stewerds Family Gold Crown Emblem', url: '/src/assets/images/logo_design_2_1787857194100.jpg', caption: 'Photo 2: Royal gold family logo on dark wood background' },
-          { id: 3, title: 'Logo Design - Luxury Gold CL Ring Logo', url: '/src/assets/images/logo_design_3_1787857211820.jpg', caption: 'Photo 3: Metallic gold ring emblem with script typography' },
-          { id: 4, title: 'Logo Design - Gold CL Cream Badge Logo', url: '/src/assets/images/logo_design_4_1787857231906.jpg', caption: 'Photo 4: Premium gold monogram script on cream circular badge' }
+          { id: 1, title: 'Pixel Forge Studio - Creative Design Workspace', url: '/src/images/pixelforge_studio_1.jpg', caption: 'Photo 1: Pixel Forge Studio monitor workspace, drawing tablet & color swatches' },
+          { id: 2, title: 'Logo Design - Stewerds Family Gold Crown Emblem', url: '/src/images/logo_design_2.jpg', caption: 'Photo 2: Royal gold family logo on dark wood background' },
+          { id: 3, title: 'Logo Design - Luxury Gold CL Ring Logo', url: '/src/images/logo_design_3.jpg', caption: 'Photo 3: Metallic gold ring emblem with script typography' },
+          { id: 4, title: 'Logo Design - Gold CL Cream Badge Logo', url: '/src/images/logo_design_4.jpg', caption: 'Photo 4: Premium gold monogram script on cream circular badge' }
         ]
       },
       {
@@ -98,10 +98,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 2 • 4 Photos',
         description: 'Modern corporate business cards, double-sided executive layouts, luxury gold foil, and custom mobile shop business card designs.',
         photos: [
-          { id: 1, title: 'Muhammad Ali - Creative Developer Business Card', url: '/src/assets/images/visiting_card_1_1787855772693.jpg', caption: 'Photo 1: Executive double-sided blue & black design with contact details & website link' },
-          { id: 2, title: 'Jhan Mobile Hub - Luxury Gold Partner Card', url: '/src/assets/images/visiting_card_2_1787855792826.jpg', caption: 'Photo 2: Gold & black mobile shop business card with smartphone repair services list & QR code' },
-          { id: 3, title: 'Anshu Mobile Shop - Tech Blue Business Card', url: '/src/assets/images/visiting_card_3_1787855814659.jpg', caption: 'Photo 3: Futuristic tech blue card layout with WhatsApp chat QR code & service guide' },
-          { id: 4, title: 'Mobile Zone - CEO Faizan Amjad Business Card', url: '/src/assets/images/visiting_card_4_1787855835198.jpg', caption: 'Photo 4: High-contrast orange & dark geometric corporate card with CEO details & address' }
+          { id: 1, title: 'Muhammad Ali - Creative Developer Business Card', url: '/src/images/visiting_card_1.jpg', caption: 'Photo 1: Executive double-sided blue & black design with contact details & website link' },
+          { id: 2, title: 'Jhan Mobile Hub - Luxury Gold Partner Card', url: '/src/images/visiting_card_2.jpg', caption: 'Photo 2: Gold & black mobile shop business card with smartphone repair services list & QR code' },
+          { id: 3, title: 'Anshu Mobile Shop - Tech Blue Business Card', url: '/src/images/visiting_card_3.jpg', caption: 'Photo 3: Futuristic tech blue card layout with WhatsApp chat QR code & service guide' },
+          { id: 4, title: 'Mobile Zone - CEO Faizan Amjad Business Card', url: '/src/images/visiting_card_4.jpg', caption: 'Photo 4: High-contrast orange & dark geometric corporate card with CEO details & address' }
         ]
       },
       {
@@ -109,10 +109,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 3 • 4 Photos',
         description: 'High-converting social media promotional banners, YouTube & Twitch channel cover artwork, e-commerce sale ads, and roll-up event display banners.',
         photos: [
-          { id: 1, title: 'Aala Hazrat Muradabadi Biryani Banner', url: '/src/assets/images/banner_1_1787857540321.jpg', caption: 'Photo 1: Aala Hazrat Muradabadi Biryani restaurant promotional banner' },
-          { id: 2, title: 'Travel The World Explorer Banner', url: '/src/assets/images/banner_2_1787857554740.jpg', caption: 'Photo 2: Travel The World adventure banner with sea & mountain scenery' },
-          { id: 3, title: 'Special Coffee Shop 30% Discount Banner', url: '/src/assets/images/banner_3_1787857567119.jpg', caption: 'Photo 3: Special Coffee Shop 30% discount promotional banner' },
-          { id: 4, title: 'Special Discount Food Shop Banner', url: '/src/assets/images/banner_4_1787857579846.jpg', caption: 'Photo 4: Special Discount Food Shop promotional header banner with pizza frames' }
+          { id: 1, title: 'Aala Hazrat Muradabadi Biryani Banner', url: '/src/images/banner_1.jpg', caption: 'Photo 1: Aala Hazrat Muradabadi Biryani restaurant promotional banner' },
+          { id: 2, title: 'Travel The World Explorer Banner', url: '/src/images/banner_2.jpg', caption: 'Photo 2: Travel The World adventure banner with sea & mountain scenery' },
+          { id: 3, title: 'Special Coffee Shop 30% Discount Banner', url: '/src/images/banner_3.jpg', caption: 'Photo 3: Special Coffee Shop 30% discount promotional banner' },
+          { id: 4, title: 'Special Discount Food Shop Banner', url: '/src//images/banner_4.jpg', caption: 'Photo 4: Special Discount Food Shop promotional header banner with pizza frames' }
         ]
       }
     ]
