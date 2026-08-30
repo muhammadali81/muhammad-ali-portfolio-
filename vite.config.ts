@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: './',
+    base: '/muhammad-ali-portfolio/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
@@ -13,6 +13,8 @@ export default defineConfig(() => {
       },
     },
     build: {
+      outDir: 'dist',
+      emptyOutDir: true,
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
