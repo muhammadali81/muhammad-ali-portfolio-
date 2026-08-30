@@ -79,7 +79,7 @@ function AdminLogin({
           name: 'Muhammad Ali (Master)',
           email: 'alimuhammadhvn81@gmail.com',
           role: 'Master Admin',
-          avatarUrl: '/src/assets/images/avatar_developer_3d_1787859991162.jpg',
+          avatarUrl: '/src/assets/images/profile.jpg',
           status: 'Online'
         };
 
@@ -100,7 +100,7 @@ function AdminLogin({
           name: 'Muhammad Ali (Bypass)',
           email: 'alimuhammadhvn81@gmail.com',
           role: 'Master Admin',
-          avatarUrl: '/src/assets/images/avatar_developer_3d_1787859991162.jpg',
+          avatarUrl: '/src/assets/images/profile.jpg',
           status: 'Online'
         };
 
@@ -146,7 +146,7 @@ function AdminLogin({
           name: user.displayName || 'Muhammad Ali',
           email: user.email || email,
           role: 'Master Admin',
-          avatarUrl: user.photoURL || '/src/assets/images/avatar_developer_3d_1787859991162.jpg',
+          avatarUrl: user.photoURL || '/src/assets/images/profile.jpg',
           status: 'Online'
         };
         
