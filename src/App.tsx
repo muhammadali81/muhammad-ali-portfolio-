@@ -202,7 +202,8 @@ function AIFloatingBar({ onOpen }: { onOpen: () => void }) {
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'2d' | '3d' | 'admin'>(() => {
-    if (window.location.pathname.startsWith('/admin')) return 'admin';
+    const path = window.location.pathname;
+    if (path.endsWith('/admin') || path.includes('/admin/')) return 'admin';
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('mode') === '3d' ? '3d' : '2d';
   });
@@ -213,7 +214,8 @@ export default function App() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      if (window.location.pathname.startsWith('/admin')) setViewMode('admin');
+      const path = window.location.pathname;
+      if (path.endsWith('/admin') || path.includes('/admin/')) setViewMode('admin');
       else {
         const urlParams = new URLSearchParams(window.location.search);
         setViewMode(urlParams.get('mode') === '3d' ? '3d' : '2d');
@@ -228,7 +230,7 @@ export default function App() {
     setViewMode('2d');
     const url = new URL(window.location.href);
     url.searchParams.delete('mode');
-    window.history.pushState({}, '', url.toString());
+    window.history.pushState({}, '', url.pathname + url.search);
   };
 
   const handleOpenLightbox = (src: string, title: string) => setLightboxState({ isOpen: true, src, title });
@@ -242,7 +244,7 @@ export default function App() {
         setViewMode('3d');
         const url = new URL(window.location.href);
         url.searchParams.set('mode', '3d');
-        window.history.pushState({}, '', url.toString());
+        window.history.pushState({}, '', url.pathname + url.search);
       } else alert('Unsupported 3D format.');
     }
   };
@@ -250,12 +252,16 @@ export default function App() {
   const handleOpenAdmin = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     setViewMode('admin');
-    window.history.pushState({}, '', '/admin');
+    const url = new URL(window.location.href);
+    const newPath = url.pathname.endsWith('/') ? url.pathname + 'admin' : url.pathname + '/admin';
+    window.history.pushState({}, '', newPath);
   };
 
   const handleBackToPortfolio = () => {
     setViewMode('2d');
-    window.history.pushState({}, '', '/');
+    const url = new URL(window.location.href);
+    const newPath = url.pathname.replace(/\/admin\/?$/, '') || '/';
+    window.history.pushState({}, '', newPath);
   };
 
   if (viewMode === 'admin') return <AdminApp onBack={handleBackToPortfolio} />;
