@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, updateDoc, doc as firestoreDoc, deleteDoc, addDoc, setDoc, increment, enableNetwork, getDocFromServer, getDocsFromServer } from 'firebase/firestore';
 import { getDb, getFirebaseAuth } from '../lib/firebase';
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from 'firebase/auth';
 import {
   Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, Sparkles, CheckCircle2,
   AlertCircle, X, KeyRound, Phone, Globe, Award, LayoutDashboard,
@@ -32,6 +32,7 @@ import {
   INITIAL_CODES
 } from './adminStore';
 import { AdminUser, FeedbackItem, InquiryItem, GeneratedCode, DashboardStats } from './types';
+import ContentManager from './ContentManager';
 
 // =========================================================================
 // SCREENSHOT 1: EXACT MATCH ADMIN LOGIN PORTAL
@@ -69,9 +70,8 @@ function AdminLogin({
 
     if (accessCode.trim() === MASTER_ACCESS_CODE) {
       try {
-        // Sign in anonymously to provide a valid auth context for Firestore rules
-        const { signInAnonymously } = await import('firebase/auth');
-        const { auth } = await import('../lib/firebase');
+        const auth = getFirebaseAuth();
+        if (!auth) throw new Error('Auth not initialized');
         await signInAnonymously(auth);
 
         setSuccessMessage('Access Granted! Welcome, Muhammad Ali.');
@@ -682,7 +682,6 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
     const newGeneratedCode = `Ali-${suffix}`;
 
     try {
-      const { doc, setDoc } = await import('firebase/firestore');
       await setDoc(doc(db, 'feedback_codes', newGeneratedCode), {
         code: newGeneratedCode,
         assignedTo: clientName,
@@ -860,6 +859,7 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'feedbacks', label: 'Feedbacks', icon: MessageSquare, count: feedbacks.length },
               { id: 'inquiries', label: 'Inquiries', icon: Mail, count: inquiries.filter(i => i.status === 'New').length },
+              { id: 'content', label: 'Content Manager', icon: FileText },
               { id: 'projects', label: 'Projects', icon: Layers },
               { id: 'services', label: 'Services', icon: Wrench },
               { id: 'reactions', label: 'Reactions', icon: Heart },
@@ -1554,6 +1554,11 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
           )}
 
           {/* FEEDBACKS TAB */}
+          {activeTab === 'content' && (
+            <div className="p-4 sm:p-6 lg:p-8">
+              <ContentManager />
+            </div>
+          )}
           {activeTab === 'feedbacks' && (
             <div className="space-y-6 max-w-5xl mx-auto">
               <div className="flex items-center justify-between">

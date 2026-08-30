@@ -5,15 +5,16 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/muhammad-ali-portfolio/',
+    base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
       },
     },
     build: {
       outDir: 'dist',
+      assetsDir: 'assets',
       emptyOutDir: true,
       rollupOptions: {
         input: {
