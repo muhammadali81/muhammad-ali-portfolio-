@@ -4,7 +4,7 @@ export const DEFAULT_ADMIN_USER: AdminUser = {
   name: 'Muhammad Ali',
   email: 'alimuhammadhvn81@gmail.com',
   role: 'Administrator',
-  avatarUrl: 'https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true',
+  avatarUrl: '/src/assets/images/avatar_developer_3d_1787859991162.jpg',
   status: 'Online'
 };
 

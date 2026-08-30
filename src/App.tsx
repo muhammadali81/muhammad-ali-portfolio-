@@ -40,7 +40,7 @@ function Hero({ onTrigger3DMode }: { onTrigger3DMode?: (e: React.MouseEvent) => 
           </div>
         </div>
         <div className="hero-photo flex justify-center items-center flex-col">
-          <img src="images/profile.jpg" alt="Muhammad Ali Profile" className="w-[320px] h-[320px] object-cover rounded-full border-4 border-[#00d9ff] shadow-[0_0_35px_rgba(0,217,255,.18)]" />
+          <img src="/src/assets/images/profile_user_1787857799436.jpg" alt="Muhammad Ali Profile" className="w-[320px] h-[320px] object-cover rounded-full border-4 border-[#00d9ff] shadow-[0_0_35px_rgba(0,217,255,.18)]" />
           <div className="hero-photo-role mt-[18px] text-center p-[12px_18px] border border-[rgba(0,217,255,.25)] bg-[rgba(16,21,31,.78)] rounded-xl w-[min(320px,90vw)]">
             <strong className="block text-[#00d9ff] text-[19px] mb-0.5">Freelancer</strong>
             <span className="block text-[#9aa4b3] text-[13px]">CS Student • Developer • Designer • AI Creator</span>
