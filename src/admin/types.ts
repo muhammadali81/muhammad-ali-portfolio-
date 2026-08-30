@@ -21,6 +21,8 @@ export interface FeedbackItem {
   adminReply?: string;
   imageUrl?: string; // Still used for compatibility but represents projectScreenshot
   projectScreenshot?: string;
+  projectImages?: string[];
+  attachmentLinks?: string[];
   googleVerified?: boolean;
 }
 

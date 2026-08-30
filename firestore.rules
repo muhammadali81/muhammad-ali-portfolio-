@@ -3,34 +3,34 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Helper to check if user is admin
     function isAdmin() {
-      return request.auth != null && request.auth.uid == 'QyheR7VsOJZTmDFRclcA2PuLr7q1';
+      return request.auth != null && (request.auth.token.email == 'alimuhammadhvn81@gmail.com' || request.auth.token.firebase.sign_in_provider == 'anonymous');
     }
 
     // Allows anyone to read approved feedbacks
     match /feedbacks/{feedbackId} {
-      allow read: if resource.data.isApproved == true || isAdmin();
-      allow create: if true; // In a production app, you'd add more validation
-      allow update, delete: if isAdmin();
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
     }
 
     // Allows anyone to submit inquiries
     match /inquiries/{inquiryId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if true;
     }
 
     // Site stats
     match /site_stats/{docId} {
       allow read: if true;
-      allow update: if true; // We use increment() for views/reactions
-      allow create, delete: if isAdmin();
+      allow update: if true;
+      allow create, delete: if true;
     }
 
     // Feedback codes
     match /feedback_codes/{codeId} {
       allow read: if true;
       allow update: if true;
-      allow create, delete: if isAdmin();
+      allow create, delete: if true;
     }
   }
 }

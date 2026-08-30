@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { getDb } from '../lib/firebase';
 
 export default function ReactionSection() {
+  const db = getDb();
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [userReaction, setUserReaction] = useState<'like' | 'dislike' | null>(() => {

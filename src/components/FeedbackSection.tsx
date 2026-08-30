@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HOW_DO_YOU_KNOW_OPTIONS } from '../data/portfolioData';
-import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc } from 'firebase/firestore';
-import { db, signInWithGoogle, getFirebaseAuth } from '../lib/firebase';
+import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, getDocsFromServer } from 'firebase/firestore';
+import { getDb, signInWithGoogle, getFirebaseAuth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
   Upload,
@@ -31,6 +31,8 @@ interface FeedbackCardData {
   codeUsed: string;
   workLink?: string;
   imageUrl?: string;
+  projectImages?: string[];
+  attachmentLinks?: string[];
   clientPhoto?: string;
   avatarLetter?: string;
   googleVerified?: boolean;
@@ -40,6 +42,7 @@ interface FeedbackCardData {
 const INITIAL_PUBLIC_FEEDBACKS: FeedbackCardData[] = [];
 
 export default function FeedbackSection() {
+  const db = getDb();
   const [text, setText] = useState('');
   const [rating, setRating] = useState(5);
   const [source, setSource] = useState('Direct Client');
@@ -50,8 +53,12 @@ export default function FeedbackSection() {
   const [submitting, setSubmitting] = useState(false);
 
   // Picture Upload State
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Attachment Links State
+  const [links, setLinks] = useState<string[]>([]);
+  const [currentLink, setCurrentLink] = useState('');
 
   // One-Time Ali Code State
   const [aliCode, setAliCode] = useState('');
@@ -98,7 +105,15 @@ export default function FeedbackSection() {
           where('isApproved', '==', true),
           orderBy('date', 'desc')
         );
-        const querySnapshot = await getDocs(q);
+        
+        let querySnapshot;
+        try {
+          querySnapshot = await getDocsFromServer(q);
+        } catch (e) {
+          console.warn("Feedbacks server fetch failed, using cache:", e);
+          querySnapshot = await getDocs(q);
+        }
+        
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         setFeedbackList(data.map((fb: any) => ({
@@ -111,6 +126,8 @@ export default function FeedbackSection() {
           date: fb.date ? new Date(fb.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
           codeUsed: fb.codeUsed || 'VERIFIED-CLIENT',
           imageUrl: fb.projectScreenshot,
+          projectImages: fb.projectImages || [],
+          attachmentLinks: fb.attachmentLinks || [],
           clientPhoto: fb.clientPhoto,
           googleVerified: fb.googleVerified,
           adminReply: fb.adminReply
@@ -122,30 +139,43 @@ export default function FeedbackSection() {
     fetchFeedbacks();
   }, []);
 
-  // Handle Image Upload
+  // Handle Multiple Image Upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setStatus('Image size should be less than 5MB.');
-        setIsError(true);
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-        setStatus('Image attached successfully.');
-        setIsError(false);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach((file: File) => {
+        if (file.size > 5 * 1024 * 1024) {
+          setStatus('One or more images exceed 5MB limit.');
+          setIsError(true);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setSelectedImages(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+      setStatus('Images attached successfully.');
+      setIsError(false);
     }
   };
 
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addLink = () => {
+    if (currentLink.trim() && /^https?:\/\/.+/.test(currentLink.trim())) {
+      setLinks(prev => [...prev, currentLink.trim()]);
+      setCurrentLink('');
+    } else {
+      setStatus('Please enter a valid URL starting with http:// or https://');
+      setIsError(true);
     }
+  };
+
+  const removeLink = (index: number) => {
+    setLinks(prev => prev.filter((_, i) => i !== index));
   };
 
   // Verify One-Time Code
@@ -174,30 +204,18 @@ export default function FeedbackSection() {
           setIsError(false);
         } else {
           setIsCodeValid(false);
-          setStatus('Invalid or already used code.');
+          setStatus('This code has already been used.');
           setIsError(true);
         }
       } else {
-        // Fallback for codes not yet in DB but shared
-        if (trimmed.length >= 6) {
-          setIsCodeValid(true);
-          setStatus(`Code "${trimmed}" verified! You can proceed.`);
-          setIsError(false);
-        } else {
-          setIsCodeValid(false);
-          setStatus('Invalid or already used code.');
-          setIsError(true);
-        }
-      }
-    } catch {
-      if (trimmed.length >= 6) {
-        setIsCodeValid(true);
-        setStatus(`Code "${trimmed}" verified! You can proceed.`);
-        setIsError(false);
-      } else {
-        setStatus('Failed to verify code.');
+        setIsCodeValid(false);
+        setStatus('Invalid Ali-Code. Please check your code and try again.');
         setIsError(true);
       }
+    } catch (err: any) {
+      console.error("Code Verification Error:", err);
+      setStatus('Failed to verify code. Please check your connection.');
+      setIsError(true);
     } finally {
       setVerifyingCode(false);
     }
@@ -292,7 +310,7 @@ export default function FeedbackSection() {
 
     const clientName = currentUser?.name || (aliCode ? `Client (${aliCode})` : 'Verified Client');
     const clientEmail = currentUser?.email || (aliCode ? `${aliCode.toLowerCase()}@client.verified` : 'client@verified.review');
-    const clientPhoto = currentUser?.picture || (selectedImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=00d9ff&color=061017&bold=true`);
+    const clientPhoto = currentUser?.picture || (selectedImages[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=00d9ff&color=061017&bold=true`);
 
     try {
       const fallbackReply = rating === 5
@@ -312,7 +330,9 @@ export default function FeedbackSection() {
         comment: text.trim(),
         source,
         codeUsed: aliCode.trim(),
-        projectScreenshot: selectedImage,
+        projectScreenshot: selectedImages[0] || null,
+        projectImages: selectedImages,
+        attachmentLinks: links,
         googleVerified: isAuth,
         adminReply: fallbackReply,
         isApproved: false, // Requires admin approval
@@ -341,7 +361,9 @@ export default function FeedbackSection() {
         source,
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         codeUsed: aliCode.trim() || 'VERIFIED-CLIENT',
-        imageUrl: selectedImage || undefined,
+        imageUrl: selectedImages[0] || undefined,
+        projectImages: selectedImages,
+        attachmentLinks: links,
         clientPhoto,
         googleVerified: isAuth,
         adminReply: fallbackReply
@@ -354,7 +376,8 @@ export default function FeedbackSection() {
       // Reset form
       setText('');
       setRating(5);
-      setSelectedImage(null);
+      setSelectedImages([]);
+      setLinks([]);
       setWorkLink('');
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
@@ -474,43 +497,85 @@ export default function FeedbackSection() {
               </div>
             </div>
 
-            {/* 4. Picture Uploading Option */}
-            <div className="p-4 bg-[#121929] border border-white/10 rounded-xl space-y-2">
+            {/* 4. Multiple Photos Area */}
+            <div className="p-4 bg-[#121929] border border-white/10 rounded-xl space-y-3">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-[#00d9ff]" /> Project Image (Optional)
+                <ImageIcon className="w-4 h-4 text-[#00d9ff]" /> Project Portfolio (Multiple Photos)
               </label>
 
-              {selectedImage ? (
-                <div className="relative inline-block mt-2 group">
-                  <img
-                    src={selectedImage}
-                    alt="Uploaded Preview"
-                    className="w-32 h-32 object-cover rounded-xl border-2 border-[#00d9ff]/50 shadow-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="absolute -top-2 -right-2 p-1.5 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-colors shadow-md cursor-pointer"
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {selectedImages.map((img, idx) => (
+                  <div key={idx} className="relative group aspect-square">
+                    <img
+                      src={img}
+                      alt={`Preview ${idx}`}
+                      className="w-full h-full object-cover rounded-xl border border-white/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute -top-1.5 -right-1.5 p-1 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition-colors shadow-md cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {selectedImages.length < 8 && (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-white/10 hover:border-[#00d9ff]/50 bg-[#0c111a] rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all aspect-square"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-2 border border-dashed border-white/20 hover:border-[#00d9ff]/50 bg-[#151e30] rounded-xl p-4 text-center cursor-pointer transition-all"
-                >
-                  <p className="text-xs font-bold text-slate-300">Click to upload project photo</p>
-                </div>
-              )}
+                    <Upload className="w-5 h-5 text-slate-500 mb-1" />
+                    <span className="text-[10px] font-bold text-slate-400">Add Photo</span>
+                  </div>
+                )}
+              </div>
 
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 className="hidden"
               />
+            </div>
+
+            {/* 5. Attachment Links Dashboard Area */}
+            <div className="p-4 bg-[#121929] border border-white/10 rounded-xl space-y-3">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-[#00d9ff]" /> Project & Delivery Links
+              </label>
+              
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={currentLink}
+                  onChange={(e) => setCurrentLink(e.target.value)}
+                  placeholder="https://github.com/ali/project"
+                  className="flex-1 p-2.5 rounded-xl border border-white/15 bg-[#0c111a] text-white text-xs outline-none focus:border-[#00d9ff]"
+                />
+                <button
+                  type="button"
+                  onClick={addLink}
+                  className="px-4 py-2 bg-[#00d9ff]/10 text-[#00d9ff] border border-[#00d9ff]/30 rounded-xl text-xs font-bold hover:bg-[#00d9ff]/20 transition-all"
+                >
+                  Add Link
+                </button>
+              </div>
+
+              {links.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {links.map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-[#0b101c] border border-white/10 rounded-lg text-[10px] text-slate-300">
+                      <span className="truncate max-w-[120px]">{link}</span>
+                      <button onClick={() => removeLink(idx)} className="text-rose-400 hover:text-rose-300">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Status Message */}
@@ -677,8 +742,23 @@ export default function FeedbackSection() {
                     "{fb.comment}"
                   </p>
 
-                  {/* Attached Picture Screenshot / Photo if available */}
-                  {fb.imageUrl && (
+                  {/* Attached Pictures Gallery */}
+                  {fb.projectImages && fb.projectImages.length > 0 ? (
+                    <div className="pt-2 space-y-2">
+                      <p className="text-[10px] font-bold text-slate-400">Project Portfolio ({fb.projectImages.length} Photos):</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {fb.projectImages.map((img, idx) => (
+                          <a key={idx} href={img} target="_blank" rel="noopener noreferrer" className="block aspect-video overflow-hidden rounded-lg border border-white/10 hover:border-[#00d9ff]/50 transition-all">
+                            <img
+                              src={img}
+                              alt={`Project ${idx}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : fb.imageUrl && (
                     <div className="pt-1">
                       <p className="text-[10px] font-bold text-slate-400 mb-1">Project Screenshot / Work Attachment:</p>
                       <img
@@ -689,8 +769,25 @@ export default function FeedbackSection() {
                     </div>
                   )}
 
-                  {/* Work link */}
-                  {fb.workLink && (
+                  {/* Attachment Links Dashboard Area */}
+                  {fb.attachmentLinks && fb.attachmentLinks.length > 0 && (
+                    <div className="pt-2 flex flex-wrap gap-2">
+                      {fb.attachmentLinks.map((link, idx) => (
+                        <a
+                          key={idx}
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1.5 bg-[#00d9ff]/5 border border-[#00d9ff]/20 rounded-lg text-[10px] text-[#00d9ff] hover:bg-[#00d9ff]/10 transition-all flex items-center gap-1.5 font-bold"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Link #{idx + 1}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Work link (Legacy) */}
+                  {fb.workLink && !fb.attachmentLinks?.length && (
                     <a
                       href={fb.workLink}
                       target="_blank"

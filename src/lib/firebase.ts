@@ -1,36 +1,64 @@
 // src/lib/firebase.ts
-import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult, Auth } from "firebase/auth";
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, FirebaseApp, getApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult, Auth, browserPopupRedirectResolver } from "firebase/auth";
+import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED, Firestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || firebaseConfig.oAuthClientId || "1057584179825-ebgauidoppj7qfc4d3lrf99c7rokag9c.apps.googleusercontent.com";
 
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
+// Singleton-ish initialization
+let appInstance: FirebaseApp;
+let authInstance: Auth;
+let googleProviderInstance: GoogleAuthProvider;
 
 export const getFirebaseApp = () => {
-  if (!app) {
-    if (getApps().length === 0) {
-      app = initializeApp(firebaseConfig);
-    } else {
-      app = getApps()[0];
-    }
+  if (!appInstance) {
+    const apps = getApps();
+    appInstance = apps.length === 0 ? initializeApp(firebaseConfig) : apps[0];
   }
-  return app;
+  return appInstance;
+};
+
+let dbInstance: Firestore | null = null;
+
+// Simplified Firestore access to avoid assertion errors and fix connectivity
+export const getDb = (): Firestore => {
+  if (dbInstance) return dbInstance;
+  
+  const app = getFirebaseApp();
+  try {
+    dbInstance = initializeFirestore(app, {
+      cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+      experimentalForceLongPolling: true,
+      ignoreUndefinedProperties: true,
+    }, (firebaseConfig as any).firestoreDatabaseId || "(default)");
+  } catch (e) {
+    // If already initialized (e.g. during HMR), use getFirestore
+    dbInstance = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || "(default)");
+  }
+  return dbInstance;
 };
 
 export const getFirebaseAuth = () => {
-  const firebaseApp = getFirebaseApp();
-  if (!auth && firebaseApp) {
-    auth = getAuth(firebaseApp);
+  if (!authInstance) {
+    const app = getFirebaseApp();
+    authInstance = getAuth(app);
   }
-  return auth;
+  return authInstance;
 };
 
-export { googleProvider };
+export const getGoogleProvider = () => {
+  if (!googleProviderInstance) {
+    googleProviderInstance = new GoogleAuthProvider();
+    googleProviderInstance.setCustomParameters({ prompt: 'select_account' });
+  }
+  return googleProviderInstance;
+};
+
+// Standard exports that initialize correctly
+export const db = getDb();
+export const auth = getFirebaseAuth();
+export const googleProvider = getGoogleProvider();
 
 export interface GoogleUserProfile {
   name: string;
@@ -150,6 +178,9 @@ export const signInWithGoogle = async (): Promise<GoogleUserProfile> => {
       }
     } catch (fbError: any) {
       console.error("Firebase Popup Auth Error:", fbError);
+      if (fbError.message?.includes('referer') || fbError.code?.includes('unauthorized-domain') || fbError.code?.includes('referer-blocked')) {
+        throw new Error("AUTH DOMAIN PENDING: If you have already added the domain, please refresh and wait 2-3 minutes. Google services sometimes take a moment to sync new authorized domains.");
+      }
       throw fbError;
     }
   }
@@ -166,5 +197,3 @@ export const getGoogleRedirectResult = async () => {
     return null;
   }
 };
-
-export const db = getFirestore(getFirebaseApp());

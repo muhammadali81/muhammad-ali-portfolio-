@@ -9,6 +9,7 @@ import Services from './components/Services';
 import HireMe from './components/HireMe';
 import ProfessionalExtras from './components/ProfessionalExtras';
 import OverviewSection from './components/OverviewSection';
+import Header from './components/Header';
 import FeedbackSection from './components/FeedbackSection';
 import InquirySection from './components/InquirySection';
 import ContactSection from './components/ContactSection';
@@ -22,92 +23,6 @@ import AdminApp from './admin/AdminApp';
 // =========================================================================
 // CONSOLIDATED SUB-COMPONENTS
 // =========================================================================
-
-function Navbar({ onTrigger3DMode, onOpenAdmin }: { onTrigger3DMode?: (e: React.MouseEvent) => void; onOpenAdmin?: (e: React.MouseEvent) => void }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLight, setIsLight] = useState(() => {
-    const saved = localStorage.getItem('luxTheme');
-    if (saved) return saved === 'light';
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-  });
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    if (isLight) document.body.classList.add('lux-light');
-    else document.body.classList.remove('lux-light');
-  }, [isLight]);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const toggleTheme = () => {
-    const next = !isLight;
-    setIsLight(next);
-    localStorage.setItem('luxTheme', next ? 'light' : 'dark');
-    if (next) document.body.classList.add('lux-light');
-    else document.body.classList.remove('lux-light');
-  };
-
-  const navLinks = [
-    { label: 'Home', href: '#home' },
-    { label: 'About', href: '#about' },
-    { label: 'Education', href: '#education' },
-    { label: 'Skills', href: '#skills' },
-    { label: 'Projects', href: '#projects' },
-    { label: 'Services', href: '#services' },
-    { label: 'Hire Me', href: '#hire' },
-    { label: 'Feedback', href: '#feedback' },
-    { label: 'Contact', href: '#contact' },
-  ];
-
-  return (
-    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'header-glass py-2.5 shadow-md' : 'bg-transparent py-4'}`}>
-      <div className="container flex justify-between items-center px-4 sm:px-0">
-        <div className="flex items-center gap-3 select-none">
-          <a href="/admin" onClick={onOpenAdmin} className="brand-badge w-10 h-10 rounded-xl flex items-center justify-center font-brand font-black text-sm text-[#00d9ff] hover:scale-105 transition-transform duration-300 cursor-pointer shadow-sm">MA</a>
-          <a href="#home" className="flex flex-col leading-tight group">
-            <span className="brand-title text-lg sm:text-xl font-black text-[var(--lux-text)] tracking-[0.14em] uppercase">
-              Muhammad <span className="bg-gradient-to-r from-[#00d9ff] via-[#5ce1e6] to-[#7c5cff] bg-clip-text text-transparent">Ali</span>
-            </span>
-            <span className="text-[9px] font-bold tracking-[0.22em] text-[var(--lux-text-muted)] uppercase flex items-center gap-1.5">
-              <span>Developer</span> <span className="text-[#00d9ff] text-[7px]">✦</span> <span>Designer</span>
-            </span>
-          </a>
-        </div>
-        <nav className="hidden lg:flex items-center gap-6">
-          {navLinks.map(link => (
-            <a key={link.label} href={link.href} className="text-[13px] font-semibold text-[var(--lux-text)] opacity-80 hover:opacity-100 hover:text-[#00d9ff] transition-all relative py-1">{link.label}</a>
-          ))}
-        </nav>
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <a href="/admin" onClick={onOpenAdmin} className="luxury-header-admin-btn hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[#00d9ff] font-bold text-xs cursor-pointer select-none"><span>⚙</span><span>Admin</span></a>
-          <a href="?mode=3d" onClick={onTrigger3DMode} className="luxury-header-3d-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[var(--lux-text)] font-extrabold text-xs tracking-wider uppercase cursor-pointer select-none"><span className="text-[#00d9ff] text-sm animate-pulse">◇</span><span className="hidden xs:inline">3D World</span></a>
-          <button onClick={toggleTheme} className="w-9 h-9 rounded-xl border border-[var(--lux-border)] bg-[var(--lux-surface2)] text-[var(--lux-text)] flex items-center justify-center text-sm cursor-pointer hover:border-[#00d9ff] transition-all duration-200">{isLight ? '☾' : '☀'}</button>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={`hamburger-btn lg:hidden ${mobileMenuOpen ? 'is-active' : ''}`}><span className="hamburger-line line-1"></span><span className="hamburger-line line-2"></span><span className="hamburger-line line-3"></span></button>
-        </div>
-      </div>
-      {mobileMenuOpen && (
-        <div className="mobile-nav-drawer fixed inset-x-0 top-[65px] bottom-0 z-40 lg:hidden overflow-y-auto p-6 flex flex-col justify-between animate-fadeIn border-t border-[var(--lux-border)]">
-          <div>
-            <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#00d9ff] mb-4">Navigation</div>
-            <div className="grid grid-cols-2 gap-2.5 mb-6">
-              {navLinks.map(link => (
-                <a key={link.label} href={link.href} onClick={() => setMobileMenuOpen(false)} className="p-3 rounded-xl bg-[var(--lux-surface2)] border border-[var(--lux-border)] text-sm font-semibold text-[var(--lux-text)]">{link.label}</a>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <a href="/admin" onClick={(e) => { setMobileMenuOpen(false); if (onOpenAdmin) onOpenAdmin(e); }} className="p-3.5 rounded-xl border border-[#00d9ff]/40 bg-[#00d9ff]/10 text-[#00d9ff] font-bold text-xs flex items-center justify-center gap-2"><span>⚙</span><span>Admin Portal</span></a>
-              <a href="?mode=3d" onClick={(e) => { setMobileMenuOpen(false); onTrigger3DMode?.(e); }} className="p-3.5 rounded-xl border border-[#7c5cff]/50 bg-[#7c5cff]/15 text-[var(--lux-text)] font-bold text-xs flex items-center justify-center gap-2"><span>◇</span><span>3D Art World</span></a>
-            </div>
-          </div>
-        </div>
-      )}
-    </header>
-  );
-}
 
 function Hero({ onTrigger3DMode }: { onTrigger3DMode?: (e: React.MouseEvent) => void }) {
   return (
@@ -349,7 +264,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[var(--lux-bg)] text-[var(--lux-text)] antialiased">
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".glb,.gltf" className="hidden" />
-      <Navbar onTrigger3DMode={handleTrigger3DMode} onOpenAdmin={handleOpenAdmin} />
+      <Header onTrigger3DMode={handleTrigger3DMode} onOpenAdmin={handleOpenAdmin} />
       <main id="main-content">
         <Hero onTrigger3DMode={handleTrigger3DMode} />
         <About />

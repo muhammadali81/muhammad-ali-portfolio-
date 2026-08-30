@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { getDb } from '../lib/firebase';
 
 export default function InquirySection() {
+  const db = getDb();
   const [formData, setFormData] = useState({
     name: '',
     email: '',

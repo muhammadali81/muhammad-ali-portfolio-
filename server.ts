@@ -242,8 +242,8 @@ function saveStore(): void {
 // ADMIN AUTHENTICATION CONFIGURATION
 // =========================================================================
 export const ADMIN_CREDENTIALS = {
-  email: process.env.ADMIN_EMAIL || "alimuhammadhvn81@gmail.com",
-  password: process.env.ADMIN_PASSWORD || "Ali2007",
+  email: process.env.ADMIN_EMAIL || null,
+  password: process.env.ADMIN_PASSWORD || null,
 };
 
 // System prompt for Muhammad Ali’s AI Portfolio Assistant
@@ -752,16 +752,22 @@ app.post("/api/inquiries", (req, res) => {
 // Admin Login
 app.post("/api/admin/login", (req, res) => {
   const { email, password } = req.body;
+  
+  // Require both email and password to be set in environment and match
+  const envEmail = ADMIN_CREDENTIALS.email;
+  const envPass = ADMIN_CREDENTIALS.password;
+
   if (
-    (email || "").toLowerCase().trim() === ADMIN_CREDENTIALS.email.toLowerCase() &&
-    password === ADMIN_CREDENTIALS.password
+    envEmail && envPass && 
+    (email || "").toLowerCase().trim() === envEmail.toLowerCase() &&
+    password === envPass
   ) {
     res.json({
       success: true,
       token: `ma_sess_${Date.now()}`,
       user: {
         name: "Muhammad Ali",
-        email: ADMIN_CREDENTIALS.email,
+        email: envEmail,
         role: "Administrator",
         status: "Online"
       }
