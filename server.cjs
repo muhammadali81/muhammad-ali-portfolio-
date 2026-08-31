@@ -822,6 +822,12 @@ app.delete("/api/admin/inquiries/:id", (req, res) => {
 async function startServer() {
   const mainApp = (0, import_express.default)();
   mainApp.use(import_express.default.json({ limit: "10mb" }));
+  const publicPath = import_path.default.join(process.cwd(), "public");
+  mainApp.use("/images", import_express.default.static(import_path.default.join(publicPath, "images"), {
+    maxAge: "1d",
+    immutable: false
+  }));
+  mainApp.use(import_express.default.static(publicPath));
   mainApp.use(app);
   if (process.env.NODE_ENV !== "production") {
     const vite = await (0, import_vite.createServer)({
