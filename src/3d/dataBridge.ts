@@ -96,7 +96,21 @@ export function getShared3DData(): Shared3DData {
     { id: 'pf-1', title: 'Pixel Forge Studio Workspace', category: 'Graphic Design', url: IMAGES.pixelforgeStudio, caption: 'Pixel Forge Studio monitor workspace & drawing tablet' },
     { id: 'lg-2', title: 'Stewerds Family Gold Emblem', category: 'Graphic Design', url: IMAGES.logoDesign2, caption: 'Royal gold family crown emblem on dark wood texture' },
     { id: 'lg-3', title: 'Luxury Gold CL Ring Logo', category: 'Graphic Design', url: IMAGES.logoDesign3, caption: 'Metallic gold ring emblem with script typography' },
-    { id: 'lg-4', title: 'Gold CL Cream Badge Logo', category: 'Graphic Design', url: IMAGES.logoDesign4, caption: 'Premium gold monogram script on cream circular badge' }
+    { id: 'lg-4', title: 'Gold CL Cream Badge Logo', category: 'Graphic Design', url: IMAGES.logoDesign4, caption: 'Premium gold monogram script on cream circular badge' },
+
+    // 2D & 3D Architecture - 2D Smart Flooring
+    { id: 'arch-c1', title: '2D & 3D Architecture Master Suite', category: 'Architecture', url: IMAGES.archCover3d, caption: '10 Marla Luxury Residence twilight elevation with LED accents & blueprints' },
+    { id: 'fl-1', title: 'Smart Floor — 10x20 Shop & Pizza Restaurant', category: 'Architecture', url: IMAGES.smartFloor1, caption: 'Two separate shops commercial floor plan and 3D dining layout' },
+    { id: 'fl-2', title: 'Smart Floor — 35x70 Ground Floor Flow Map', category: 'Architecture', url: IMAGES.smartFloor2, caption: 'Ground floor 3D circulation mapping with double height lobby & master suites' },
+    { id: 'fl-3', title: 'Smart Floor — 35x70 Basement Entertainment Suite', category: 'Architecture', url: IMAGES.smartFloor3, caption: 'Basement 3D floor plan with home theater, indoor pool & gaming room' },
+    { id: 'fl-4', title: 'Smart Floor — 35x70 Basement Multi-Suite Plan', category: 'Architecture', url: IMAGES.smartFloor4, caption: '3D cutaway layout with guest bedroom, central bethak & elevator' },
+
+    // 2D & 3D Architecture - 3D House Design
+    { id: 'dh-1', title: 'DreamHouse 3D — Multi-Elevation & Plans Sheet', category: 'Architecture', url: IMAGES.dreamhouse1, caption: 'Luxury villa front right/left/rear views & multi-floor CAD plans' },
+    { id: 'dh-2', title: 'DreamHouse 3D — 35x70 Master Presentation Board', category: 'Architecture', url: IMAGES.dreamhouse2, caption: 'Plot size 35x70 master presentation with rooftop deck lounge' },
+    { id: 'dh-3', title: 'DreamHouse 3D — 3D Cutaways & Interior Gallery', category: 'Architecture', url: IMAGES.dreamhouse3, caption: '3D isometric cutaways with TV lounge, master bed, indoor pool & theater' },
+    { id: 'dh-4', title: 'DreamHouse 3D — Daylight Facade & Side Elevations', category: 'Architecture', url: IMAGES.dreamhouse4, caption: 'Daytime architectural facade with timber louvers & clean floor layouts' },
+    { id: 'dh-5', title: 'DreamHouse 3D — 3-Level Cutaway Furnished Layout', category: 'Architecture', url: IMAGES.dreamhouse5, caption: '3-level (Basement, Ground, First Floor) furnished layout with night villa' }
   ];
 
   return {

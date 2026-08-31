@@ -314,10 +314,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['smartFlooring'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Residential Interior Smart Layout', url: IMAGES.colorBlock1 },
-                        { n: 2, title: 'Photo 2 — Commercial Space Blueprint', url: IMAGES.colorBlock2 },
-                        { n: 3, title: 'Photo 3 — Modern Tile & Material Distribution', url: IMAGES.colorBlock3 },
-                        { n: 4, title: 'Photo 4 — Scaled Utility & Dimension Map', url: IMAGES.colorBlock4 }
+                        { n: 1, title: 'Photo 1 — 10ft x 20ft Shop & Pizza Restaurant Plan', url: IMAGES.smartFloor1 },
+                        { n: 2, title: 'Photo 2 — 35x70 Ground Floor 3D Circulation Map', url: IMAGES.smartFloor2 },
+                        { n: 3, title: 'Photo 3 — 35x70 Basement 3D Entertainment Suite', url: IMAGES.smartFloor3 },
+                        { n: 4, title: 'Photo 4 — 35x70 Basement Multi-Suite Isometric Layout', url: IMAGES.smartFloor4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`2D Smart Flooring — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -341,10 +341,11 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['houseDesign3D'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Modern Exterior Elevation & Facade', url: IMAGES.cyborgChamber },
-                        { n: 2, title: 'Photo 2 — Luxury Living Room Interior Render', url: IMAGES.cyberTunnel },
-                        { n: 3, title: 'Photo 3 — Panoramic Architectural Walkthrough', url: IMAGES.avatar3dBoy },
-                        { n: 4, title: 'Photo 4 — Night Exterior Lighting Study', url: IMAGES.pakai4 }
+                        { n: 1, title: 'Photo 1 — 10 Marla Luxury Villa Multi-Elevation Sheet', url: IMAGES.dreamhouse1 },
+                        { n: 2, title: 'Photo 2 — 10 Marla 35x70 Master Presentation & Rooftop', url: IMAGES.dreamhouse2 },
+                        { n: 3, title: 'Photo 3 — 10 Marla 3D Cutaway & Luxury Interiors', url: IMAGES.dreamhouse3 },
+                        { n: 4, title: 'Photo 4 — 10 Marla Daytime Facade & Side Views', url: IMAGES.dreamhouse4 },
+                        { n: 5, title: 'Photo 5 — 10 Marla 3-Level Isometric Furnished Layout', url: IMAGES.dreamhouse5 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`3D House Design — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">

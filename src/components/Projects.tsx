@@ -122,30 +122,31 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     id: '2d-3d-architecture',
     title: '2D and 3D Architecture',
     subtitle: 'Smart architectural 2D floor plans and immersive 3D house exterior & interior renderings',
-    description: 'Architectural spatial planning, intelligent 2D smart floor mapping, material distribution layouts, and photorealistic 3D house renderings.',
+    description: 'Architectural spatial planning, intelligent 2D smart floor mapping, circulation flow analysis, material distribution layouts, and photorealistic 3D house renderings.',
     icon: Box,
-    coverImage: IMAGES.cyberTunnel,
+    coverImage: IMAGES.archCover3d,
     subdivisions: [
       {
         name: '2D Smart Flooring',
         badge: 'Division 1 • 4 Photos',
-        description: 'Precision architectural 2D smart flooring plans, room spatial mapping, material tile grids, and CAD property dimension blueprints.',
+        description: 'Precision architectural 2D smart flooring plans, room circulation mapping, commercial restaurant layouts, and high-definition CAD property dimension blueprints.',
         photos: [
-          { id: 1, title: '2D Smart Flooring - Residential Interior Smart Layout', url: IMAGES.colorBlock1, caption: 'Photo 1: Multi-room home smart flooring grid & spatial room mapping' },
-          { id: 2, title: '2D Smart Flooring - Commercial Space Blueprint', url: IMAGES.colorBlock2, caption: 'Photo 2: Corporate workspace flooring layout & circulation path CAD plan' },
-          { id: 3, title: '2D Smart Flooring - Modern Tile & Material Distribution', url: IMAGES.colorBlock3, caption: 'Photo 3: 2.5D shaded flooring material placement & tile allocation diagram' },
-          { id: 4, title: '2D Smart Flooring - Scaled Utility & Dimension Map', url: IMAGES.colorBlock4, caption: 'Photo 4: Automated CAD room boundary & smart floor heating system map' }
+          { id: 1, title: '10ft x 20ft Commercial Shop & Pizza Restaurant Plan', url: IMAGES.smartFloor1, caption: 'Photo 1: 10ft x 20ft two separate shops floor plan, 3D interior dining layout, front elevation & section view' },
+          { id: 2, title: '35x70 Ground Floor 3D Circulation & Flow Mapping', url: IMAGES.smartFloor2, caption: 'Photo 2: Ground floor 3D circulation mapping with double-height lobby, 16-seater dining area & master suites' },
+          { id: 3, title: '35x70 Basement Floor Plan (3D Entertainment Suite)', url: IMAGES.smartFloor3, caption: 'Photo 3: Approx 2,100 sq.ft basement plan with home theater, indoor pool, games area & traditional bethak' },
+          { id: 4, title: '35x70 Basement Multi-Suite Isometric Layout', url: IMAGES.smartFloor4, caption: 'Photo 4: 3D cutaway basement layout with guest suite, central lobby, elevator lift & room specification chart' }
         ]
       },
       {
         name: '3D House Design',
-        badge: 'Division 2 • 4 Photos',
-        description: 'Photorealistic 3D villa elevation renders, interior living space models, panoramic walkthrough visualizations, and architectural lighting studies.',
+        badge: 'Division 2 • 5 Photos',
+        description: 'Photorealistic 3D villa elevation renders, 10 Marla multi-level cutaway models, interior living room & pool visualization, and architectural lighting studies.',
         photos: [
-          { id: 1, title: '3D House Design - Modern Exterior Elevation & Facade', url: IMAGES.cyborgChamber, caption: 'Photo 1: High-end luxury villa facade render with glass & wood accents' },
-          { id: 2, title: '3D House Design - Luxury Living Room Interior Render', url: IMAGES.cyberTunnel, caption: 'Photo 2: Immersive 3D interior visualization with natural daylighting' },
-          { id: 3, title: '3D House Design - Panoramic Architectural Walkthrough', url: IMAGES.avatar3dBoy, caption: 'Photo 3: 360-degree spatial perspective render of courtyard & pool deck' },
-          { id: 4, title: '3D House Design - Night Exterior Lighting Study', url: IMAGES.pakai4, caption: 'Photo 4: Twilight exterior architectural lighting & landscape rendering' }
+          { id: 1, title: '10 Marla Luxury Residence Multi-Elevation Sheet', url: IMAGES.dreamhouse1, caption: 'Photo 1: Modern luxury villa front right/left/rear views, cross-section and multi-floor plans (Design 123)' },
+          { id: 2, title: '10 Marla Luxury Residence 35x70 Master Presentation', url: IMAGES.dreamhouse2, caption: 'Photo 2: Plot size 35x70 master presentation with rooftop deck lounge, 4 CAD floor plans & design highlights' },
+          { id: 3, title: '10 Marla Luxury Villa 3D Cutaway & Interior Showcase', url: IMAGES.dreamhouse3, caption: 'Photo 3: 3D isometric cutaways with luxury TV lounge, master bedroom, indoor swimming pool & home theater' },
+          { id: 4, title: '10 Marla Luxury Residence Daylight Facade & Side Views', url: IMAGES.dreamhouse4, caption: 'Photo 4: Daytime architectural facade with timber louvers, left/right side elevations & clean blueprint plans' },
+          { id: 5, title: '10 Marla 3-Level Isometric Cutaway & Room Gallery', url: IMAGES.dreamhouse5, caption: 'Photo 5: 3 levels (Basement, Ground, First Floor) furnished layout with night exterior villa & amenities' }
         ]
       }
     ]
