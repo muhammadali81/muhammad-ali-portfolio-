@@ -154,20 +154,20 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     id: 'nova-web',
     title: 'Nova Web',
     subtitle: 'Modern web development studio showcase with live website link & photos',
-    description: 'Full-stack web application featuring live website link, responsive Vite React frontend, dark theme aesthetic, and backend admin portal controls.',
+    description: 'Full-stack web application featuring live website link, responsive Vite React frontend, dark theme aesthetic, client feedback engine, and backend admin portal controls.',
     icon: Globe,
-    coverImage: IMAGES.pakai2,
+    coverImage: IMAGES.novaWeb1,
     websiteUrl: 'https://muhammadali81.github.io/muhammad-ali-portfolio-/',
     subdivisions: [
       {
         name: 'Nova Web Studio Showcase',
         badge: 'Website Showcase • 4 Photos',
-        description: 'Full-stack web studio platform featuring direct live website link, clean hero sections, mobile touch responsiveness, interactive service widgets, and dark mode backend dashboard.',
+        description: 'Full-stack web studio platform featuring direct live website link, clean hero section with personal branding, real-time admin analytics dashboard, client testimonials portal, and interactive AI voice support assistant.',
         photos: [
-          { id: 1, title: 'Nova Web - Hero Section & Landing Page', url: IMAGES.pakai2, caption: 'Photo 1: Clean high-contrast hero section with call-to-action buttons' },
-          { id: 2, title: 'Nova Web - Responsive Mobile & Tablet Views', url: IMAGES.pakai3, caption: 'Photo 2: Cross-device responsiveness & touch-optimized mobile viewport' },
-          { id: 3, title: 'Nova Web - Services & Interactive Features', url: IMAGES.pakai1, caption: 'Photo 3: Live interactive service cards & real-time analytics widgets' },
-          { id: 4, title: 'Nova Web - Admin Portal & Dark Theme UI', url: IMAGES.pixelforgeStudio, caption: 'Photo 4: Secure backend dashboard management & metrics monitor' }
+          { id: 1, title: 'Nova Web - Hero Section & Personal Branding', url: IMAGES.novaWeb1, caption: 'Photo 1: High-impact hero section with Muhammad Ali profile, glowing avatar frame, and quick action buttons' },
+          { id: 2, title: 'Nova Web - Live Admin Dashboard & Analytics', url: IMAGES.novaWeb2, caption: 'Photo 2: Full-screen administrator portal with 7-day traffic trends, feedback stats, and Recharts analytics' },
+          { id: 3, title: 'Nova Web - Client Testimonials & Inquiries Portal', url: IMAGES.novaWeb3, caption: 'Photo 3: Star rating reviews, Ali- verification code entry, project uploader, and inquiry forms' },
+          { id: 4, title: 'Nova Web - AI Voice Support Assistant Modal', url: IMAGES.novaWeb4, caption: 'Photo 4: Interactive AI Voice Assistant dialog with audio waveforms, WhatsApp, and direct contact buttons' }
         ]
       }
     ]

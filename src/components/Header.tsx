@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon, Cpu, Box, Settings } from 'lucide-react';
+import { Menu, X, Sun, Moon, Cpu, Box, Settings, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { IMAGES } from '../images';
 
 interface HeaderProps {
   onTrigger3DMode?: (e: React.MouseEvent) => void;
@@ -102,15 +103,23 @@ const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin }) => {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
-          {/* Admin Toggle */}
+          {/* Admin Toggle with Profile Picture */}
           <motion.button 
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={onOpenAdmin}
-            className="hidden sm:flex w-10 h-10 rounded-xl bg-slate-800/50 border border-white/5 items-center justify-center text-slate-400 hover:text-[#00d9ff] hover:border-[#00d9ff]/30 transition-all shadow-inner"
-            title="Admin Portal"
+            className="hidden sm:flex w-10 h-10 rounded-xl overflow-hidden border border-[#00d9ff]/40 bg-slate-900/80 items-center justify-center relative group shadow-md shadow-[#00d9ff]/15 hover:border-[#00d9ff] transition-all"
+            title="Admin Portal (Muhammad Ali)"
           >
-            <Settings className="w-5 h-5" />
+            <img 
+              src={IMAGES.profile} 
+              alt="Admin Profile" 
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-115" 
+            />
+            <div className="absolute inset-0 bg-[#00d9ff]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
+              <Settings className="w-4 h-4 text-white drop-shadow-md animate-spin" style={{ animationDuration: '4s' }} />
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-[#020617] ring-1 ring-emerald-400/50" />
           </motion.button>
 
           {/* 3D Mode */}
@@ -189,13 +198,19 @@ const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin }) => {
               <div className="mt-auto grid grid-cols-1 gap-4 pt-10">
                 <button 
                   onClick={(e) => { setMobileMenuOpen(false); onOpenAdmin?.(e); }}
-                  className="flex items-center justify-between p-6 rounded-3xl bg-slate-900 border border-white/5 text-white font-bold"
+                  className="flex items-center justify-between p-5 rounded-3xl bg-slate-900 border border-[#00d9ff]/20 text-white font-bold"
                 >
-                  <div className="flex items-center gap-4">
-                    <Settings className="w-6 h-6 text-[#00d9ff]" />
-                    <span className="text-lg">Admin Portal</span>
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#00d9ff]/50 relative shrink-0">
+                      <img src={IMAGES.profile} alt="Admin" className="w-full h-full object-cover" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-[#020617]" />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-base font-bold block">Admin Portal</span>
+                      <span className="text-[10px] text-[#00d9ff] font-medium">Muhammad Ali Control</span>
+                    </div>
                   </div>
-                  <Cpu className="w-5 h-5 text-slate-600" />
+                  <Settings className="w-5 h-5 text-[#00d9ff]" />
                 </button>
                 <button 
                   onClick={(e) => { setMobileMenuOpen(false); onTrigger3DMode?.(e); }}

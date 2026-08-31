@@ -33,6 +33,7 @@ import {
 } from './adminStore';
 import { AdminUser, FeedbackItem, InquiryItem, GeneratedCode, DashboardStats } from './types';
 import ContentManager from './ContentManager';
+import { IMAGES } from '../images';
 
 // =========================================================================
 // SCREENSHOT 1: EXACT MATCH ADMIN LOGIN PORTAL
@@ -79,7 +80,7 @@ function AdminLogin({
           name: 'Muhammad Ali (Master)',
           email: 'alimuhammadhvn81@gmail.com',
           role: 'Master Admin',
-          avatarUrl: '/images/profile.jpg',
+          avatarUrl: IMAGES.profile,
           status: 'Online'
         };
 
@@ -100,7 +101,7 @@ function AdminLogin({
           name: 'Muhammad Ali (Bypass)',
           email: 'alimuhammadhvn81@gmail.com',
           role: 'Master Admin',
-          avatarUrl: '/images/profile.jpg',
+          avatarUrl: IMAGES.profile,
           status: 'Online'
         };
 
@@ -146,7 +147,7 @@ function AdminLogin({
           name: user.displayName || 'Muhammad Ali',
           email: user.email || email,
           role: 'Master Admin',
-          avatarUrl: user.photoURL || '/images/profile.jpg',
+          avatarUrl: user.photoURL || IMAGES.profile,
           status: 'Online'
         };
         
@@ -193,7 +194,7 @@ function AdminLogin({
             >
               <div className="w-20 h-20 rounded-2xl p-[2px] bg-gradient-to-tr from-[#00d9ff] via-[#38bdf8] to-[#0ea5e9] shadow-[0_0_20px_rgba(0,217,255,0.4)]">
                 <img 
-                  src="/images/profile.jpg" 
+                  src={IMAGES.profile} 
                   alt="Muhammad Ali" 
                   className="w-full h-full object-cover rounded-[14px]" 
                 />
@@ -398,7 +399,7 @@ function AdminLogin({
             </button>
             <div className="text-center">
               <div className="w-20 h-20 mx-auto rounded-2xl p-1 bg-gradient-to-tr from-[#00d9ff] to-[#38bdf8] mb-3">
-                <img src="/images/profile.jpg" className="w-full h-full object-cover rounded-xl" alt="Muhammad Ali" />
+                <img src={IMAGES.profile} className="w-full h-full object-cover rounded-xl" alt="Muhammad Ali" />
               </div>
               <h3 className="text-lg font-black text-white">Muhammad Ali</h3>
               <p className="text-xs text-[#00d9ff] font-semibold">Full-Stack, AI & 2D Game Developer</p>
@@ -442,6 +443,7 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
   const [assignedClient, setAssignedClient] = useState('');
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Profile traffic data for Line/Area chart
   const trafficData = [
@@ -488,7 +490,7 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
           name: firebaseUser.displayName || 'Muhammad Ali',
           email: firebaseUser.email || '',
           role: 'Master Admin',
-          avatarUrl: firebaseUser.photoURL || '/images/profile.jpg',
+          avatarUrl: firebaseUser.photoURL || IMAGES.profile,
           status: 'Online'
         };
         setUser(adminUser);
@@ -827,20 +829,25 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
 
           {/* User Profile Card */}
           <div className="p-4">
-            <div className="bg-[#101726] border border-white/10 rounded-2xl p-3.5 flex items-center gap-3 shadow-lg">
+            <div 
+              onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }}
+              className="bg-[#101726] border border-white/10 hover:border-[#00d9ff]/40 rounded-2xl p-3.5 flex items-center gap-3 shadow-lg cursor-pointer transition-all group"
+              title="Open Profile Settings"
+            >
               <div className="relative">
-                <div className="w-11 h-11 rounded-xl p-0.5 bg-gradient-to-tr from-[#00d9ff] to-[#38bdf8]">
-                  <img src="/images/profile.jpg" alt="Muhammad Ali" className="w-full h-full object-cover rounded-[10px]" />
+                <div className="w-11 h-11 rounded-xl p-0.5 bg-gradient-to-tr from-[#00d9ff] to-[#38bdf8] group-hover:shadow-[0_0_12px_rgba(0,217,255,0.4)] transition-all">
+                  <img src={IMAGES.profile} alt="Muhammad Ali" className="w-full h-full object-cover rounded-[10px]" />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#101726]" />
               </div>
-              <div className="overflow-hidden">
-                <h3 className="text-sm font-bold text-white truncate">Muhammad Ali</h3>
+              <div className="overflow-hidden flex-1">
+                <h3 className="text-sm font-bold text-white truncate group-hover:text-[#00d9ff] transition-colors">Muhammad Ali</h3>
                 <p className="text-[11px] text-slate-400">Administrator</p>
                 <span className="inline-flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Online
                 </span>
               </div>
+              <ChevronRight size={14} className="text-slate-600 group-hover:text-[#00d9ff] transition-colors" />
             </div>
           </div>
 
@@ -970,6 +977,25 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
               {inquiries.some(i => i.status === 'New') && (
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#00d9ff]" />
               )}
+            </button>
+
+            {/* Admin Profile Picture Icon Button */}
+            <button
+              onClick={() => setActiveTab('profile')}
+              className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-[#101726] border border-white/10 hover:border-[#00d9ff]/50 transition-all cursor-pointer group"
+              title="Muhammad Ali Profile — Administrator"
+            >
+              <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-[#00d9ff]/60 group-hover:shadow-[0_0_8px_rgba(0,217,255,0.4)] transition-all">
+                <img 
+                  src={IMAGES.profile} 
+                  alt="Muhammad Ali" 
+                  className="w-full h-full object-cover" 
+                />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#101726]" />
+              </div>
+              <span className="hidden sm:inline text-xs font-bold text-slate-300 group-hover:text-[#00d9ff] transition-colors">
+                Ali
+              </span>
             </button>
           </div>
         </header>
@@ -1850,17 +1876,179 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
             </div>
           )}
 
-          {/* SETTINGS & PROFILE TAB */}
-          {(activeTab === 'settings' || activeTab === 'profile') && (
+          {/* PROFILE TAB */}
+          {activeTab === 'profile' && (
+            <div className="space-y-6 max-w-4xl mx-auto">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black text-white">Admin Profile & Identity</h2>
+                  <p className="text-xs text-slate-400 mt-1">Master Administrator credentials, official details and professional background.</p>
+                </div>
+                <button
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#00d9ff]/10 border border-[#00d9ff]/30 text-[#00d9ff] text-xs font-bold hover:bg-[#00d9ff]/20 transition-all cursor-pointer shadow-[0_0_15px_rgba(0,217,255,0.15)]"
+                >
+                  <Sparkles size={14} />
+                  <span>View ID Card</span>
+                </button>
+              </div>
+
+              {/* Main Profile Showcase Card */}
+              <div className="bg-[#0e1422] border border-white/10 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#00d9ff]/10 via-[#7c5cff]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-white/10 relative z-10">
+                  <div className="relative shrink-0">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl p-1 bg-gradient-to-tr from-[#00d9ff] via-[#38bdf8] to-[#7c5cff] shadow-[0_0_25px_rgba(0,217,255,0.35)]">
+                      <img 
+                        src={IMAGES.profile} 
+                        alt="Muhammad Ali" 
+                        className="w-full h-full object-cover rounded-[14px]" 
+                      />
+                    </div>
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-400 border-3 border-[#0e1422] ring-2 ring-emerald-400/40 animate-pulse" />
+                  </div>
+
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h3 className="text-xl sm:text-2xl font-black text-white">Muhammad Ali</h3>
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#00d9ff]/15 border border-[#00d9ff]/30 text-[#00d9ff] text-[10px] font-extrabold uppercase tracking-wider">
+                        Master Administrator
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-semibold text-[#00d9ff]">
+                      Web Developer • Game &amp; AI Developer • Graphic Designer
+                    </p>
+                    <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                      <Globe size={13} className="text-slate-500" />
+                      <span>Havelian, Abbottabad, Pakistan (Worldwide Remote)</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Direct Contact Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 relative z-10 text-xs">
+                  <a 
+                    href="mailto:alimuhammadhvn81@gmail.com"
+                    className="p-3.5 rounded-2xl bg-[#121a2c] border border-white/5 hover:border-[#00d9ff]/40 transition-all flex items-center gap-3 group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Mail size={16} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="text-[10px] text-slate-400 block font-medium">Email Address</span>
+                      <span className="text-white font-semibold truncate block group-hover:text-[#00d9ff] transition-colors">
+                        alimuhammadhvn81@gmail.com
+                      </span>
+                    </div>
+                  </a>
+
+                  <a 
+                    href="https://wa.me/923426793428"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-3.5 rounded-2xl bg-[#121a2c] border border-white/5 hover:border-emerald-500/40 transition-all flex items-center gap-3 group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Phone size={16} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="text-[10px] text-slate-400 block font-medium">WhatsApp Direct</span>
+                      <span className="text-white font-semibold truncate block group-hover:text-emerald-400 transition-colors">
+                        +92 342 6793428
+                      </span>
+                    </div>
+                  </a>
+
+                  <a 
+                    href="tel:+923300358799"
+                    className="p-3.5 rounded-2xl bg-[#121a2c] border border-white/5 hover:border-[#00d9ff]/40 transition-all flex items-center gap-3 group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Phone size={16} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="text-[10px] text-slate-400 block font-medium">Direct Voice Line</span>
+                      <span className="text-white font-semibold truncate block group-hover:text-[#00d9ff] transition-colors">
+                        +92 330 0358799
+                      </span>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+              {/* Bio & Core Values */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-[#0e1422] border border-white/10 rounded-2xl p-5 space-y-3">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <User size={14} className="text-[#00d9ff]" />
+                    <span>Personal &amp; Professional Bio</span>
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    I am Muhammad Ali, a Computer Science student, freelancer and creative developer from Havelian, Abbottabad. I value honesty, professionalism, respect and responsible work. My expertise spans web development, game &amp; AI application development, Pixel Forge graphic design, 2D &amp; 3D architecture, and modern cloud technologies.
+                  </p>
+                </div>
+
+                <div className="bg-[#0e1422] border border-white/10 rounded-2xl p-5 space-y-3">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Shield size={14} className="text-emerald-400" />
+                    <span>Guiding Muslim Values</span>
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2 text-xs">
+                    {[
+                      { title: 'Honesty & Integrity (Amanah)', desc: 'Transparent communication & sincere delivery.' },
+                      { title: 'Respect & Politeness (Adab)', desc: 'Professional conduct and courteous client care.' },
+                      { title: 'Pixel-Perfect Quality', desc: 'Craftsmanship in code, design and architecture.' },
+                      { title: 'Ethical & Responsible Work', desc: 'Strict standard of reliability and data privacy.' }
+                    ].map((val, idx) => (
+                      <div key={idx} className="p-2 rounded-xl bg-[#121a2c] flex items-center gap-2.5">
+                        <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                        <div>
+                          <span className="text-white font-semibold text-[11px] block">{val.title}</span>
+                          <span className="text-[10px] text-slate-400">{val.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Education & Academic Milestones */}
+              <div className="bg-[#0e1422] border border-white/10 rounded-2xl p-5 space-y-3">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Award size={14} className="text-amber-400" />
+                  <span>Academic Milestones</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { degree: 'BS Computer Science', inst: 'Iqra Post Graduate College, Havelian', status: '3rd Semester (Active)', color: 'border-[#00d9ff]/30 text-[#00d9ff]' },
+                    { degree: 'FSc Computer Science', inst: 'Pak Wattan School & College', status: 'Completed (2024)', color: 'border-emerald-500/30 text-emerald-400' },
+                    { degree: 'Matric in Science', inst: 'Al Arqam Academy of Excellence', status: 'Completed (2022)', color: 'border-purple-500/30 text-purple-400' }
+                  ].map((edu, idx) => (
+                    <div key={idx} className={`p-3.5 rounded-xl bg-[#121a2c] border ${edu.color} flex flex-col justify-between`}>
+                      <div>
+                        <span className="text-white font-bold text-xs block">{edu.degree}</span>
+                        <span className="text-[10px] text-slate-400 mt-1 block">{edu.inst}</span>
+                      </div>
+                      <span className="text-[10px] font-semibold mt-2 block opacity-90">{edu.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SETTINGS TAB */}
+          {activeTab === 'settings' && (
             <div className="space-y-6 max-w-3xl mx-auto">
               <div>
-                <h2 className="text-xl font-black text-white">System Settings & Profile</h2>
+                <h2 className="text-xl font-black text-white">System Settings &amp; Security</h2>
                 <p className="text-xs text-slate-400 mt-1">Administrative credentials and system parameters.</p>
               </div>
               <div className="bg-[#0e1422] border border-white/10 p-6 rounded-2xl space-y-4">
                 <div className="flex items-center gap-4 pb-4 border-b border-white/5">
                   <div className="w-16 h-16 rounded-2xl p-0.5 bg-[#00d9ff]">
-                    <img src="https://ui-avatars.com/api/?name=Muhammad+Ali&background=00d9ff&color=061017&bold=true" alt="Muhammad Ali" className="w-full h-full object-cover rounded-[14px]" />
+                    <img src={IMAGES.profile} alt="Muhammad Ali" className="w-full h-full object-cover rounded-[14px]" />
                   </div>
                   <div>
                     <h3 className="font-bold text-white text-base">Muhammad Ali</h3>
@@ -1889,6 +2077,30 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
 
         </main>
       </div>
+
+      {/* Admin Profile ID Modal */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onClick={() => setIsProfileModalOpen(false)}>
+          <div className="w-full max-w-sm bg-[#0e1422] border border-[#00d9ff]/30 rounded-3xl p-6 relative shadow-2xl" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg bg-white/5">
+              <X size={18} />
+            </button>
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto rounded-2xl p-1 bg-gradient-to-tr from-[#00d9ff] to-[#38bdf8] mb-3">
+                <img src={IMAGES.profile} className="w-full h-full object-cover rounded-xl" alt="Muhammad Ali" />
+              </div>
+              <h3 className="text-lg font-black text-white">Muhammad Ali</h3>
+              <p className="text-xs text-[#00d9ff] font-semibold">Web Developer • Game &amp; AI Developer</p>
+              <div className="mt-4 pt-4 border-t border-white/10 text-left space-y-2 text-xs text-slate-300">
+                <p><span className="text-slate-500 font-semibold">Email:</span> alimuhammadhvn81@gmail.com</p>
+                <p><span className="text-slate-500 font-semibold">WhatsApp:</span> +92 342 6793428</p>
+                <p><span className="text-slate-500 font-semibold">Call:</span> +92 330 0358799</p>
+                <p><span className="text-slate-500 font-semibold">Location:</span> Havelian, Abbottabad, Pakistan</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

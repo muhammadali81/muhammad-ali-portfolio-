@@ -86,6 +86,12 @@ export function getShared3DData(): Shared3DData {
     { id: 'vc-3', title: 'Anshu Mobile Tech Blue Card', category: 'Graphic Design', url: IMAGES.visitingCard3, caption: 'Futuristic tech blue card layout with WhatsApp QR code' },
     { id: 'vc-4', title: 'Mobile Zone CEO Card', category: 'Graphic Design', url: IMAGES.visitingCard4, caption: 'High-contrast orange & dark geometric corporate card' },
 
+    // Web Development - Nova Web Studio
+    { id: 'nw-1', title: 'Nova Web — Hero Section & Branding', category: 'Web Development', url: IMAGES.novaWeb1, caption: 'High-impact hero section with Muhammad Ali profile, glowing avatar frame, and quick action buttons' },
+    { id: 'nw-2', title: 'Nova Web — Admin Dashboard & Analytics', category: 'Web Development', url: IMAGES.novaWeb2, caption: 'Full-screen administrator portal with 7-day traffic trends, feedback stats, and Recharts analytics' },
+    { id: 'nw-3', title: 'Nova Web — Client Feedback & Inquiries', category: 'Web Development', url: IMAGES.novaWeb3, caption: 'Star rating reviews, Ali- verification code entry, project uploader, and inquiry forms' },
+    { id: 'nw-4', title: 'Nova Web — AI Voice Support Assistant', category: 'Web Development', url: IMAGES.novaWeb4, caption: 'Interactive AI Voice Assistant dialog with audio waveforms, WhatsApp, and direct contact buttons' },
+
     // Graphic Design - Logos & Studio
     { id: 'pf-1', title: 'Pixel Forge Studio Workspace', category: 'Graphic Design', url: IMAGES.pixelforgeStudio, caption: 'Pixel Forge Studio monitor workspace & drawing tablet' },
     { id: 'lg-2', title: 'Stewerds Family Gold Emblem', category: 'Graphic Design', url: IMAGES.logoDesign2, caption: 'Royal gold family crown emblem on dark wood texture' },
@@ -97,9 +103,9 @@ export function getShared3DData(): Shared3DData {
     profile: {
       name: 'Muhammad Ali',
       title: 'Web Developer • Game & AI Developer • Graphic Designer',
-      avatarUrl: IMAGES.avatar3dBoy,
+      avatarUrl: IMAGES.profile,
       email: 'alimuhammadhvn81@gmail.com',
-      phone: '+92 300 1234567',
+      phone: '+92 342 6793428',
       location: 'Havelian, Abbottabad, Pakistan (Worldwide Remote)',
       bio: "I am Muhammad Ali, a Computer Science student, freelancer and creative developer from Havelian, Abbottabad. I am a Muslim who values honesty, professionalism, respect and responsible work. My interests include web development, game & AI application development, Pixel Forge graphic design, 2D & 3D architecture design, and modern technology. My aim is to communicate clearly, understand each client's needs and deliver thoughtful, reliable and high-quality digital solutions.",
       skills: SKILLS_DATA,
@@ -120,9 +126,9 @@ export function getShared3DData(): Shared3DData {
       answer: faq.answer
     })),
     contactInfo: {
-      whatsapp: '+92 300 1234567',
+      whatsapp: '+92 342 6793428',
       email: 'alimuhammadhvn81@gmail.com',
-      availability: 'Available for Remote Contracts & Freelance Projects',
+      availability: 'Available for Remote Contracts & Freelance Projects (Call: +92 330 0358799)',
     },
     allPhotoShowcase: photoShowcase,
   };

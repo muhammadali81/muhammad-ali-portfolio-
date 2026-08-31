@@ -20,6 +20,10 @@ import learnplay4 from './learnplay_4.jpg';
 import logoDesign2 from './logo_design_2.jpg';
 import logoDesign3 from './logo_design_3.jpg';
 import logoDesign4 from './logo_design_4.jpg';
+import novaWeb1 from './nova_web_1.jpg';
+import novaWeb2 from './nova_web_2.jpg';
+import novaWeb3 from './nova_web_3.jpg';
+import novaWeb4 from './nova_web_4.jpg';
 import pakai1 from './pakai_1.jpg';
 import pakai2 from './pakai_2.jpg';
 import pakai3 from './pakai_3.jpg';
@@ -50,6 +54,10 @@ export const IMAGES = {
   logoDesign2,
   logoDesign3,
   logoDesign4,
+  novaWeb1,
+  novaWeb2,
+  novaWeb3,
+  novaWeb4,
   pakai1,
   pakai2,
   pakai3,

@@ -71,10 +71,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['novaWeb'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Hero Section & Landing Page', url: IMAGES.pakai2 },
-                        { n: 2, title: 'Photo 2 — Responsive Mobile & Tablet Views', url: IMAGES.pakai3 },
-                        { n: 3, title: 'Photo 3 — Services & Interactive Features', url: IMAGES.pakai1 },
-                        { n: 4, title: 'Photo 4 — Admin Portal & Dark Theme UI', url: IMAGES.pixelforgeStudio }
+                        { n: 1, title: 'Photo 1 — Hero Section & Personal Branding', url: IMAGES.novaWeb1 },
+                        { n: 2, title: 'Photo 2 — Live Admin Dashboard & Analytics', url: IMAGES.novaWeb2 },
+                        { n: 3, title: 'Photo 3 — Client Testimonials & Inquiries Portal', url: IMAGES.novaWeb3 },
+                        { n: 4, title: 'Photo 4 — AI Voice Support Assistant Modal', url: IMAGES.novaWeb4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c] border border-transparent hover:border-[#00d9ff]/30">
                           <span onClick={() => setSelectedService(`Web Development — Nova Web Studio — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
