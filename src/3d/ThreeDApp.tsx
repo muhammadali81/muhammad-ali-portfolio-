@@ -94,7 +94,7 @@ export default function ThreeDApp({ onExitTo2D, initialModelFile = null }: Three
       <div className="w-full h-full relative">
         <ThreeDCanvas
           modelFile={modelFile}
-          onLoadStatus={setLoadStatus}
+          onLoadStatus={(status) => setLoadStatus(status as any)}
           onError={(err) => {
             setErrorMessage(err);
             setLoadStatus('error');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, updateDoc, doc as firestoreDoc, deleteDoc, addDoc, setDoc, increment, enableNetwork, getDocFromServer, getDocsFromServer } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, orderBy, updateDoc, doc as firestoreDoc, deleteDoc, addDoc, setDoc, increment, enableNetwork } from 'firebase/firestore';
 import { getDb, getFirebaseAuth } from '../lib/firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from 'firebase/auth';
 import {
@@ -525,15 +525,9 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
     setErrorMessage('');
 
     try {
-      // 1. Fetch site_stats (Force from server)
+      // 1. Fetch site_stats
       const statsRef = firestoreDoc(db, 'site_stats', 'global');
-      let snap;
-      try {
-        snap = await getDocFromServer(statsRef);
-      } catch (e) {
-        console.warn("Server fetch failed, falling back to cache:", e);
-        snap = await getDoc(statsRef);
-      }
+      const snap = await getDoc(statsRef);
       
       let sData: any = null;
 
@@ -551,14 +545,8 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
         await setDoc(statsRef, sData);
       }
 
-      // 2. Fetch all feedbacks (Force from server)
-      let fbSnap;
-      try {
-        fbSnap = await getDocsFromServer(collection(db, 'feedbacks'));
-      } catch (e) {
-        console.warn("Feedbacks server fetch failed:", e);
-        fbSnap = await getDocs(collection(db, 'feedbacks'));
-      }
+      // 2. Fetch all feedbacks
+      const fbSnap = await getDocs(collection(db, 'feedbacks'));
       const fRaw = fbSnap.docs.map(d => d.data());
 
       const approved = fRaw?.filter(f => f.isApproved) || [];
@@ -568,10 +556,13 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
         : 0;
 
       // Calculate rating breakdown for chart
-      const breakdown = [0, 0, 0, 0, 0];
-      approved.forEach(f => {
-        if (f.rating >= 1 && f.rating <= 5) breakdown[f.rating - 1]++;
-      });
+      const breakdown = {
+        stars5: approved.filter(f => f.rating === 5).length,
+        stars4: approved.filter(f => f.rating === 4).length,
+        stars3: approved.filter(f => f.rating === 3).length,
+        stars2: approved.filter(f => f.rating === 2).length,
+        stars1: approved.filter(f => f.rating === 1).length,
+      };
 
       setStats(prev => ({
         ...prev,

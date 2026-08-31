@@ -21,19 +21,18 @@ export const getFirebaseApp = () => {
 
 let dbInstance: Firestore | null = null;
 
-// Simplified Firestore access to avoid assertion errors and fix connectivity
+// Clean Firestore access with auto-detect long polling and caching
 export const getDb = (): Firestore => {
   if (dbInstance) return dbInstance;
   
   const app = getFirebaseApp();
   try {
     dbInstance = initializeFirestore(app, {
-      cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-      experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: true,
       ignoreUndefinedProperties: true,
     }, (firebaseConfig as any).firestoreDatabaseId || "(default)");
   } catch (e) {
-    // If already initialized (e.g. during HMR), use getFirestore
+    // If already initialized, use getFirestore
     dbInstance = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || "(default)");
   }
   return dbInstance;

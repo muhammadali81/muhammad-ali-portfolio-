@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HOW_DO_YOU_KNOW_OPTIONS } from '../data/portfolioData';
-import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, getDocsFromServer } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { getDb, signInWithGoogle, getFirebaseAuth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
@@ -106,14 +106,7 @@ export default function FeedbackSection() {
           orderBy('date', 'desc')
         );
         
-        let querySnapshot;
-        try {
-          querySnapshot = await getDocsFromServer(q);
-        } catch (e) {
-          console.warn("Feedbacks server fetch failed, using cache:", e);
-          querySnapshot = await getDocs(q);
-        }
-        
+        const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         setFeedbackList(data.map((fb: any) => ({

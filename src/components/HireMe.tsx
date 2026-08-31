@@ -115,10 +115,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['colorBlocks'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Intro Title Screen (Ali Game Hubs)', url: '/public/images/color_block_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Mobile Puzzle Gameplay (Level 35)', url: '/public/images/color_block_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Free Mode Board Grid', url: '/public/images/color_block_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Victory Trophy Screen (All 25 Levels)', url: '/public/images/color_block_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Intro Title Screen (Ali Game Hubs)', url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80' },
+                        { n: 2, title: 'Photo 2 — Mobile Puzzle Gameplay (Level 35)', url: 'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=800&auto=format&fit=crop&q=80' },
+                        { n: 3, title: 'Photo 3 — Free Mode Board Grid', url: 'https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=800&auto=format&fit=crop&q=80' },
+                        { n: 4, title: 'Photo 4 — Victory Trophy Screen (All 25 Levels)', url: 'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=800&auto=format&fit=crop&q=80' }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Game & AI — Colour Block — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -142,10 +142,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['pakAI'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — PakAI Emblem & Logo', url: '/public/images/pakai_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Smartphone UI & Pakistan Map', url: '/public/images/pakai_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Real-Time Chat Screen', url: '/public/images/pakai_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Smart Assistant Hero Banner', url: '/public/images/pakai_4.jpg' }
+                        { n: 1, title: 'Photo 1 — PakAI Emblem & Logo', url: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80' },
+                        { n: 2, title: 'Photo 2 — Smartphone UI & Pakistan Map', url: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&auto=format&fit=crop&q=80' },
+                        { n: 3, title: 'Photo 3 — Real-Time Chat Screen', url: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&auto=format&fit=crop&q=80' },
+                        { n: 4, title: 'Photo 4 — Smart Assistant Hero Banner', url: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=80' }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Game & AI — Pak AI — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -169,10 +169,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['learnPlay'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — LearnPlay Educational Logo', url: '/public/images/learnplay_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Tablet Dashboard & Subjects', url: '/public/images/learnplay_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Learn Today Lead Tomorrow Banner', url: '/public/images/learnplay_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Quiz Victory Score Popup', url: '/public/images/learnplay_4.jpg' }
+                        { n: 1, title: 'Photo 1 — LearnPlay Educational Logo', url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=80' },
+                        { n: 2, title: 'Photo 2 — Tablet Dashboard & Subjects', url: 'https://images.unsplash.com/photo-1584697964190-7bb883907e85?w=800&auto=format&fit=crop&q=80' },
+                        { n: 3, title: 'Photo 3 — Learn Today Lead Tomorrow Banner', url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=80' },
+                        { n: 4, title: 'Photo 4 — Quiz Victory Score Popup', url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&auto=format&fit=crop&q=80' }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Game & AI — Learn Play — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -214,10 +214,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['logoDesign'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Pixel Forge Studio Creative Workspace', url: '/public/images/pixelforge_studio.jpg' },
-                        { n: 2, title: 'Photo 2 — Stewerds Family Gold Crown Emblem', url: '/public/images/logo_design_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Luxury Gold CL Ring Logo', url: '/public/images/logo_design_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Gold CL Cream Badge Logo', url: '/public/images/logo_design_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Pixel Forge Studio Creative Workspace', url: 'https://images.unsplash.com/photo-1542744094-3a31f272c490?w=800&auto=format&fit=crop&q=80' },
+                        { n: 2, title: 'Photo 2 — Stewerds Family Gold Crown Emblem', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80' },
+                        { n: 3, title: 'Photo 3 — Luxury Gold CL Ring Logo', url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80' },
+                        { n: 4, title: 'Photo 4 — Gold CL Cream Badge Logo', url: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&auto=format&fit=crop&q=80' }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Pixel Forge — Logo Design — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -241,10 +241,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['visitingCard'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Muhammad Ali (Creative Developer)', url: '/public/images/visiting_card_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Jhan Mobile Hub (Luxury Gold Card)', url: '/public/images/visiting_card_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Anshu Mobile Shop (Tech Blue Card)', url: '/public/images/visiting_card_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Mobile Zone (CEO Faizan Amjad)', url: '/public/images/visiting_card_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Muhammad Ali (Creative Developer)', url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80' },
+                        { n: 2, title: 'Photo 2 — Jhan Mobile Hub (Luxury Gold Card)', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80' },
+                        { n: 3, title: 'Photo 3 — Anshu Mobile Shop (Tech Blue Card)', url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=800&auto=format&fit=crop&q=80' },
+                        { n: 4, title: 'Photo 4 — Mobile Zone (CEO Faizan Amjad)', url: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=800&auto=format&fit=crop&q=80' }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Pixel Forge — Visiting Card — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -268,10 +268,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['banner'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Aala Hazrat Muradabadi Biryani Banner', url: '/public/images/banner_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Travel The World Explorer Banner', url: '/public/images/banner_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Special Coffee Shop 30% Discount Banner', url: '/public/images/banner_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Special Discount Food Shop Banner', url: '/public/images/banner_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Aala Hazrat Muradabadi Biryani Banner', url: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&auto=format&fit=crop&q=80' },
+                        { n: 2, title: 'Photo 2 — Travel The World Explorer Banner', url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop&q=80' },
+                        { n: 3, title: 'Photo 3 — Special Coffee Shop 30% Discount Banner', url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80' },
+                        { n: 4, title: 'Photo 4 — Special Discount Food Shop Banner', url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop&q=80' }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Pixel Forge — Banner — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">

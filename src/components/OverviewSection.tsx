@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, CheckCircle2, Star } from 'lucide-react';
-import { collection, doc, getDoc, getDocs, query, where, updateDoc, increment, setDoc, getDocFromServer, getDocsFromServer } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { getDb } from '../lib/firebase';
 
 export default function OverviewSection() {
@@ -18,15 +18,9 @@ export default function OverviewSection() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // 1. Fetch from site_stats (Force server)
+        // 1. Fetch from site_stats
         const statsRef = doc(db, 'site_stats', 'global');
-        let snap;
-        try {
-          snap = await getDocFromServer(statsRef);
-        } catch (e) {
-          console.warn("Stats server fetch failed, using cache:", e);
-          snap = await getDoc(statsRef);
-        }
+        const snap = await getDoc(statsRef);
         
         let siteData: any = null;
 
@@ -43,15 +37,9 @@ export default function OverviewSection() {
           await setDoc(statsRef, siteData);
         }
 
-        // 2. Fetch feedback aggregates (Force server)
+        // 2. Fetch feedback aggregates
         const q = query(collection(db, 'feedbacks'), where('isApproved', '==', true));
-        let fbSnap;
-        try {
-          fbSnap = await getDocsFromServer(q);
-        } catch (e) {
-          console.warn("Feedback aggregates server fetch failed, using cache:", e);
-          fbSnap = await getDocs(q);
-        }
+        const fbSnap = await getDocs(q);
         const approvedFbs = fbSnap.docs.map(d => d.data());
 
         const totalApproved = approvedFbs.length;

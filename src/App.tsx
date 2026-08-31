@@ -40,7 +40,14 @@ function Hero({ onTrigger3DMode }: { onTrigger3DMode?: (e: React.MouseEvent) => 
           </div>
         </div>
         <div className="hero-photo flex justify-center items-center flex-col">
-          <img src="/src/assets/images/profile_user_1787857799436.jpg" alt="Muhammad Ali Profile" className="w-[320px] h-[320px] object-cover rounded-full border-4 border-[#00d9ff] shadow-[0_0_35px_rgba(0,217,255,.18)]" />
+          <img 
+            src="/src/assets/images/profile_user_1787857799436.jpg" 
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80";
+            }}
+            alt="Muhammad Ali Profile" 
+            className="w-[320px] h-[320px] object-cover rounded-full border-4 border-[#00d9ff] shadow-[0_0_35px_rgba(0,217,255,.18)]" 
+          />
           <div className="hero-photo-role mt-[18px] text-center p-[12px_18px] border border-[rgba(0,217,255,.25)] bg-[rgba(16,21,31,.78)] rounded-xl w-[min(320px,90vw)]">
             <strong className="block text-[#00d9ff] text-[19px] mb-0.5">Freelancer</strong>
             <span className="block text-[#9aa4b3] text-[13px]">CS Student • Developer • Designer • AI Creator</span>
@@ -166,10 +173,11 @@ function FooterSection() {
         <div>
           <h4 className="text-xs uppercase font-extrabold tracking-wider text-[var(--lux-text)] mb-3">Connect</h4>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <a href="https://muhammadali81.github.io/muhammad-ali-portfolio-/" target="_blank" rel="noopener noreferrer" className="border border-[var(--lux-border)] p-2 rounded-xl text-xs hover:border-[#00d9ff] hover:text-[#00d9ff] transition-all flex items-center gap-1">GH Pages</a>
             <a href="https://github.com/muhammadali81" target="_blank" rel="noopener noreferrer" className="border border-[var(--lux-border)] p-2 rounded-xl text-xs hover:border-[#00d9ff] hover:text-[#00d9ff] transition-all flex items-center gap-1">GitHub</a>
             <a href="https://www.facebook.com/share/19K82QsNZv/" target="_blank" rel="noopener noreferrer" className="border border-[var(--lux-border)] p-2 rounded-xl text-xs hover:border-[#00d9ff] hover:text-[#00d9ff] transition-all">FB</a>
             <a href="https://www.instagram.com/m_ali._.0?igsi=bGkxNHg5d3UzeWs1" target="_blank" rel="noopener noreferrer" className="border border-[var(--lux-border)] p-2 rounded-xl text-xs hover:border-[#00d9ff] hover:text-[#00d9ff] transition-all">IG</a>
+            <a href="https://www.tiktok.com/@m_ali._.0?_r=1&_t=ZS-99KII17PA7o" target="_blank" rel="noopener noreferrer" className="border border-[var(--lux-border)] p-2 rounded-xl text-xs hover:border-[#00d9ff] hover:text-[#00d9ff] transition-all">TikTok</a>
+            <a href="https://www.snapchat.com/add/cdt.mali?share_id=DGft9LUfnPY&locale=en-AU" target="_blank" rel="noopener noreferrer" className="border border-[var(--lux-border)] p-2 rounded-xl text-xs hover:border-[#00d9ff] hover:text-[#00d9ff] transition-all">SC</a>
           </div>
         </div>
       </div>
