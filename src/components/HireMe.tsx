@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { IMAGES } from '../images';
 
 interface HireMeProps {
   onOpenLightbox: (url: string, title: string) => void;
@@ -70,10 +71,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['novaWeb'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Hero Section & Landing Page', url: '/images/pakai_2.jpg' },
-                        { n: 2, title: 'Photo 2 — Responsive Mobile & Tablet Views', url: '/images/pakai_3.jpg' },
-                        { n: 3, title: 'Photo 3 — Services & Interactive Features', url: '/images/pakai_1.jpg' },
-                        { n: 4, title: 'Photo 4 — Admin Portal & Dark Theme UI', url: '/images/pixelforge_studio.jpg' }
+                        { n: 1, title: 'Photo 1 — Hero Section & Landing Page', url: IMAGES.pakai2 },
+                        { n: 2, title: 'Photo 2 — Responsive Mobile & Tablet Views', url: IMAGES.pakai3 },
+                        { n: 3, title: 'Photo 3 — Services & Interactive Features', url: IMAGES.pakai1 },
+                        { n: 4, title: 'Photo 4 — Admin Portal & Dark Theme UI', url: IMAGES.pixelforgeStudio }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c] border border-transparent hover:border-[#00d9ff]/30">
                           <span onClick={() => setSelectedService(`Web Development — Nova Web Studio — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -115,10 +116,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['colorBlocks'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Intro Title Screen (Ali Game Hubs)', url: '/images/color_block_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Mobile Puzzle Gameplay (Level 35)', url: '/images/color_block_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Free Mode Board Grid', url: '/images/color_block_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Victory Trophy Screen (All 25 Levels)', url: '/images/color_block_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Intro Title Screen (Ali Game Hubs)', url: IMAGES.colorBlock1 },
+                        { n: 2, title: 'Photo 2 — Mobile Puzzle Gameplay (Level 35)', url: IMAGES.colorBlock2 },
+                        { n: 3, title: 'Photo 3 — Free Mode Board Grid', url: IMAGES.colorBlock3 },
+                        { n: 4, title: 'Photo 4 — Victory Trophy Screen (All 25 Levels)', url: IMAGES.colorBlock4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Game & AI — Colour Block — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -142,10 +143,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['pakAI'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — PakAI Emblem & Logo', url: '/images/pakai_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Smartphone UI & Pakistan Map', url: '/images/pakai_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Real-Time Chat Screen', url: '/images/pakai_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Smart Assistant Hero Banner', url: '/images/pakai_4.jpg' }
+                        { n: 1, title: 'Photo 1 — PakAI Emblem & Logo', url: IMAGES.pakai1 },
+                        { n: 2, title: 'Photo 2 — Smartphone UI & Pakistan Map', url: IMAGES.pakai2 },
+                        { n: 3, title: 'Photo 3 — Real-Time Chat Screen', url: IMAGES.pakai3 },
+                        { n: 4, title: 'Photo 4 — Smart Assistant Hero Banner', url: IMAGES.pakai4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Game & AI — Pak AI — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -169,10 +170,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['learnPlay'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — LearnPlay Educational Logo', url: '/images/learnplay_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Tablet Dashboard & Subjects', url: '/images/learnplay_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Learn Today Lead Tomorrow Banner', url: '/images/learnplay_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Quiz Victory Score Popup', url: '/images/learnplay_4.jpg' }
+                        { n: 1, title: 'Photo 1 — LearnPlay Educational Logo', url: IMAGES.learnplay1 },
+                        { n: 2, title: 'Photo 2 — Tablet Dashboard & Subjects', url: IMAGES.learnplay2 },
+                        { n: 3, title: 'Photo 3 — Learn Today Lead Tomorrow Banner', url: IMAGES.learnplay3 },
+                        { n: 4, title: 'Photo 4 — Quiz Victory Score Popup', url: IMAGES.learnplay4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Game & AI — Learn Play — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -214,10 +215,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['logoDesign'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Pixel Forge Studio Creative Workspace', url: '/images/pixelforge_studio.jpg' },
-                        { n: 2, title: 'Photo 2 — Stewerds Family Gold Crown Emblem', url: '/images/logo_design_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Luxury Gold CL Ring Logo', url: '/images/logo_design_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Gold CL Cream Badge Logo', url: '/images/logo_design_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Pixel Forge Studio Creative Workspace', url: IMAGES.pixelforgeStudio },
+                        { n: 2, title: 'Photo 2 — Stewerds Family Gold Crown Emblem', url: IMAGES.logoDesign2 },
+                        { n: 3, title: 'Photo 3 — Luxury Gold CL Ring Logo', url: IMAGES.logoDesign3 },
+                        { n: 4, title: 'Photo 4 — Gold CL Cream Badge Logo', url: IMAGES.logoDesign4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Pixel Forge — Logo Design — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -241,10 +242,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['visitingCard'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Muhammad Ali (Creative Developer)', url: '/images/visiting_card_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Jhan Mobile Hub (Luxury Gold Card)', url: '/images/visiting_card_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Anshu Mobile Shop (Tech Blue Card)', url: '/images/visiting_card_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Mobile Zone (CEO Faizan Amjad)', url: '/images/visiting_card_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Muhammad Ali (Creative Developer)', url: IMAGES.visitingCard1 },
+                        { n: 2, title: 'Photo 2 — Jhan Mobile Hub (Luxury Gold Card)', url: IMAGES.visitingCard2 },
+                        { n: 3, title: 'Photo 3 — Anshu Mobile Shop (Tech Blue Card)', url: IMAGES.visitingCard3 },
+                        { n: 4, title: 'Photo 4 — Mobile Zone (CEO Faizan Amjad)', url: IMAGES.visitingCard4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Pixel Forge — Visiting Card — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -268,10 +269,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['banner'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Aala Hazrat Muradabadi Biryani Banner', url: '/images/banner_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Travel The World Explorer Banner', url: '/images/banner_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Special Coffee Shop 30% Discount Banner', url: '/images/banner_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Special Discount Food Shop Banner', url: '/images/banner_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Aala Hazrat Muradabadi Biryani Banner', url: IMAGES.banner1 },
+                        { n: 2, title: 'Photo 2 — Travel The World Explorer Banner', url: IMAGES.banner2 },
+                        { n: 3, title: 'Photo 3 — Special Coffee Shop 30% Discount Banner', url: IMAGES.banner3 },
+                        { n: 4, title: 'Photo 4 — Special Discount Food Shop Banner', url: IMAGES.banner4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`Pixel Forge — Banner — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -313,10 +314,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['smartFlooring'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Residential Interior Smart Layout', url: '/images/color_block_1.jpg' },
-                        { n: 2, title: 'Photo 2 — Commercial Space Blueprint', url: '/images/color_block_2.jpg' },
-                        { n: 3, title: 'Photo 3 — Modern Tile & Material Distribution', url: '/images/color_block_3.jpg' },
-                        { n: 4, title: 'Photo 4 — Scaled Utility & Dimension Map', url: '/images/color_block_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Residential Interior Smart Layout', url: IMAGES.colorBlock1 },
+                        { n: 2, title: 'Photo 2 — Commercial Space Blueprint', url: IMAGES.colorBlock2 },
+                        { n: 3, title: 'Photo 3 — Modern Tile & Material Distribution', url: IMAGES.colorBlock3 },
+                        { n: 4, title: 'Photo 4 — Scaled Utility & Dimension Map', url: IMAGES.colorBlock4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`2D Smart Flooring — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">
@@ -340,10 +341,10 @@ export default function HireMe({ onOpenLightbox }: HireMeProps) {
                   {openSubs['houseDesign3D'] && (
                     <div className="hire-sub-content space-y-2 pt-2">
                       {[
-                        { n: 1, title: 'Photo 1 — Modern Exterior Elevation & Facade', url: '/images/cyborg_chamber.jpg' },
-                        { n: 2, title: 'Photo 2 — Luxury Living Room Interior Render', url: '/images/cyber_tunnel.jpg' },
-                        { n: 3, title: 'Photo 3 — Panoramic Architectural Walkthrough', url: '/images/avatar_3d_boy.jpg' },
-                        { n: 4, title: 'Photo 4 — Night Exterior Lighting Study', url: '/images/pakai_4.jpg' }
+                        { n: 1, title: 'Photo 1 — Modern Exterior Elevation & Facade', url: IMAGES.cyborgChamber },
+                        { n: 2, title: 'Photo 2 — Luxury Living Room Interior Render', url: IMAGES.cyberTunnel },
+                        { n: 3, title: 'Photo 3 — Panoramic Architectural Walkthrough', url: IMAGES.avatar3dBoy },
+                        { n: 4, title: 'Photo 4 — Night Exterior Lighting Study', url: IMAGES.pakai4 }
                       ].map(item => (
                         <div key={item.n} className="hire-photo-row flex justify-between items-center p-2.5 rounded-lg bg-[#18202c]">
                           <span onClick={() => setSelectedService(`3D House Design — ${item.title}`)} className="cursor-pointer flex-1 text-xs text-[#cbd5e1] hover:text-[#00d9ff]">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { IMAGES } from './images';
 import { 
   EDUCATION_DATA, 
   SKILLS_DATA, 
@@ -41,7 +42,7 @@ function Hero({ onTrigger3DMode }: { onTrigger3DMode?: (e: React.MouseEvent) => 
         </div>
         <div className="hero-photo flex justify-center items-center flex-col">
           <img 
-            src="/images/profile.jpg" 
+            src={IMAGES.profile} 
             alt="Muhammad Ali Profile" 
             className="w-[320px] h-[320px] object-cover rounded-full border-4 border-[#00d9ff] shadow-[0_0_35px_rgba(0,217,255,.18)]" 
           />

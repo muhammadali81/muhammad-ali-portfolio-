@@ -1,6 +1,7 @@
 import { INITIAL_PROJECTS, INITIAL_SERVICES, INITIAL_FEEDBACKS, INITIAL_STATS, loadFromStorage } from '../admin/adminStore';
 import { ProjectItem, ServiceItem, FeedbackItem, DashboardStats } from '../admin/types';
 import { EDUCATION_DATA, SKILLS_DATA, FAQ_DATA } from '../data/portfolioData';
+import { IMAGES } from '../images';
 
 const STORAGE_KEYS = {
   PROJECTS: 'ma_admin_projects_data',
@@ -56,47 +57,47 @@ export function getShared3DData(): Shared3DData {
 
   const photoShowcase = [
     // Game & AI - Colour Block
-    { id: 'cb-1', title: 'Colour Block — Intro Screen', category: 'Game & AI', url: '/images/color_block_1.jpg', caption: 'Ali Game Hubs Presents Color Blocks title intro screen' },
-    { id: 'cb-2', title: 'Colour Block — Level 35 Gameplay', category: 'Game & AI', url: '/images/color_block_2.jpg', caption: 'Level 35 gameplay screen with Score 8,450 & Moves 23' },
-    { id: 'cb-3', title: 'Colour Block — Free Mode Grid', category: 'Game & AI', url: '/images/color_block_3.jpg', caption: 'Free Mode puzzle grid with Score 1260 and Restart/Menu controls' },
-    { id: 'cb-4', title: 'Colour Block — Victory Trophy', category: 'Game & AI', url: '/images/color_block_4.jpg', caption: 'You Win! All 25 Levels Complete victory screen with trophy' },
+    { id: 'cb-1', title: 'Colour Block — Intro Screen', category: 'Game & AI', url: IMAGES.colorBlock1, caption: 'Ali Game Hubs Presents Color Blocks title intro screen' },
+    { id: 'cb-2', title: 'Colour Block — Level 35 Gameplay', category: 'Game & AI', url: IMAGES.colorBlock2, caption: 'Level 35 gameplay screen with Score 8,450 & Moves 23' },
+    { id: 'cb-3', title: 'Colour Block — Free Mode Grid', category: 'Game & AI', url: IMAGES.colorBlock3, caption: 'Free Mode puzzle grid with Score 1260 and Restart/Menu controls' },
+    { id: 'cb-4', title: 'Colour Block — Victory Trophy', category: 'Game & AI', url: IMAGES.colorBlock4, caption: 'You Win! All 25 Levels Complete victory screen with trophy' },
 
     // Game & AI - PakAI
-    { id: 'pak-1', title: 'PakAI — Smart Logo & Badge', category: 'Game & AI', url: '/images/pakai_1.jpg', caption: 'PakAI Logo with Brain Circuit emblem & AI Assistant Badge' },
-    { id: 'pak-2', title: 'PakAI — Smartphone UI', category: 'Game & AI', url: '/images/pakai_2.jpg', caption: 'Assalam-o-Alaikum PakAI home greeting with Pakistan map' },
-    { id: 'pak-3', title: 'PakAI — Chat Interface', category: 'Game & AI', url: '/images/pakai_3.jpg', caption: 'Dark theme conversation with What is AI question' },
-    { id: 'pak-4', title: 'PakAI — Hero Banner', category: 'Game & AI', url: '/images/pakai_4.jpg', caption: 'Dark green promotional showcase with Chat Now action' },
+    { id: 'pak-1', title: 'PakAI — Smart Logo & Badge', category: 'Game & AI', url: IMAGES.pakai1, caption: 'PakAI Logo with Brain Circuit emblem & AI Assistant Badge' },
+    { id: 'pak-2', title: 'PakAI — Smartphone UI', category: 'Game & AI', url: IMAGES.pakai2, caption: 'Assalam-o-Alaikum PakAI home greeting with Pakistan map' },
+    { id: 'pak-3', title: 'PakAI — Chat Interface', category: 'Game & AI', url: IMAGES.pakai3, caption: 'Dark theme conversation with What is AI question' },
+    { id: 'pak-4', title: 'PakAI — Hero Banner', category: 'Game & AI', url: IMAGES.pakai4, caption: 'Dark green promotional showcase with Chat Now action' },
 
     // Game & AI - LearnPlay
-    { id: 'lp-1', title: 'LearnPlay — Educational Emblem', category: 'Game & AI', url: '/images/learnplay_1.jpg', caption: 'Graduation cap emblem & Learn Play Grow logo' },
-    { id: 'lp-2', title: 'LearnPlay — Tablet Dashboard', category: 'Game & AI', url: '/images/learnplay_2.jpg', caption: 'Interactive subjects dashboard with English, Maths, Science & Quiz' },
-    { id: 'lp-3', title: 'LearnPlay — Hero Showcase', category: 'Game & AI', url: '/images/learnplay_3.jpg', caption: 'Learn Today Lead Tomorrow banner' },
-    { id: 'lp-4', title: 'LearnPlay — Quiz Score Victory', category: 'Game & AI', url: '/images/learnplay_4.jpg', caption: 'Score 8/10 popup with 3 gold stars & trophy' },
+    { id: 'lp-1', title: 'LearnPlay — Educational Emblem', category: 'Game & AI', url: IMAGES.learnplay1, caption: 'Graduation cap emblem & Learn Play Grow logo' },
+    { id: 'lp-2', title: 'LearnPlay — Tablet Dashboard', category: 'Game & AI', url: IMAGES.learnplay2, caption: 'Interactive subjects dashboard with English, Maths, Science & Quiz' },
+    { id: 'lp-3', title: 'LearnPlay — Hero Showcase', category: 'Game & AI', url: IMAGES.learnplay3, caption: 'Learn Today Lead Tomorrow banner' },
+    { id: 'lp-4', title: 'LearnPlay — Quiz Score Victory', category: 'Game & AI', url: IMAGES.learnplay4, caption: 'Score 8/10 popup with 3 gold stars & trophy' },
 
     // Graphic Design - Banners
-    { id: 'bnr-1', title: 'Muradabadi Biryani Banner', category: 'Graphic Design', url: '/images/banner_1.jpg', caption: 'Aala Hazrat Muradabadi Biryani promotional banner' },
-    { id: 'bnr-2', title: 'Travel The World Banner', category: 'Graphic Design', url: '/images/banner_2.jpg', caption: 'Travel The World adventure banner with sea & mountain views' },
-    { id: 'bnr-3', title: 'Coffee Shop 30% Off Banner', category: 'Graphic Design', url: '/images/banner_3.jpg', caption: 'Special Coffee Shop 30% discount promo banner' },
-    { id: 'bnr-4', title: 'Special Discount Food Shop', category: 'Graphic Design', url: '/images/banner_4.jpg', caption: 'Special Discount Food Shop promotional banner' },
+    { id: 'bnr-1', title: 'Muradabadi Biryani Banner', category: 'Graphic Design', url: IMAGES.banner1, caption: 'Aala Hazrat Muradabadi Biryani promotional banner' },
+    { id: 'bnr-2', title: 'Travel The World Banner', category: 'Graphic Design', url: IMAGES.banner2, caption: 'Travel The World adventure banner with sea & mountain views' },
+    { id: 'bnr-3', title: 'Coffee Shop 30% Off Banner', category: 'Graphic Design', url: IMAGES.banner3, caption: 'Special Coffee Shop 30% discount promo banner' },
+    { id: 'bnr-4', title: 'Special Discount Food Shop', category: 'Graphic Design', url: IMAGES.banner4, caption: 'Special Discount Food Shop promotional banner' },
 
     // Graphic Design - Business Cards
-    { id: 'vc-1', title: 'Muhammad Ali Business Card', category: 'Graphic Design', url: '/images/visiting_card_1.jpg', caption: 'Executive double-sided blue & black developer card' },
-    { id: 'vc-2', title: 'Jhan Mobile Hub Gold Card', category: 'Graphic Design', url: '/images/visiting_card_2.jpg', caption: 'Gold & black mobile shop business card with QR code' },
-    { id: 'vc-3', title: 'Anshu Mobile Tech Blue Card', category: 'Graphic Design', url: '/images/visiting_card_3.jpg', caption: 'Futuristic tech blue card layout with WhatsApp QR code' },
-    { id: 'vc-4', title: 'Mobile Zone CEO Card', category: 'Graphic Design', url: '/images/visiting_card_4.jpg', caption: 'High-contrast orange & dark geometric corporate card' },
+    { id: 'vc-1', title: 'Muhammad Ali Business Card', category: 'Graphic Design', url: IMAGES.visitingCard1, caption: 'Executive double-sided blue & black developer card' },
+    { id: 'vc-2', title: 'Jhan Mobile Hub Gold Card', category: 'Graphic Design', url: IMAGES.visitingCard2, caption: 'Gold & black mobile shop business card with QR code' },
+    { id: 'vc-3', title: 'Anshu Mobile Tech Blue Card', category: 'Graphic Design', url: IMAGES.visitingCard3, caption: 'Futuristic tech blue card layout with WhatsApp QR code' },
+    { id: 'vc-4', title: 'Mobile Zone CEO Card', category: 'Graphic Design', url: IMAGES.visitingCard4, caption: 'High-contrast orange & dark geometric corporate card' },
 
     // Graphic Design - Logos & Studio
-    { id: 'pf-1', title: 'Pixel Forge Studio Workspace', category: 'Graphic Design', url: '/images/pixelforge_studio.jpg', caption: 'Pixel Forge Studio monitor workspace & drawing tablet' },
-    { id: 'lg-2', title: 'Stewerds Family Gold Emblem', category: 'Graphic Design', url: '/images/logo_design_2.jpg', caption: 'Royal gold family crown emblem on dark wood texture' },
-    { id: 'lg-3', title: 'Luxury Gold CL Ring Logo', category: 'Graphic Design', url: '/images/logo_design_3.jpg', caption: 'Metallic gold ring emblem with script typography' },
-    { id: 'lg-4', title: 'Gold CL Cream Badge Logo', category: 'Graphic Design', url: '/images/logo_design_4.jpg', caption: 'Premium gold monogram script on cream circular badge' }
+    { id: 'pf-1', title: 'Pixel Forge Studio Workspace', category: 'Graphic Design', url: IMAGES.pixelforgeStudio, caption: 'Pixel Forge Studio monitor workspace & drawing tablet' },
+    { id: 'lg-2', title: 'Stewerds Family Gold Emblem', category: 'Graphic Design', url: IMAGES.logoDesign2, caption: 'Royal gold family crown emblem on dark wood texture' },
+    { id: 'lg-3', title: 'Luxury Gold CL Ring Logo', category: 'Graphic Design', url: IMAGES.logoDesign3, caption: 'Metallic gold ring emblem with script typography' },
+    { id: 'lg-4', title: 'Gold CL Cream Badge Logo', category: 'Graphic Design', url: IMAGES.logoDesign4, caption: 'Premium gold monogram script on cream circular badge' }
   ];
 
   return {
     profile: {
       name: 'Muhammad Ali',
       title: 'Web Developer • Game & AI Developer • Graphic Designer',
-      avatarUrl: '/images/avatar_3d_boy.jpg',
+      avatarUrl: IMAGES.avatar3dBoy,
       email: 'alimuhammadhvn81@gmail.com',
       phone: '+92 300 1234567',
       location: 'Havelian, Abbottabad, Pakistan (Worldwide Remote)',
