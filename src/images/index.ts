@@ -39,6 +39,7 @@ import smartFloor1 from './smart_floor_1.jpg';
 import smartFloor2 from './smart_floor_2.jpg';
 import smartFloor3 from './smart_floor_3.jpg';
 import smartFloor4 from './smart_floor_4.jpg';
+import underConstruction3d from './under_construction_3d.jpg';
 import visitingCard1 from './visiting_card_1.jpg';
 import visitingCard2 from './visiting_card_2.jpg';
 import visitingCard3 from './visiting_card_3.jpg';
@@ -83,6 +84,7 @@ export const IMAGES = {
   smartFloor2,
   smartFloor3,
   smartFloor4,
+  underConstruction3d,
   visitingCard1,
   visitingCard2,
   visitingCard3,

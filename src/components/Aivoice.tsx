@@ -38,6 +38,7 @@ const VERIFIED_KNOWLEDGE = {
   about: "Muhammad Ali is a dedicated Computer Science student and software creator specializing in Web Development, Game & AI App Development, Pixel Forge Graphic Design, and 2D/3D Architecture from Pakistan.",
   passion: "Muhammad Ali is deeply passionate about web development, game & AI app development, graphic design, 2D/3D architectural rendering, and modern technology. He is driven by a desire to turn ideas into polished digital experiences through continuous learning, clean software architecture, and disciplined work.",
   workStyle: "Muhammad Ali follows a transparent, 6-step collaborative work process: 1. Discussing requirements, 2. Planning structure & design, 3. Building with clean code, 4. Testing usability, 5. Delivering on time, and 6. Providing post-delivery support.",
+  threeDMode: "The 3D interactive interface is currently under construction (insha'Allah coming soon) by Muhammad Ali, featuring upcoming enhanced visuals, spatial 3D experience, and interactive asset viewing!",
   contactAll: "You can message Muhammad on WhatsApp at +92 342 6793428, call him directly at +92 330 0358799, or email alimuhammadhvn81@gmail.com."
 };
 
@@ -128,6 +129,16 @@ function getInstantAnswer(question: string): { text: string; actionLinks?: Messa
       actionLinks: [
         { type: 'whatsapp', label: '💬 Contact Muhammad on WhatsApp', url: VERIFIED_KNOWLEDGE.whatsappUrl },
         { type: 'call', label: '📞 Call: +92 330 0358799', url: VERIFIED_KNOWLEDGE.callUrl }
+      ]
+    };
+  }
+
+  // 3D Shifter / 3D Mode / 3D Interface status
+  if (q.includes("3d") || q.includes("shifter") || q.includes("3d art") || q.includes("three d") || q.includes("under construction")) {
+    return {
+      text: VERIFIED_KNOWLEDGE.threeDMode,
+      actionLinks: [
+        { type: 'whatsapp', label: '💬 Inquire About 3D & Architecture', url: VERIFIED_KNOWLEDGE.whatsappUrl }
       ]
     };
   }

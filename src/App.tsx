@@ -17,6 +17,7 @@ import ContactSection from './components/ContactSection';
 import ReactionSection from './components/ReactionSection';
 import WhatNextSection from './components/WhatNextSection';
 import LightboxModal from './components/LightboxModal';
+import ThreeDConstructionModal from './components/ThreeDConstructionModal';
 import Aivoice from './components/Aivoice';
 import ThreeDApp from './3d/ThreeDApp';
 import AdminApp from './admin/AdminApp';
@@ -214,6 +215,7 @@ export default function App() {
     return urlParams.get('mode') === '3d' ? '3d' : '2d';
   });
   const [lightboxState, setLightboxState] = useState({ isOpen: false, src: '', title: '' });
+  const [is3DConstructionOpen, setIs3DConstructionOpen] = useState(false);
   const [isVoiceSupportOpen, setIsVoiceSupportOpen] = useState(false);
   const [uploaded3DFile, setUploaded3DFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -234,13 +236,25 @@ export default function App() {
   const handleExitTo2D = () => {
     setUploaded3DFile(null);
     setViewMode('2d');
+    setIs3DConstructionOpen(false);
     const url = new URL(window.location.href);
     url.searchParams.delete('mode');
     window.history.pushState({}, '', url.pathname + url.search);
   };
 
   const handleOpenLightbox = (src: string, title: string) => setLightboxState({ isOpen: true, src, title });
-  const handleTrigger3DMode = (e: React.MouseEvent) => { e.preventDefault(); fileInputRef.current?.click(); };
+  const handleTrigger3DMode = (e?: React.MouseEvent) => { 
+    if (e) e.preventDefault(); 
+    setIs3DConstructionOpen(true); 
+  };
+
+  const handleOpenDirect3D = () => {
+    setIs3DConstructionOpen(false);
+    setViewMode('3d');
+    const url = new URL(window.location.href);
+    url.searchParams.set('mode', '3d');
+    window.history.pushState({}, '', url.pathname + url.search);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -296,6 +310,11 @@ export default function App() {
       </main>
       <FooterSection />
       <LightboxModal isOpen={lightboxState.isOpen} imageSrc={lightboxState.src} imageTitle={lightboxState.title} onClose={() => setLightboxState({ isOpen: false, src: '', title: '' })} />
+      <ThreeDConstructionModal 
+        isOpen={is3DConstructionOpen} 
+        onClose={() => setIs3DConstructionOpen(false)} 
+        onOpenDirect3D={handleOpenDirect3D}
+      />
       <Aivoice isOpen={isVoiceSupportOpen} onClose={() => setIsVoiceSupportOpen(false)} />
       <AIFloatingBar onOpen={() => setIsVoiceSupportOpen(true)} />
     </div>
