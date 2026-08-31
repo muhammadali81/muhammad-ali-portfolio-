@@ -286,7 +286,7 @@ export default function App() {
         <HireMe onOpenLightbox={handleOpenLightbox} />
         <ProfessionalExtras />
         <OverviewSection />
-        <FeedbackSection />
+        <FeedbackSection onOpenLightbox={handleOpenLightbox} />
         <InquirySection />
         <ContactSection onOpenVoiceSupport={() => setIsVoiceSupportOpen(true)} />
         <FaqSection />

@@ -41,7 +41,11 @@ interface FeedbackCardData {
 
 const INITIAL_PUBLIC_FEEDBACKS: FeedbackCardData[] = [];
 
-export default function FeedbackSection() {
+interface FeedbackSectionProps {
+  onOpenLightbox?: (url: string, title: string) => void;
+}
+
+export default function FeedbackSection({ onOpenLightbox }: FeedbackSectionProps = {}) {
   const db = getDb();
   const [text, setText] = useState('');
   const [rating, setRating] = useState(5);
@@ -741,13 +745,20 @@ export default function FeedbackSection() {
                       <p className="text-[10px] font-bold text-slate-400">Project Portfolio ({fb.projectImages.length} Photos):</p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {fb.projectImages.map((img, idx) => (
-                          <a key={idx} href={img} target="_blank" rel="noopener noreferrer" className="block aspect-video overflow-hidden rounded-lg border border-white/10 hover:border-[#00d9ff]/50 transition-all">
+                          <div 
+                            key={idx} 
+                            onClick={() => onOpenLightbox ? onOpenLightbox(img, `${fb.clientName}'s Project Photo ${idx + 1}`) : window.open(img, '_blank')} 
+                            className="block aspect-video overflow-hidden rounded-lg border border-white/10 hover:border-[#00d9ff]/50 transition-all cursor-pointer group relative"
+                          >
                             <img
                               src={img}
                               alt={`Project ${idx}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             />
-                          </a>
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[#00d9ff] text-[10px] font-bold">
+                              Zoom Photo
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -757,7 +768,8 @@ export default function FeedbackSection() {
                       <img
                         src={fb.imageUrl}
                         alt="Project Screenshot"
-                        className="w-full max-h-[300px] rounded-xl border border-white/10 object-contain bg-black/20 shadow-md"
+                        onClick={() => onOpenLightbox ? onOpenLightbox(fb.imageUrl!, `${fb.clientName}'s Project Screenshot`) : undefined}
+                        className="w-full max-h-[300px] rounded-xl border border-white/10 object-contain bg-black/20 shadow-md cursor-pointer hover:border-[#00d9ff]/50 transition-colors"
                       />
                     </div>
                   )}
