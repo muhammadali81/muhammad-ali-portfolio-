@@ -26,12 +26,37 @@ import {
 import { motion } from 'motion/react';
 import { IMAGES } from '../images';
 
-export default function CVSection() {
+export interface CVSectionProps {
+  externalModalOpen?: boolean;
+  onCloseModal?: () => void;
+}
+
+export default function CVSection({ externalModalOpen, onCloseModal }: CVSectionProps = {}) {
   const [copiedContact, setCopiedContact] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'experience' | 'education' | 'projects'>('all');
+  const [internalModalOpen, setInternalModalOpen] = useState(false);
+
+  const isPdfModalOpen = externalModalOpen !== undefined ? externalModalOpen : internalModalOpen;
+  const setIsPdfModalOpen = (open: boolean) => {
+    if (onCloseModal && !open) onCloseModal();
+    setInternalModalOpen(open);
+  };
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPdf = () => {
+    const cvContent = `MUHAMMAD ALI\nWeb Developer | Game & AI App Developer | Graphic Designer | 3D Designer\n\nCONTACT:\n- Phone: +92 330 0358799 / +92 342 6793428\n- Email: alimuhammadhvn81@gmail.com\n- Location: Havelian, Abbottabad, KPK\n- Portfolio: muhammadali81.github.io\n- LinkedIn: linkedin.com/in/muhammadali81\n\nABOUT ME:\nI am a passionate and dedicated Computer Science student with expertise in Web Development, Game & AI App Development, Graphic Design, and 3D Design.\n\nEDUCATION:\n- BS Computer Science (2025 - Present) - Iqra Post Graduate College\n- Intermediate (2024) - Pakwattan School and College of Science (753/1200 | Grade B)\n- Matriculation (2022) - Al Arqam Academy of Excellence (795/1100 | Grade A)\n\nEXPERIENCE:\n- Frontend Developer (2022 - Present) - Freelance\n- Graphic Designer (2021 - Present) - Freelance\n- 3D Designer (2021 - Present) - Freelance\n\nSKILLS:\nHTML5, CSS3, JavaScript, Bootstrap, React.js, Node.js, Express.js, MongoDB, Git & GitHub, UI/UX Design, Adobe Photoshop, 3D Modeling\n\nLANGUAGES:\nUrdu, English, Hindko\n\nINTERESTS:\nCoding, Gaming, Photography, Designing`;
+    
+    const blob = new Blob([cvContent], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Muhammad_Ali_CV.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleCopyContact = () => {
@@ -167,9 +192,9 @@ export default function CVSection() {
           </button>
 
           <button
-            onClick={handlePrint}
+            onClick={() => setIsPdfModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00d9ff] to-[#7c5cff] text-[#03060f] font-black text-xs uppercase tracking-wider transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(0,217,255,0.3)] cursor-pointer"
-            title="Print or Save CV as PDF"
+            title="Open, Print or Save CV as PDF"
           >
             <Printer className="w-4 h-4" />
             <span>Print / Save PDF</span>
@@ -545,6 +570,89 @@ export default function CVSection() {
         </div>
 
       </div>
+
+      {/* PDF View / Download Modal */}
+      {isPdfModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-[#030712] border border-[#00d9ff]/40 rounded-3xl shadow-[0_0_80px_rgba(0,217,255,0.25)] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 bg-[#060c1d] border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[#00d9ff]/10 text-[#00d9ff]">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">Muhammad_Ali_CV.pdf</h3>
+                  <p className="text-[11px] text-slate-400">Official Curriculum Vitae • Verified Document</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={handleDownloadPdf}
+                  className="relative group overflow-hidden flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00d9ff] via-[#38bdf8] to-[#7c5cff] text-[#03060f] font-black text-xs uppercase tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_25px_rgba(0,217,255,0.4)] cursor-pointer"
+                  title="Download Official PDF Resume"
+                >
+                  <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                  <Download className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
+                  <span>Download PDF</span>
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/10 text-white font-bold text-xs uppercase tracking-wider transition-all hover:border-[#00d9ff]/50 shadow-md cursor-pointer"
+                  title="Print Resume"
+                >
+                  <Printer className="w-4 h-4 text-[#00d9ff]" />
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={() => setIsPdfModalOpen(false)}
+                  className="p-2.5 rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/5 hover:border-rose-500/30 transition-all cursor-pointer ml-2"
+                  title="Close Modal"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal PDF Body Preview */}
+            <div className="p-6 sm:p-8 overflow-y-auto space-y-6 bg-[#030712] max-h-[calc(90vh-120px)]">
+              <div className="p-6 sm:p-8 rounded-2xl bg-[#060c1d] border border-[#00d9ff]/20 space-y-6">
+                <div className="flex flex-col sm:flex-row items-center gap-6 border-b border-white/10 pb-6">
+                  <img src={IMAGES.profile} alt="Muhammad Ali" className="w-24 h-24 rounded-full object-cover border-2 border-[#00d9ff] shadow-[0_0_20px_rgba(0,217,255,0.3)]" />
+                  <div className="text-center sm:text-left">
+                    <h2 className="text-2xl font-black text-white uppercase tracking-wide">Muhammad Ali</h2>
+                    <p className="text-xs text-[#00d9ff] font-bold mt-1">Web Developer | Game & AI App Developer | Graphic Designer | 3D Designer</p>
+                    <p className="text-xs text-slate-300 mt-2">Havelian, Abbottabad, KPK | Tel: +92 330 0358799 | Email: alimuhammadhvn81@gmail.com</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-300">
+                  <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/5">
+                    <h4 className="text-xs font-black text-[#00d9ff] uppercase tracking-wider">Education & Academic</h4>
+                    <p><strong>BS Computer Science</strong> (2025 - Present)<br/><span className="text-slate-400">Iqra Post Graduate College</span></p>
+                    <p><strong>Intermediate</strong> (2024)<br/><span className="text-slate-400">Pakwattan School & College (753/1200 | Grade B)</span></p>
+                    <p><strong>Matriculation</strong> (2022)<br/><span className="text-slate-400">Al Arqam Academy (795/1100 | Grade A)</span></p>
+                  </div>
+                  <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/5">
+                    <h4 className="text-xs font-black text-[#00d9ff] uppercase tracking-wider">Professional Experience</h4>
+                    <p><strong>Frontend Developer</strong> (2022 - Present)<br/><span className="text-slate-400">Freelance</span></p>
+                    <p><strong>Graphic Designer</strong> (2021 - Present)<br/><span className="text-slate-400">Freelance</span></p>
+                    <p><strong>3D Designer</strong> (2021 - Present)<br/><span className="text-slate-400">Freelance</span></p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-2 text-[11px] text-slate-400 font-mono">
+                  <span>Portfolio: muhammadali81.github.io</span>
+                  <span>LinkedIn: linkedin.com/in/muhammadali81</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </section>
   );
 }

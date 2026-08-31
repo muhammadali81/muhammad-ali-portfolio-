@@ -27,7 +27,7 @@ import AdminApp from './admin/AdminApp';
 // CONSOLIDATED SUB-COMPONENTS
 // =========================================================================
 
-function Hero({ onTrigger3DMode }: { onTrigger3DMode?: (e: React.MouseEvent) => void }) {
+function Hero({ onTrigger3DMode, onOpenCvModal }: { onTrigger3DMode?: (e: React.MouseEvent) => void; onOpenCvModal?: (e: React.MouseEvent) => void }) {
   return (
     <section id="home" className="hero min-h-[92vh] flex items-center pt-[100px] relative overflow-hidden">
       <div className="container hero-content grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-[60px] items-center relative z-10">
@@ -37,7 +37,16 @@ function Hero({ onTrigger3DMode }: { onTrigger3DMode?: (e: React.MouseEvent) => 
           <h2 className="text-[22px] sm:text-[24px] text-[#c5ccd7] font-medium mb-[18px]">Web Developer • Game &amp; AI App Developer • Graphic Designer</h2>
           <p className="max-w-[650px] text-[#a4adba] text-[17px] mb-[30px] leading-relaxed">I am a Computer Science student passionate about technology, creative design, web development, game development, AI applications and building innovative digital experiences.</p>
           <div className="buttons flex gap-3.5 flex-wrap mt-6">
-            <a href="#cv" className="btn px-6 py-3.5 rounded-lg font-bold border border-[#00d9ff]/50 bg-[#00d9ff]/10 text-[#00d9ff] hover:bg-[#00d9ff]/20 transition-all flex items-center gap-2">
+            <a 
+              href="#cv" 
+              onClick={(e) => {
+                e.preventDefault();
+                if (onOpenCvModal) onOpenCvModal(e);
+                const el = document.getElementById('cv');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="btn px-6 py-3.5 rounded-lg font-bold border border-[#00d9ff]/50 bg-[#00d9ff]/10 text-[#00d9ff] hover:bg-[#00d9ff]/20 transition-all flex items-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(0,217,255,0.2)]"
+            >
               <span>📄</span>
               <span>View CV &amp; Resume</span>
             </a>
@@ -286,6 +295,7 @@ export default function App() {
   const [lightboxState, setLightboxState] = useState({ isOpen: false, src: '', title: '' });
   const [is3DConstructionOpen, setIs3DConstructionOpen] = useState(false);
   const [isVoiceSupportOpen, setIsVoiceSupportOpen] = useState(false);
+  const [isCvModalOpen, setIsCvModalOpen] = useState(false);
   const [uploaded3DFile, setUploaded3DFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -359,13 +369,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[var(--lux-bg)] text-[var(--lux-text)] antialiased">
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".glb,.gltf" className="hidden" />
-      <Header onTrigger3DMode={handleTrigger3DMode} onOpenAdmin={handleOpenAdmin} />
+      <Header onTrigger3DMode={handleTrigger3DMode} onOpenAdmin={handleOpenAdmin} onOpenCvModal={() => setIsCvModalOpen(true)} />
       <main id="main-content">
-        <Hero onTrigger3DMode={handleTrigger3DMode} />
+        <Hero onTrigger3DMode={handleTrigger3DMode} onOpenCvModal={() => setIsCvModalOpen(true)} />
         <About />
         <Education />
         <Skills />
-        <CVSection />
+        <CVSection externalModalOpen={isCvModalOpen} onCloseModal={() => setIsCvModalOpen(false)} />
         <Projects onOpenLightbox={handleOpenLightbox} />
         <Services />
         <HireMe onOpenLightbox={handleOpenLightbox} />

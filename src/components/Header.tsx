@@ -6,9 +6,10 @@ import { IMAGES } from '../images';
 interface HeaderProps {
   onTrigger3DMode?: (e: React.MouseEvent) => void;
   onOpenAdmin?: (e: React.MouseEvent) => void;
+  onOpenCvModal?: (e: React.MouseEvent) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin }) => {
+const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin, onOpenCvModal }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLight, setIsLight] = useState(() => {
     const saved = localStorage.getItem('luxTheme');
@@ -86,6 +87,14 @@ const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin }) => {
             <motion.a 
               key={link.label} 
               href={link.href}
+              onClick={(e) => {
+                if (link.label === 'CV') {
+                  e.preventDefault();
+                  if (onOpenCvModal) onOpenCvModal(e);
+                  const el = document.getElementById('cv');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + idx * 0.05 }}
