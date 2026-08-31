@@ -984,6 +984,14 @@ async function startServer() {
   const mainApp = express();
   mainApp.use(express.json({ limit: "10mb" }));
 
+  // Explicitly mount static public directory and images
+  const publicPath = path.join(process.cwd(), "public");
+  mainApp.use("/images", express.static(path.join(publicPath, "images"), {
+    maxAge: "1d",
+    immutable: false
+  }));
+  mainApp.use(express.static(publicPath));
+
   // MOUNT API ROUTES FIRST
   mainApp.use(app);
 
