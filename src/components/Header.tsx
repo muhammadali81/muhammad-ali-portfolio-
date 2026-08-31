@@ -39,6 +39,7 @@ const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin }) => {
   const navLinks = [
     { label: 'Home', href: '#home' },
     { label: 'About', href: '#about' },
+    { label: 'CV', href: '#cv' },
     { label: 'Skills', href: '#skills' },
     { label: 'Projects', href: '#projects' },
     { label: 'Services', href: '#services' },

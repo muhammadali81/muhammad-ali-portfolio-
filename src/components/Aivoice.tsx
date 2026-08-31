@@ -39,6 +39,7 @@ const VERIFIED_KNOWLEDGE = {
   passion: "Muhammad Ali is deeply passionate about web development, game & AI app development, graphic design, 2D/3D architectural rendering, and modern technology. He is driven by a desire to turn ideas into polished digital experiences through continuous learning, clean software architecture, and disciplined work.",
   workStyle: "Muhammad Ali follows a transparent, 6-step collaborative work process: 1. Discussing requirements, 2. Planning structure & design, 3. Building with clean code, 4. Testing usability, 5. Delivering on time, and 6. Providing post-delivery support.",
   threeDMode: "The 3D interactive interface is currently under construction (insha'Allah coming soon) by Muhammad Ali, featuring upcoming enhanced visuals, spatial 3D experience, and interactive asset viewing!",
+  cv: "Muhammad Ali's CV highlights his Computer Science BS degree (Iqra Post Graduate College), Intermediate (Pakwattan), Matriculation (Al Arqam), freelance experience in Frontend, Graphic Design & 3D Modeling, and core skills in Web, Unity Game Dev, and AI.",
   contactAll: "You can message Muhammad on WhatsApp at +92 342 6793428, call him directly at +92 330 0358799, or email alimuhammadhvn81@gmail.com."
 };
 
@@ -139,6 +140,17 @@ function getInstantAnswer(question: string): { text: string; actionLinks?: Messa
       text: VERIFIED_KNOWLEDGE.threeDMode,
       actionLinks: [
         { type: 'whatsapp', label: '💬 Inquire About 3D & Architecture', url: VERIFIED_KNOWLEDGE.whatsappUrl }
+      ]
+    };
+  }
+
+  // CV / Resume specific
+  if (q.includes("cv") || q.includes("resume") || q.includes("curriculum vitae") || q.includes("biodata")) {
+    return {
+      text: VERIFIED_KNOWLEDGE.cv,
+      actionLinks: [
+        { type: 'whatsapp', label: '💬 Inquire on WhatsApp (+92 342 6793428)', url: VERIFIED_KNOWLEDGE.whatsappUrl },
+        { type: 'email', label: '✉ Email Muhammad Ali', url: VERIFIED_KNOWLEDGE.emailUrl }
       ]
     };
   }
