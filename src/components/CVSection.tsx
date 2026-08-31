@@ -46,17 +46,12 @@ export default function CVSection({ externalModalOpen, onCloseModal }: CVSection
   };
 
   const handleDownloadPdf = () => {
-    const cvContent = `MUHAMMAD ALI\nWeb Developer | Game & AI App Developer | Graphic Designer | 3D Designer\n\nCONTACT:\n- Phone: +92 330 0358799 / +92 342 6793428\n- Email: alimuhammadhvn81@gmail.com\n- Location: Havelian, Abbottabad, KPK\n- Portfolio: muhammadali81.github.io\n- LinkedIn: linkedin.com/in/muhammadali81\n\nABOUT ME:\nI am a passionate and dedicated Computer Science student with expertise in Web Development, Game & AI App Development, Graphic Design, and 3D Design.\n\nEDUCATION:\n- BS Computer Science (2025 - Present) - Iqra Post Graduate College\n- Intermediate (2024) - Pakwattan School and College of Science (753/1200 | Grade B)\n- Matriculation (2022) - Al Arqam Academy of Excellence (795/1100 | Grade A)\n\nEXPERIENCE:\n- Frontend Developer (2022 - Present) - Freelance\n- Graphic Designer (2021 - Present) - Freelance\n- 3D Designer (2021 - Present) - Freelance\n\nSKILLS:\nHTML5, CSS3, JavaScript, Bootstrap, React.js, Node.js, Express.js, MongoDB, Git & GitHub, UI/UX Design, Adobe Photoshop, 3D Modeling\n\nLANGUAGES:\nUrdu, English, Hindko\n\nINTERESTS:\nCoding, Gaming, Photography, Designing`;
-    
-    const blob = new Blob([cvContent], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Muhammad_Ali_CV.pdf';
+    a.href = '/muhammad_ali_cv.jpg';
+    a.download = 'Muhammad_Ali_CV.jpg';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const handleCopyContact = () => {
@@ -617,36 +612,14 @@ export default function CVSection({ externalModalOpen, onCloseModal }: CVSection
             </div>
 
             {/* Modal PDF Body Preview */}
-            <div className="p-6 sm:p-8 overflow-y-auto space-y-6 bg-[#030712] max-h-[calc(90vh-120px)]">
-              <div className="p-6 sm:p-8 rounded-2xl bg-[#060c1d] border border-[#00d9ff]/20 space-y-6">
-                <div className="flex flex-col sm:flex-row items-center gap-6 border-b border-white/10 pb-6">
-                  <img src={IMAGES.profile} alt="Muhammad Ali" className="w-24 h-24 rounded-full object-cover border-2 border-[#00d9ff] shadow-[0_0_20px_rgba(0,217,255,0.3)]" />
-                  <div className="text-center sm:text-left">
-                    <h2 className="text-2xl font-black text-white uppercase tracking-wide">Muhammad Ali</h2>
-                    <p className="text-xs text-[#00d9ff] font-bold mt-1">Web Developer | Game & AI App Developer | Graphic Designer | 3D Designer</p>
-                    <p className="text-xs text-slate-300 mt-2">Havelian, Abbottabad, KPK | Tel: +92 330 0358799 | Email: alimuhammadhvn81@gmail.com</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-300">
-                  <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/5">
-                    <h4 className="text-xs font-black text-[#00d9ff] uppercase tracking-wider">Education & Academic</h4>
-                    <p><strong>BS Computer Science</strong> (2025 - Present)<br/><span className="text-slate-400">Iqra Post Graduate College</span></p>
-                    <p><strong>Intermediate</strong> (2024)<br/><span className="text-slate-400">Pakwattan School & College (753/1200 | Grade B)</span></p>
-                    <p><strong>Matriculation</strong> (2022)<br/><span className="text-slate-400">Al Arqam Academy (795/1100 | Grade A)</span></p>
-                  </div>
-                  <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/5">
-                    <h4 className="text-xs font-black text-[#00d9ff] uppercase tracking-wider">Professional Experience</h4>
-                    <p><strong>Frontend Developer</strong> (2022 - Present)<br/><span className="text-slate-400">Freelance</span></p>
-                    <p><strong>Graphic Designer</strong> (2021 - Present)<br/><span className="text-slate-400">Freelance</span></p>
-                    <p><strong>3D Designer</strong> (2021 - Present)<br/><span className="text-slate-400">Freelance</span></p>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-2 text-[11px] text-slate-400 font-mono">
-                  <span>Portfolio: muhammadali81.github.io</span>
-                  <span>LinkedIn: linkedin.com/in/muhammadali81</span>
-                </div>
+            <div className="p-4 sm:p-6 overflow-y-auto flex justify-center items-center bg-[#030712] max-h-[calc(90vh-100px)]">
+              <div className="w-full max-w-3xl rounded-2xl overflow-hidden border border-[#00d9ff]/30 shadow-[0_0_30px_rgba(0,217,255,0.2)] bg-black">
+                <img 
+                  src="/muhammad_ali_cv.jpg" 
+                  alt="Muhammad Ali Official CV" 
+                  className="w-full h-auto object-contain select-none"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
               </div>
             </div>
 
