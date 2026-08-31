@@ -37,17 +37,17 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     subtitle: 'Interactive games and intelligent AI applications',
     description: 'Specialized game mechanics, custom puzzle engines, localized NLP AI architectures, and gamified learning platforms built with high performance.',
     icon: Gamepad2,
-    coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
+    coverImage: '/images/pakai_4.jpg',
     subdivisions: [
       {
         name: 'Colour Block',
         badge: 'Division 1 • 4 Photos',
         description: 'Interactive color block puzzle game logic featuring smooth animations, player mechanics, dynamic block matching physics, combo blast particles, and high score leaderboards.',
         photos: [
-          { id: 1, title: 'Colour Block - Intro Title Screen (Ali Game Hubs)', url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: Ali Game Hubs Presents Color Blocks title intro screen' },
-          { id: 2, title: 'Colour Block - Mobile Puzzle Gameplay (Level 35)', url: 'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Level 35 gameplay screen with Score 8,450 & Moves 23' },
-          { id: 3, title: 'Colour Block - Free Mode Board Grid', url: 'https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: Free Mode puzzle grid with Score 1260 and Restart/Menu controls' },
-          { id: 4, title: 'Colour Block - Victory Trophy Screen (All 25 Levels)', url: 'https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: You Win! All 25 Levels Complete victory screen with trophy' }
+          { id: 1, title: 'Colour Block - Intro Title Screen (Ali Game Hubs)', url: '/images/color_block_1.jpg', caption: 'Photo 1: Ali Game Hubs Presents Color Blocks title intro screen' },
+          { id: 2, title: 'Colour Block - Mobile Puzzle Gameplay (Level 35)', url: '/images/color_block_2.jpg', caption: 'Photo 2: Level 35 gameplay screen with Score 8,450 & Moves 23' },
+          { id: 3, title: 'Colour Block - Free Mode Board Grid', url: '/images/color_block_3.jpg', caption: 'Photo 3: Free Mode puzzle grid with Score 1260 and Restart/Menu controls' },
+          { id: 4, title: 'Colour Block - Victory Trophy Screen (All 25 Levels)', url: '/images/color_block_4.jpg', caption: 'Photo 4: You Win! All 25 Levels Complete victory screen with trophy' }
         ]
       },
       {
@@ -55,10 +55,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 2 • 4 Photos',
         description: 'Next-gen artificial intelligence platform featuring intelligent Urdu & English NLP conversational chat, real-time voice processing, and custom vector document query solutions.',
         photos: [
-          { id: 1, title: 'Pak AI - AI Assistant Emblem & Logo', url: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: PakAI Logo, Brain Circuits & AI Assistant Badge' },
-          { id: 2, title: 'Pak AI - Mobile App Interface & Flag Mockup', url: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Smartphone UI with Assalamualaikum PakAI greeting & Pakistan map' },
-          { id: 3, title: 'Pak AI - Conversational Chat UI', url: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: Dark theme chat screen with What is AI question & response' },
-          { id: 4, title: 'Pak AI - Smart AI Assistant Promotional Banner', url: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: Hero banner with Chat Now button & mobile viewport' }
+          { id: 1, title: 'Pak AI - AI Assistant Emblem & Logo', url: '/images/pakai_1.jpg', caption: 'Photo 1: PakAI Logo, Brain Circuits & AI Assistant Badge' },
+          { id: 2, title: 'Pak AI - Mobile App Interface & Flag Mockup', url: '/images/pakai_2.jpg', caption: 'Photo 2: Smartphone UI with Assalamualaikum PakAI greeting & Pakistan map' },
+          { id: 3, title: 'Pak AI - Conversational Chat UI', url: '/images/pakai_3.jpg', caption: 'Photo 3: Dark theme chat screen with What is AI question & response' },
+          { id: 4, title: 'Pak AI - Smart AI Assistant Promotional Banner', url: '/images/pakai_4.jpg', caption: 'Photo 4: Hero banner with Chat Now button & mobile viewport' }
         ]
       },
       {
@@ -66,10 +66,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 3 • 4 Photos',
         description: 'Gamified educational learning portal empowering students with interactive quizzes, real-time logic challenges, daily streak counters, and reward badges.',
         photos: [
-          { id: 1, title: 'Learn Play - Educational Hub Logo', url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: LearnPlay Logo with graduation cap & Learn Play Grow slogan' },
-          { id: 2, title: 'Learn Play - Tablet Learning Dashboard', url: 'https://images.unsplash.com/photo-1584697964190-7bb883907e85?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: English, Maths, Science & Quiz modules on tablet UI' },
-          { id: 3, title: 'Learn Play - Student Hero Banner', url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: Learn Today, Lead Tomorrow banner with Start Learning button' },
-          { id: 4, title: 'Learn Play - Quiz Victory Score Screen', url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: Well Done victory modal with 3 gold stars & Score 8/10' }
+          { id: 1, title: 'Learn Play - Educational Hub Logo', url: '/images/learnplay_1.jpg', caption: 'Photo 1: LearnPlay Logo with graduation cap & Learn Play Grow slogan' },
+          { id: 2, title: 'Learn Play - Tablet Learning Dashboard', url: '/images/learnplay_2.jpg', caption: 'Photo 2: English, Maths, Science & Quiz modules on tablet UI' },
+          { id: 3, title: 'Learn Play - Student Hero Banner', url: '/images/learnplay_3.jpg', caption: 'Photo 3: Learn Today, Lead Tomorrow banner with Start Learning button' },
+          { id: 4, title: 'Learn Play - Quiz Victory Score Screen', url: '/images/learnplay_4.jpg', caption: 'Photo 4: Well Done victory modal with 3 gold stars & Score 8/10' }
         ]
       }
     ]
@@ -80,17 +80,17 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     subtitle: 'Graphic design, logo identity, visiting cards, and promotional banners',
     description: 'Comprehensive visual graphic studio providing custom vector logo branding, executive business card layouts, and eye-catching promotional advertising banners.',
     icon: Palette,
-    coverImage: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&auto=format&fit=crop&q=80',
+    coverImage: '/images/pixelforge_studio.jpg',
     subdivisions: [
       {
         name: 'Logo Design',
         badge: 'Division 1 • 4 Photos',
         description: 'Professional vector logos, corporate brand identities, geometric emblems, gaming logos, and luxury typography crafted for digital and print media.',
         photos: [
-          { id: 1, title: 'Pixel Forge Studio - Creative Design Workspace', url: 'https://images.unsplash.com/photo-1542744094-3a31f272c490?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: Pixel Forge Studio monitor workspace, drawing tablet & color swatches' },
-          { id: 2, title: 'Logo Design - Stewerds Family Gold Crown Emblem', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Royal gold family logo on dark wood background' },
-          { id: 3, title: 'Logo Design - Luxury Gold CL Ring Logo', url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: Metallic gold ring emblem with script typography' },
-          { id: 4, title: 'Logo Design - Gold CL Cream Badge Logo', url: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: Premium gold monogram script on cream circular badge' }
+          { id: 1, title: 'Pixel Forge Studio - Creative Design Workspace', url: '/images/pixelforge_studio.jpg', caption: 'Photo 1: Pixel Forge Studio monitor workspace, drawing tablet & color swatches' },
+          { id: 2, title: 'Logo Design - Stewerds Family Gold Crown Emblem', url: '/images/logo_design_2.jpg', caption: 'Photo 2: Royal gold family logo on dark wood background' },
+          { id: 3, title: 'Logo Design - Luxury Gold CL Ring Logo', url: '/images/logo_design_3.jpg', caption: 'Photo 3: Metallic gold ring emblem with script typography' },
+          { id: 4, title: 'Logo Design - Gold CL Cream Badge Logo', url: '/images/logo_design_4.jpg', caption: 'Photo 4: Premium gold monogram script on cream circular badge' }
         ]
       },
       {
@@ -98,10 +98,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 2 • 4 Photos',
         description: 'Modern corporate business cards, double-sided executive layouts, luxury gold foil, and custom mobile shop business card designs.',
         photos: [
-          { id: 1, title: 'Muhammad Ali - Creative Developer Business Card', url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: Executive double-sided blue & black design with contact details & website link' },
-          { id: 2, title: 'Jhan Mobile Hub - Luxury Gold Partner Card', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Gold & black mobile shop business card with smartphone repair services list & QR code' },
-          { id: 3, title: 'Anshu Mobile Shop - Tech Blue Business Card', url: 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: Futuristic tech blue card layout with WhatsApp chat QR code & service guide' },
-          { id: 4, title: 'Mobile Zone - CEO Faizan Amjad Business Card', url: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: High-contrast orange & dark geometric corporate card with CEO details & address' }
+          { id: 1, title: 'Muhammad Ali - Creative Developer Business Card', url: '/images/visiting_card_1.jpg', caption: 'Photo 1: Executive double-sided blue & black design with contact details & website link' },
+          { id: 2, title: 'Jhan Mobile Hub - Luxury Gold Partner Card', url: '/images/visiting_card_2.jpg', caption: 'Photo 2: Gold & black mobile shop business card with smartphone repair services list & QR code' },
+          { id: 3, title: 'Anshu Mobile Shop - Tech Blue Business Card', url: '/images/visiting_card_3.jpg', caption: 'Photo 3: Futuristic tech blue card layout with WhatsApp chat QR code & service guide' },
+          { id: 4, title: 'Mobile Zone - CEO Faizan Amjad Business Card', url: '/images/visiting_card_4.jpg', caption: 'Photo 4: High-contrast orange & dark geometric corporate card with CEO details & address' }
         ]
       },
       {
@@ -109,10 +109,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 3 • 4 Photos',
         description: 'High-converting social media promotional banners, YouTube & Twitch channel cover artwork, e-commerce sale ads, and roll-up event display banners.',
         photos: [
-          { id: 1, title: 'Aala Hazrat Muradabadi Biryani Banner', url: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: Aala Hazrat Muradabadi Biryani restaurant promotional banner' },
-          { id: 2, title: 'Travel The World Explorer Banner', url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Travel The World adventure banner with sea & mountain scenery' },
-          { id: 3, title: 'Special Coffee Shop 30% Discount Banner', url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: Special Coffee Shop 30% discount promotional banner' },
-          { id: 4, title: 'Special Discount Food Shop Banner', url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: Special Discount Food Shop promotional header banner with pizza frames' }
+          { id: 1, title: 'Aala Hazrat Muradabadi Biryani Banner', url: '/images/banner_1.jpg', caption: 'Photo 1: Aala Hazrat Muradabadi Biryani restaurant promotional banner' },
+          { id: 2, title: 'Travel The World Explorer Banner', url: '/images/banner_2.jpg', caption: 'Photo 2: Travel The World adventure banner with sea & mountain scenery' },
+          { id: 3, title: 'Special Coffee Shop 30% Discount Banner', url: '/images/banner_3.jpg', caption: 'Photo 3: Special Coffee Shop 30% discount promotional banner' },
+          { id: 4, title: 'Special Discount Food Shop Banner', url: '/images/banner_4.jpg', caption: 'Photo 4: Special Discount Food Shop promotional header banner with pizza frames' }
         ]
       }
     ]
@@ -123,17 +123,17 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     subtitle: 'Smart architectural 2D floor plans and immersive 3D house exterior & interior renderings',
     description: 'Architectural spatial planning, intelligent 2D smart floor mapping, material distribution layouts, and photorealistic 3D house renderings.',
     icon: Box,
-    coverImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+    coverImage: '/images/cyber_tunnel.jpg',
     subdivisions: [
       {
         name: '2D Smart Flooring',
         badge: 'Division 1 • 4 Photos',
         description: 'Precision architectural 2D smart flooring plans, room spatial mapping, material tile grids, and CAD property dimension blueprints.',
         photos: [
-          { id: 1, title: '2D Smart Flooring - Residential Interior Smart Layout', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: Multi-room home smart flooring grid & spatial room mapping' },
-          { id: 2, title: '2D Smart Flooring - Commercial Space Blueprint', url: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Corporate workspace flooring layout & circulation path CAD plan' },
-          { id: 3, title: '2D Smart Flooring - Modern Tile & Material Distribution', url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: 2.5D shaded flooring material placement & tile allocation diagram' },
-          { id: 4, title: '2D Smart Flooring - Scaled Utility & Dimension Map', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: Automated CAD room boundary & smart floor heating system map' }
+          { id: 1, title: '2D Smart Flooring - Residential Interior Smart Layout', url: '/images/color_block_1.jpg', caption: 'Photo 1: Multi-room home smart flooring grid & spatial room mapping' },
+          { id: 2, title: '2D Smart Flooring - Commercial Space Blueprint', url: '/images/color_block_2.jpg', caption: 'Photo 2: Corporate workspace flooring layout & circulation path CAD plan' },
+          { id: 3, title: '2D Smart Flooring - Modern Tile & Material Distribution', url: '/images/color_block_3.jpg', caption: 'Photo 3: 2.5D shaded flooring material placement & tile allocation diagram' },
+          { id: 4, title: '2D Smart Flooring - Scaled Utility & Dimension Map', url: '/images/color_block_4.jpg', caption: 'Photo 4: Automated CAD room boundary & smart floor heating system map' }
         ]
       },
       {
@@ -141,10 +141,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Division 2 • 4 Photos',
         description: 'Photorealistic 3D villa elevation renders, interior living space models, panoramic walkthrough visualizations, and architectural lighting studies.',
         photos: [
-          { id: 1, title: '3D House Design - Modern Exterior Elevation & Facade', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: High-end luxury villa facade render with glass & wood accents' },
-          { id: 2, title: '3D House Design - Luxury Living Room Interior Render', url: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Immersive 3D interior visualization with natural daylighting' },
-          { id: 3, title: '3D House Design - Panoramic Architectural Walkthrough', url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: 360-degree spatial perspective render of courtyard & pool deck' },
-          { id: 4, title: '3D House Design - Night Exterior Lighting Study', url: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: Twilight exterior architectural lighting & landscape rendering' }
+          { id: 1, title: '3D House Design - Modern Exterior Elevation & Facade', url: '/images/cyborg_chamber.jpg', caption: 'Photo 1: High-end luxury villa facade render with glass & wood accents' },
+          { id: 2, title: '3D House Design - Luxury Living Room Interior Render', url: '/images/cyber_tunnel.jpg', caption: 'Photo 2: Immersive 3D interior visualization with natural daylighting' },
+          { id: 3, title: '3D House Design - Panoramic Architectural Walkthrough', url: '/images/avatar_3d_boy.jpg', caption: 'Photo 3: 360-degree spatial perspective render of courtyard & pool deck' },
+          { id: 4, title: '3D House Design - Night Exterior Lighting Study', url: '/images/pakai_4.jpg', caption: 'Photo 4: Twilight exterior architectural lighting & landscape rendering' }
         ]
       }
     ]
@@ -155,7 +155,7 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
     subtitle: 'Modern web development studio showcase with live website link & photos',
     description: 'Full-stack web application featuring live website link, responsive Vite React frontend, dark theme aesthetic, and backend admin portal controls.',
     icon: Globe,
-    coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
+    coverImage: '/images/pakai_2.jpg',
     websiteUrl: 'https://muhammadali81.github.io/muhammad-ali-portfolio-/',
     subdivisions: [
       {
@@ -163,10 +163,10 @@ const PROJECT_CATEGORIES: ProjectCategory[] = [
         badge: 'Website Showcase • 4 Photos',
         description: 'Full-stack web studio platform featuring direct live website link, clean hero sections, mobile touch responsiveness, interactive service widgets, and dark mode backend dashboard.',
         photos: [
-          { id: 1, title: 'Nova Web - Hero Section & Landing Page', url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80', caption: 'Photo 1: Clean high-contrast hero section with call-to-action buttons' },
-          { id: 2, title: 'Nova Web - Responsive Mobile & Tablet Views', url: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&auto=format&fit=crop&q=80', caption: 'Photo 2: Cross-device responsiveness & touch-optimized mobile viewport' },
-          { id: 3, title: 'Nova Web - Services & Interactive Features', url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80', caption: 'Photo 3: Live interactive service cards & real-time analytics widgets' },
-          { id: 4, title: 'Nova Web - Admin Portal & Dark Theme UI', url: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=80', caption: 'Photo 4: Secure backend dashboard management & metrics monitor' }
+          { id: 1, title: 'Nova Web - Hero Section & Landing Page', url: '/images/pakai_2.jpg', caption: 'Photo 1: Clean high-contrast hero section with call-to-action buttons' },
+          { id: 2, title: 'Nova Web - Responsive Mobile & Tablet Views', url: '/images/pakai_3.jpg', caption: 'Photo 2: Cross-device responsiveness & touch-optimized mobile viewport' },
+          { id: 3, title: 'Nova Web - Services & Interactive Features', url: '/images/pakai_1.jpg', caption: 'Photo 3: Live interactive service cards & real-time analytics widgets' },
+          { id: 4, title: 'Nova Web - Admin Portal & Dark Theme UI', url: '/images/pixelforge_studio.jpg', caption: 'Photo 4: Secure backend dashboard management & metrics monitor' }
         ]
       }
     ]
