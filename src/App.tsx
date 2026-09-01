@@ -37,19 +37,16 @@ function Hero({ onTrigger3DMode, onOpenCvModal }: { onTrigger3DMode?: (e: React.
           <h2 className="text-[22px] sm:text-[24px] text-[#c5ccd7] font-medium mb-[18px]">Web Developer • Game &amp; AI App Developer • Graphic Designer</h2>
           <p className="max-w-[650px] text-[#a4adba] text-[17px] mb-[30px] leading-relaxed">I am a Computer Science student passionate about technology, creative design, web development, game development, AI applications and building innovative digital experiences.</p>
           <div className="buttons flex gap-3.5 flex-wrap mt-6">
-            <a 
-              href="#cv" 
+            <button 
               onClick={(e) => {
                 e.preventDefault();
                 if (onOpenCvModal) onOpenCvModal(e);
-                const el = document.getElementById('cv');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
               className="btn px-6 py-3.5 rounded-lg font-bold border border-[#00d9ff]/50 bg-[#00d9ff]/10 text-[#00d9ff] hover:bg-[#00d9ff]/20 transition-all flex items-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(0,217,255,0.2)]"
             >
               <span>📄</span>
               <span>View CV &amp; Resume</span>
-            </a>
+            </button>
             <a href="#projects" className="btn btn-primary px-6 py-3.5 rounded-lg font-bold">View My Projects</a>
             <a href="#hire" className="btn px-6 py-3.5 rounded-lg font-bold border border-[#00d9ff] text-[#00d9ff]">Hire Me</a>
             <a href="?mode=3d" onClick={onTrigger3DMode} className="btn px-6 py-3.5 rounded-lg font-extrabold border border-[#7c5cff] bg-gradient-to-r from-[#7c5cff]/20 to-[#00d9ff]/20 text-[#00d9ff] transition-all flex items-center gap-2 cursor-pointer"><span>◇</span><span>Enter 3D Art World</span></a>

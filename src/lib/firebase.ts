@@ -1,7 +1,7 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, FirebaseApp, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, getRedirectResult, Auth, browserPopupRedirectResolver } from "firebase/auth";
-import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED, Firestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED, Firestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || firebaseConfig.oAuthClientId || "1057584179825-ebgauidoppj7qfc4d3lrf99c7rokag9c.apps.googleusercontent.com";
@@ -37,6 +37,21 @@ export const getDb = (): Firestore => {
   }
   return dbInstance;
 };
+
+// Connection test helper as per Firebase skill guidelines
+export async function testConnection() {
+  const db = getDb();
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if(error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Firebase connection issue: Client is offline or backend unreachable.");
+    } else {
+      console.error("Firebase connection test error:", error);
+    }
+  }
+}
+testConnection();
 
 export const getFirebaseAuth = () => {
   if (!authInstance) {

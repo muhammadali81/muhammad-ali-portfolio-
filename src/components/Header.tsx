@@ -40,7 +40,7 @@ const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin, onOpenCvM
   const navLinks = [
     { label: 'Home', href: '#home' },
     { label: 'About', href: '#about' },
-    { label: 'CV', href: '#cv' },
+    { label: 'CV', href: '#' },
     { label: 'Skills', href: '#skills' },
     { label: 'Projects', href: '#projects' },
     { label: 'Services', href: '#services' },
@@ -91,8 +91,6 @@ const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin, onOpenCvM
                 if (link.label === 'CV') {
                   e.preventDefault();
                   if (onOpenCvModal) onOpenCvModal(e);
-                  const el = document.getElementById('cv');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
               initial={{ opacity: 0, y: -20 }}
@@ -197,7 +195,13 @@ const Header: React.FC<HeaderProps> = ({ onTrigger3DMode, onOpenAdmin, onOpenCvM
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + idx * 0.05 }}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    setMobileMenuOpen(false);
+                    if (link.label === 'CV') {
+                      e.preventDefault();
+                      if (onOpenCvModal) onOpenCvModal(e);
+                    }
+                  }}
                   className="text-4xl font-black text-slate-500 hover:text-white transition-all flex items-center gap-4 group"
                 >
                   <span className="text-[12px] font-black text-[#00d9ff] opacity-0 group-hover:opacity-100 transition-opacity">0{idx + 1}</span>
