@@ -27,7 +27,7 @@ export default function CVSection({ externalModalOpen, onCloseModal }: CVSection
 
   const handleDownloadPdf = () => {
     const a = document.createElement('a');
-    a.href = '/cv_document.jpg';
+    a.href = `/cv_document.jpg?t=${Date.now()}`;
     a.download = 'Muhammad_Ali_CV.jpg';
     document.body.appendChild(a);
     a.click();
@@ -293,7 +293,7 @@ export default function CVSection({ externalModalOpen, onCloseModal }: CVSection
             <div className="flex justify-center items-center">
               <div className="w-full max-w-3xl rounded-2xl overflow-hidden border border-[#00d9ff]/30 shadow-[0_0_30px_rgba(0,217,255,0.2)] bg-black">
                 <img 
-                  src="/cv_document.jpg" 
+                  src="/cv_document.jpg?t=${Date.now()}" 
                   alt="Muhammad Ali Official CV" 
                   className="w-full h-auto object-contain select-none"
                   onContextMenu={(e) => e.preventDefault()}
