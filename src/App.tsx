@@ -22,6 +22,7 @@ import ThreeDConstructionModal from './components/ThreeDConstructionModal';
 import Aivoice from './components/Aivoice';
 import ThreeDApp from './3d/ThreeDApp';
 import AdminApp from './admin/AdminApp';
+import CustomCursor from './components/CustomCursor';
 
 // =========================================================================
 // CONSOLIDATED SUB-COMPONENTS
@@ -365,6 +366,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[var(--lux-bg)] text-[var(--lux-text)] antialiased">
+      <CustomCursor />
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".glb,.gltf" className="hidden" />
       <Header onTrigger3DMode={handleTrigger3DMode} onOpenAdmin={handleOpenAdmin} onOpenCvModal={() => setIsCvModalOpen(true)} />
       <main id="main-content">

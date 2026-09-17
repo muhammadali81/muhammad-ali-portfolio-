@@ -24,7 +24,7 @@ const VERIFIED_KNOWLEDGE = {
   email: "alimuhammadhvn81@gmail.com",
   emailUrl: "mailto:alimuhammadhvn81@gmail.com",
   name: "Muhammad Ali",
-  education: "Muhammad is currently pursuing his BS in Computer Science at Iqra Post Graduate College (2025–Present). Previously, he completed his FSc in Computer Science from Pak Wattan School & College of Science in 2024, and Matric in Science from Al Arqam Academy of Excellence in 2022.",
+  education: "Muhammad is currently pursuing his BS in Computer Science at Iqra Post Graduate College (2025–Present). Previously, he completed his FSc in Computer Science from PAK WATTAN SCHOOL AND COLLEGE OF SCIENCES in 2024, and Matric in Science from Al Arqam Academy of Excellence in 2022.",
   languages: "Muhammad’s listed languages are Urdu, English, and Hindko.",
   services: "Muhammad offers 4 major service divisions: 1. Web Development (React, Node, Nova Web Studio agency showcase), 2. Game & AI App Development (Colour Block strategy game, Pak AI assistant, Learn Play education hub), 3. Pixel Forge Graphic Design (Logo Design, executive & mobile shop Visiting Cards, Banners), and 4. 2D & 3D Architecture (2D Smart Flooring plans, 3D House exterior & interior renders).",
   skills: "His verified technical skills include HTML, CSS, JavaScript, React, Node.js, Python, C++, Game Development (Godot, Unity), AI Development (Gemini, Speech recognition), Pixel Forge Graphic Design (Logos, Visiting Cards, Banners), 2D Smart Floor CAD mapping, 3D Architectural Rendering, and Tailwind CSS.",
@@ -39,7 +39,7 @@ const VERIFIED_KNOWLEDGE = {
   passion: "Muhammad Ali is deeply passionate about web development, game & AI app development, graphic design, 2D/3D architectural rendering, and modern technology. He is driven by a desire to turn ideas into polished digital experiences through continuous learning, clean software architecture, and disciplined work.",
   workStyle: "Muhammad Ali follows a transparent, 6-step collaborative work process: 1. Discussing requirements, 2. Planning structure & design, 3. Building with clean code, 4. Testing usability, 5. Delivering on time, and 6. Providing post-delivery support.",
   threeDMode: "The 3D interactive interface is currently under construction (insha'Allah coming soon) by Muhammad Ali, featuring upcoming enhanced visuals, spatial 3D experience, and interactive asset viewing!",
-  cv: "Muhammad Ali's CV highlights his Computer Science BS degree (Iqra Post Graduate College), Intermediate (Pakwattan), Matriculation (Al Arqam), freelance experience in Frontend, Graphic Design & 3D Modeling, and core skills in Web, Unity Game Dev, and AI.",
+  cv: "Muhammad Ali's CV highlights his Computer Science BS degree (Iqra Post Graduate College), Intermediate (PAK WATTAN SCHOOL AND COLLEGE OF SCIENCES), Matriculation (Al Arqam), freelance experience in Frontend, Graphic Design & 3D Modeling, and core skills in Web, Unity Game Dev, and AI.",
   contactAll: "You can message Muhammad on WhatsApp at +92 342 6793428, call him directly at +92 330 0358799, or email alimuhammadhvn81@gmail.com."
 };
 

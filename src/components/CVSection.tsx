@@ -60,7 +60,7 @@ export default function CVSection({ externalModalOpen, onCloseModal }: CVSection
     {
       degree: 'Intermediate',
       period: '2024',
-      institution: 'Pakwattan School and College of Science',
+      institution: 'PAK WATTAN SCHOOL AND COLLEGE OF SCIENCES',
       location: 'Havelian, Abbottabad',
       score: '753/1200 | Grade B'
     },

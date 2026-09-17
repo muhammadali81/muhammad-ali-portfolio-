@@ -39,7 +39,7 @@ const INITIAL_CONTENT: ContentData = {
     },
     {
       degree: 'FSc in Computer Science',
-      institute: 'Pak Wattan School & College of Science, Havelian, Abbottabad',
+      institute: 'PAK WATTAN SCHOOL AND COLLEGE OF SCIENCES, Havelian, Abbottabad',
       year: 'Completed — 2024'
     }
   ]

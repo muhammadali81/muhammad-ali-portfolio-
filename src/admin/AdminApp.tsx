@@ -2022,7 +2022,7 @@ export default function AdminApp({ onBack }: { onBack?: () => void }) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { degree: 'BS Computer Science', inst: 'Iqra Post Graduate College, Havelian', status: '3rd Semester (Active)', color: 'border-[#00d9ff]/30 text-[#00d9ff]' },
-                    { degree: 'FSc Computer Science', inst: 'Pak Wattan School & College', status: 'Completed (2024)', color: 'border-emerald-500/30 text-emerald-400' },
+                    { degree: 'FSc Computer Science', inst: 'PAK WATTAN SCHOOL AND COLLEGE OF SCIENCES', status: 'Completed (2024)', color: 'border-emerald-500/30 text-emerald-400' },
                     { degree: 'Matric in Science', inst: 'Al Arqam Academy of Excellence', status: 'Completed (2022)', color: 'border-purple-500/30 text-purple-400' }
                   ].map((edu, idx) => (
                     <div key={idx} className={`p-3.5 rounded-xl bg-[#121a2c] border ${edu.color} flex flex-col justify-between`}>
